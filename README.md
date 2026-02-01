@@ -25,6 +25,12 @@ bun run ipdb:fetch
 bun run dev
 ```
 
+可选环境变量：
+
+- `IPDB_DIR`：数据目录，默认 data
+- `IPDB_URL_V4`：IPv4 数据下载地址
+- `IPDB_URL_V6`：IPv6 数据下载地址
+
 ## 测试与文档要求 📌
 
 - 单元测试覆盖率目标：90%+

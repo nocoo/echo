@@ -5,13 +5,15 @@
   "private": true,
   "scripts": {
     "dev": "bun run src/index.ts",
+    "ipdb:fetch": "bun run scripts/ipdb-fetch.ts",
     "test": "bun test",
     "test:coverage": "bun test --coverage --coverage-reporter=text",
     "lint": "eslint .",
     "prepare": "husky"
   },
   "dependencies": {
-    "hono": "^4.11.7"
+    "hono": "^4.11.7",
+    "ip2region": "^2.3.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

@@ -18,6 +18,12 @@ bun install
 bun run ipdb:fetch
 ```
 
+可选环境变量：
+
+- IPDB_DIR：数据目录，默认 data
+- IPDB_URL_V4：IPv4 数据下载地址
+- IPDB_URL_V6：IPv6 数据下载地址
+
 3. 启动开发服务
 
 ```bash
