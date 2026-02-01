@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "bun run src/index.ts",
     "ipdb:fetch": "bun run scripts/ipdb-fetch.ts",
-    "test": "bun test",
-    "test:coverage": "bun test --coverage --coverage-reporter=text",
+    "test": "bun test tests/unit",
+    "test:e2e": "bun test tests/e2e",
+    "test:all": "bun run test && bun run test:e2e",
+    "test:coverage": "bun test tests/unit --coverage --coverage-reporter=text --coverage-reporter=lcov",
     "lint": "eslint .",
     "prepare": "husky"
   },

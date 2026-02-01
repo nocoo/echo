@@ -6,7 +6,7 @@ import {
   loadClient,
   resolveClientCtor,
   refreshClient,
-} from "../src/services/ipdb";
+} from "../../src/services/ipdb";
 
 type CacheState = {
   v4?: { client: unknown; loadedAt: number };
@@ -90,7 +90,7 @@ describe("ipdb cache", () => {
     const created = await loadClient({
       dataDirOverride: "custom-data",
       readFileFn,
-      createClient: ({ ipv4db, ipv6db }) => {
+      createClient: ({ ipv4db, ipv6db }: { ipv4db: string; ipv6db: string }) => {
         return {
           searchRaw: () => ({ ipv4db, ipv6db }),
         };
