@@ -1,5 +1,11 @@
 #!/usr/bin/env node
 /* global fetch, performance, console */
+// <xbar.title>Echo IP Latency</xbar.title>
+// <xbar.version>1.0</xbar.version>
+// <xbar.author>nocoo</xbar.author>
+// <xbar.desc>Show RTT and server latency from echo API.</xbar.desc>
+// <xbar.dependencies>node</xbar.dependencies>
+// <xbar.abouturl>https://github.com/nocoo/echo</xbar.abouturl>
 
 // 这里使用原生的 fetch (Node.js 18+ 内置) 避免安装依赖
 const API_URL = "https://echo.nocoo.cloud/api/ip";
