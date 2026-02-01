@@ -6,7 +6,7 @@
       "name": "echo",
       "dependencies": {
         "hono": "^4.11.7",
-        "ip2region": "^2.3.0",
+        "ip2region.js": "^3.1.6",
       },
       "devDependencies": {
         "@eslint/js": "^9.39.2",
@@ -155,7 +155,7 @@
 
     "imurmurhash": ["imurmurhash@0.1.4", "", {}, "sha512-JmXMZ6wuvDmLiHEml9ykzqO6lwFbof0GG4IkcGaENdCRDDmMVnny7s5HsIgHCbaq0w2MyPhDqkhTUgS2LU2PHA=="],
 
-    "ip2region": ["ip2region@2.3.0", "", { "peerDependencies": { "@types/node": "*" } }, "sha512-zV5Xsadzrx9Ej6heoyhbXMsfGWWQ3C6bAIYStrHhw9kzLpGpVNlnAyRBxxPgxA1GNqr1Ti7oUxcWsMWNN3jZBg=="],
+    "ip2region.js": ["ip2region.js@3.1.6", "", {}, "sha512-fXIzLreccnOCtpsIxu9qowp09qb+an5BJ2tY8E+tXlFI3CFb+GuC8Yyw/P7ZV/4LukQwcHSPUDxHORmpYtY7OQ=="],
 
     "is-extglob": ["is-extglob@2.1.1", "", {}, "sha512-SbKbANkN603Vi4jEZv49LeVJMn4yGwsbzZworEoyEiutsN3nJYdbO36zfhGJ6QEDpOZIFkDtnq5JRxmvl3jsoQ=="],
 

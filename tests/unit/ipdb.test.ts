@@ -4,7 +4,6 @@ import {
   getClient,
   isExpired,
   loadClient,
-  resolveClientCtor,
   refreshClient,
 } from "../../src/services/ipdb";
 
@@ -20,7 +19,10 @@ const globalCache = globalThis as typeof globalThis & {
 const fixedTime = 1_700_000_000_000;
 
 function setCache(type: "v4" | "v6", loadedAt: number) {
-  const entry = { client: { marker: type, searchRaw: () => null }, loadedAt };
+    const entry = {
+      client: { marker: type, search: async () => "" },
+      loadedAt,
+    };
 
   if (!globalCache.__ipdbCache) {
     globalCache.__ipdbCache = {};
@@ -56,7 +58,7 @@ describe("ipdb cache", () => {
 
     const refreshed = await refreshClient({
       type: "v6",
-      current: current as unknown as { client: { searchRaw: () => null }; loadedAt: number },
+      current: current as unknown as { client: { search: () => Promise<string> }; loadedAt: number },
       now,
     });
 
@@ -70,11 +72,11 @@ describe("ipdb cache", () => {
     let called = false;
     const refreshed = await refreshClient({
       type: "v4",
-      current: current as unknown as { client: { searchRaw: () => null }; loadedAt: number },
+      current: current as unknown as { client: { search: () => Promise<string> }; loadedAt: number },
       now,
       load: async () => {
         called = true;
-        return { searchRaw: () => null };
+        return { search: async () => "" };
       },
     });
 
@@ -90,51 +92,41 @@ describe("ipdb cache", () => {
     const created = await loadClient({
       dataDirOverride: "custom-data",
       readFileFn,
-      createClient: ({ ipv4db, ipv6db }: { ipv4db: string; ipv6db: string }) => {
+      loadContent: () => Buffer.from("IPDB"),
+      createSearcher: ({ v4, v6 }: { v4: Buffer; v6: Buffer }) => {
         return {
-          searchRaw: () => ({ ipv4db, ipv6db }),
+          search: async () => `region|${v4.length}|${v6.length}|0|0`,
         };
       },
     });
 
-    const payload = created.searchRaw("1.1.1.1") as { ipv4db: string; ipv6db: string };
+    const payload = await created.search("1.1.1.1");
 
     expect(calls.length).toBe(2);
-    expect(payload.ipv4db).toContain("custom-data");
-    expect(payload.ipv6db).toContain("custom-data");
+    expect(payload).toContain("region|");
   });
 
-  test("loadClient uses constructor override", async () => {
+  test("loadClient uses default searcher when no factory provided", async () => {
     const readCalls: string[] = [];
     const readFileFn = async (filePath: string) => {
       readCalls.push(filePath);
     };
 
-    class FakeClient {
-      searchRaw() {
-        return null;
-      }
-    }
-
     const client = await loadClient({
       dataDirOverride: "default-data",
       readFileFn,
-      constructorOverride: FakeClient,
+      loadContent: () => Buffer.from("IPDB"),
     });
 
-    expect(typeof client.searchRaw).toBe("function");
+    expect(typeof client.search).toBe("function");
     expect(readCalls.length).toBe(2);
   });
 
 
-  test("resolveClientCtor returns constructor", () => {
-    const Ctor = resolveClientCtor();
-    expect(typeof Ctor).toBe("function");
-  });
 
   test("isExpired returns true when ttl exceeded", () => {
     const entry = {
-      client: { searchRaw: () => null },
+      client: { search: async () => "" },
       loadedAt: fixedTime - CACHE_TTL_MS - 1,
     };
 

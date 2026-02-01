@@ -16,6 +16,7 @@ bun run test:all
 
 - 通过真实启动服务进行 API 校验
 - pre-push 阶段运行 UT + E2E + lint
+- E2E 依赖本地已下载 xdb
 
 ## Lint 要求
 

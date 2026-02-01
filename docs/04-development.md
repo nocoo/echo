@@ -34,3 +34,4 @@ bun run dev
 
 - 默认端口：3000
 - 健康检查：GET /health
+- IP 查询：GET /api/ip

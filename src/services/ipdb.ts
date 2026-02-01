@@ -1,11 +1,13 @@
 import path from "node:path";
 import { readFile } from "node:fs/promises";
-import ip2region from "ip2region";
+import { IPv4, IPv6, loadContentFromFile, newWithBuffer } from "ip2region.js";
 
 type IpdbType = "v4" | "v6";
 
 export type Ip2RegionClient = {
-  searchRaw: (ipaddr: string, parse?: boolean) => unknown;
+  search: (ip: string) => Promise<string>;
+  getIOCount?: () => number;
+  close?: () => void;
 };
 
 export type CacheEntry = {
@@ -39,20 +41,11 @@ export function isExpired(entry: CacheEntry) {
   return now() - entry.loadedAt > CACHE_TTL_MS;
 }
 
-export function resolveClientCtor() {
-  const resolved = (ip2region as { default?: unknown }).default ?? ip2region;
-  return resolved as new (opts: {
-    ipv4db?: string;
-    ipv6db?: string;
-    disableIpv6?: boolean;
-  }) => Ip2RegionClient;
-}
-
 type LoadClientDeps = {
   dataDirOverride?: string;
   readFileFn?: (filePath: string) => Promise<unknown>;
-  createClient?: (opts: { ipv4db: string; ipv6db: string }) => Ip2RegionClient;
-  constructorOverride?: new (opts: { ipv4db: string; ipv6db: string }) => Ip2RegionClient;
+  loadContent?: (filePath: string) => Buffer;
+  createSearcher?: (opts: { v4: Buffer; v6: Buffer }) => Ip2RegionClient;
 };
 
 export async function loadClient(deps: LoadClientDeps = {}): Promise<Ip2RegionClient> {
@@ -64,12 +57,25 @@ export async function loadClient(deps: LoadClientDeps = {}): Promise<Ip2RegionCl
   await read(v4Path);
   await read(v6Path);
 
-  if (deps.createClient) {
-    return deps.createClient({ ipv4db: v4Path, ipv6db: v6Path });
+  const load = deps.loadContent ?? loadContentFromFile;
+  const v4Buffer = load(v4Path);
+  const v6Buffer = load(v6Path);
+
+  if (deps.createSearcher) {
+    return deps.createSearcher({ v4: v4Buffer, v6: v6Buffer });
   }
 
-  const Client = deps.constructorOverride ?? resolveClientCtor();
-  return new Client({ ipv4db: v4Path, ipv6db: v6Path });
+  const v4Searcher = newWithBuffer(IPv4, v4Buffer);
+  const v6Searcher = newWithBuffer(IPv6, v6Buffer);
+
+  return {
+    search: async (ip: string) => {
+      const searcher = ip.includes(":") ? v6Searcher : v4Searcher;
+      return searcher.search(ip);
+    },
+    getIOCount: () => 0,
+    close: () => undefined,
+  } satisfies Ip2RegionClient;
 }
 
 export type CacheRefresh = {
