@@ -14,30 +14,45 @@ app.get("/health", (c) => {
 app.get("/api/ip", async (c) => {
   const started = performance.now();
   const rawIp = extractClientIp(c.req.raw.headers);
-  const result = await lookupIp(rawIp);
-  const latencyMs = Math.round(performance.now() - started);
 
-  if (!result) {
+  try {
+    const result = await lookupIp(rawIp);
+    const latencyMs = Math.round(performance.now() - started);
+
+    if (!result) {
+      return c.json(
+        {
+          error: { code: "invalid_ip", message: "invalid ip" },
+          ip: rawIp,
+          source: "ip2region",
+          attribution,
+          latencyMs,
+        },
+        400,
+      );
+    }
+
+    return c.json({
+      ip: result.ip,
+      version: result.version,
+      location: result.location,
+      latencyMs,
+      source: "ip2region",
+      attribution,
+    });
+  } catch {
+    const latencyMs = Math.round(performance.now() - started);
     return c.json(
       {
-        error: "invalid ip",
+        error: { code: "lookup_failed", message: "lookup failed" },
         ip: rawIp,
         source: "ip2region",
         attribution,
         latencyMs,
       },
-      400,
+      500,
     );
   }
-
-  return c.json({
-    ip: result.ip,
-    version: result.version,
-    location: result.location,
-    latencyMs,
-    source: "ip2region",
-    attribution,
-  });
 });
 
 export default app;

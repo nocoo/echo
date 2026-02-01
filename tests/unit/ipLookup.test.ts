@@ -32,6 +32,24 @@ describe("lookupIp", () => {
     });
   });
 
+  test("returns null location for empty region", async () => {
+    globalCache.__ipdbCache = {
+      v6: {
+        client: {
+          search: async () => "",
+        },
+        loadedAt: Date.now(),
+      },
+    };
+
+    const result = await lookupIp("2001:db8::1");
+    expect(result).toEqual({
+      ip: "2001:db8::1",
+      version: 6,
+      location: { country: "", province: "", city: "", isp: "", iso2: "" },
+    });
+  });
+
   test("parseRegion handles missing fields", () => {
     expect(parseRegion("US|CA")).toEqual({
       country: "US",

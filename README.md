@@ -56,6 +56,7 @@ bun run ipdb:fetch
 
 - `GET /health`：健康检查
 - `GET /api/ip`：返回 IP、位置、延迟、来源与 attribution
+  - 错误时返回 `error.code` 与 `error.message`
 
 默认端口：7012
 

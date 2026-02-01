@@ -18,6 +18,10 @@ bun run test:all
 - pre-push 阶段运行 UT + E2E + lint
 - E2E 依赖本地已下载 xdb
 
+## 错误响应校验
+
+- /api/ip 错误时返回 error.code 与 error.message
+
 ## Lint 要求
 
 ```bash

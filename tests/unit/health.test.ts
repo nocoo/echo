@@ -11,3 +11,17 @@ describe("GET /health", () => {
     expect(body).toEqual({ status: "ok" });
   });
 });
+
+describe("GET /api/ip", () => {
+  test("returns 400 for invalid ip", async () => {
+    const res = await app.request("/api/ip");
+
+    expect(res.status).toBe(400);
+
+    const body = await res.json();
+    expect(body).toMatchObject({
+      error: { code: "invalid_ip" },
+      source: "ip2region",
+    });
+  });
+});

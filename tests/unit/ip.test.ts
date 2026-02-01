@@ -28,4 +28,9 @@ describe("ip utils", () => {
   test("returns null for invalid ip", () => {
     expect(parseClientIp("not-an-ip")).toBeNull();
   });
+
+  test("returns null when no headers", () => {
+    const headers = new Headers();
+    expect(extractClientIp(headers)).toBeNull();
+  });
 });
