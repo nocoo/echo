@@ -14,6 +14,15 @@ export function createApp(lookup: LookupFn = lookupIp) {
     return c.json({ status: "ok" });
   });
 
+  app.get("/", (c) => {
+    return c.json({
+      name: "echo",
+      status: "ok",
+      endpoints: ["/health", "/api/ip"],
+      docs: "README.md",
+    });
+  });
+
   app.get("/api/ip", async (c) => {
     const started = performance.now();
     const rawIp = extractClientIp(c.req.raw.headers);

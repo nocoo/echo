@@ -13,6 +13,22 @@ describe("GET /health", () => {
   });
 });
 
+describe("GET /", () => {
+  test("returns service info", async () => {
+    const app = createApp();
+    const res = await app.request("/");
+
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body).toMatchObject({
+      name: "echo",
+      status: "ok",
+      endpoints: ["/health", "/api/ip"],
+    });
+  });
+});
+
 describe("GET /api/ip", () => {
   test("returns 400 for invalid ip", async () => {
     const app = createApp(async () => null);

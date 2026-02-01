@@ -54,6 +54,7 @@ bun run ipdb:fetch
 
 ## API 说明 📡
 
+- `GET /`：服务信息与可用接口
 - `GET /health`：健康检查
 - `GET /api/ip`：返回 IP、位置、延迟、来源与 attribution
   - 错误时返回 `error.code` 与 `error.message`
