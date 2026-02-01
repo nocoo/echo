@@ -1,23 +1,41 @@
 # echo 🚀
 
-一个只提供 API 的 IP 查询服务，目标部署到 Vercel 与 Railway。速度优先，Bun + TypeScript，严格 TDD。
+An API-only IP lookup service for Vercel and Railway. Fast, Bun + TypeScript, strict TDD.
 
-## 项目主要功能 ✅
+## What it does ✅
 
-- 返回客户端真实 IP（支持 IPv4/IPv6）
-- 查询 ip2region 离线库并返回结构化位置
-- 返回服务端观测延迟（毫秒）
-- 返回数据来源与 attribution
-- 仅 API，无前端页面
+- Returns the client IP (IPv4/IPv6)
+- Looks up `ip2region.xdb` and returns structured location
+- Returns server-side latency (ms)
+- API-only, no UI
 
-## 主要目录结构 📁
+## SwiftBar plugin 🧭
 
-- `src/`：服务与路由
-- `tests/`：单元测试
-- `scripts/`：构建/部署阶段脚本
-- `docs/`：项目文档
+This repo ships a SwiftBar plugin so you can turn your self-hosted API into a menu bar latency monitor on macOS.
 
-## 如何运行开发服务器 🧪
+- Plugin: `swiftbar/echo.1m.js` (refresh every 1 minute)
+- Menu bar example (color-coded RTT):
+
+```text
+🇨🇳 42ms | color=green
+```
+
+Dropdown shows:
+- IP
+- Country
+- Location (province | city)
+- ISP
+- RTT + Server latency
+
+## Project structure 📁
+
+- `src/` services and routes
+- `tests/` unit + e2e
+- `scripts/` build/deploy scripts
+- `docs/` documentation
+- `swiftbar/` SwiftBar plugin
+
+## Run locally 🧪
 
 ```bash
 bun install
@@ -25,20 +43,43 @@ bun run ipdb:fetch
 bun run dev
 ```
 
-可选环境变量：
+Optional env vars:
 
-- `IPDB_DIR`：数据目录，默认 data
-- `IPDB_URL_V4`：IPv4 数据下载地址
-- `IPDB_URL_V6`：IPv6 数据下载地址
+- `IPDB_DIR` (default: data)
+- `IPDB_URL_V4`
+- `IPDB_URL_V6`
 
-## 测试与文档要求 📌
+## API 🔌
 
-- 单元测试覆盖率目标：90%+
-- lint 0 warning/error
-- E2E 测试必须通过
-- 改代码必须同步更新相应文档
+- `GET /` service info
+- `GET /health` health check
+- `GET /api/ip` IP + location + latency
+  - Errors return `error.code` and `error.message`
 
-## 测试命令 🧪
+Default port: 7012
+
+## Deploy 🚢
+
+### Vercel
+
+- Uses `vercel.json`
+- Build: `bun install && bun run ipdb:fetch`
+
+### Railway (Docker)
+
+```bash
+docker build -t echo .
+docker run -p 7012:7012 echo
+```
+
+With SwiftBar + your deployed API, you get a self-hosted latency monitor in macOS menu bar.
+
+## Tests & docs 📌
+
+- Unit test coverage target: 90%+
+- Lint: 0 warnings/errors
+- E2E must pass
+- Code changes must update docs
 
 ```bash
 bun run test
@@ -46,33 +87,19 @@ bun run test:e2e
 bun run test:all
 ```
 
-E2E 测试依赖已下载的 xdb 数据：
+E2E requires xdb files:
 
 ```bash
 bun run ipdb:fetch
 ```
 
-## API 说明 📡
+## Atomic commits 🧱
 
-- `GET /`：服务信息与可用接口
-- `GET /health`：健康检查
-- `GET /api/ip`：返回 IP、位置、延迟、来源与 attribution
-  - 错误时返回 `error.code` 与 `error.message`
+- One logical change per commit
+- Commit after tests pass
+- Conventional Commits
 
-默认端口：7012
-
-## 部署配置 🚢
-
-- `vercel.json`：Vercel 构建与运行配置
-- `Dockerfile`：Railway Docker 部署
-
-## 原子化提交要求 🧱
-
-- 每次提交只包含一个逻辑变更
-- 测试通过后立即提交
-- 提交信息遵循 Conventional Commits
-
-## 文档树 📚
+## Docs tree 📚
 
 - docs/01-overview.md
 - docs/02-features.md
