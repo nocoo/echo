@@ -10,6 +10,8 @@
 - tests/：单元测试
 - scripts/：构建/部署时的数据下载脚本
 - docs/：项目文档
+- Dockerfile：Railway 部署
+- vercel.json：Vercel 配置
 
 ## 关键模块
 

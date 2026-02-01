@@ -57,6 +57,13 @@ bun run ipdb:fetch
 - `GET /health`：健康检查
 - `GET /api/ip`：返回 IP、位置、延迟、来源与 attribution
 
+默认端口：7012
+
+## 部署配置 🚢
+
+- `vercel.json`：Vercel 构建与运行配置
+- `Dockerfile`：Railway Docker 部署
+
 ## 原子化提交要求 🧱
 
 - 每次提交只包含一个逻辑变更

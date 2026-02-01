@@ -32,6 +32,13 @@ bun run dev
 
 ## 运行说明
 
-- 默认端口：3000
+- 默认端口：7012
 - 健康检查：GET /health
 - IP 查询：GET /api/ip
+
+## 部署（Railway Docker）
+
+```bash
+docker build -t echo .
+docker run -p 7012:7012 echo
+```

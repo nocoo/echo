@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 import { access } from "node:fs/promises";
 import path from "node:path";
 
-const baseUrl = "http://127.0.0.1:3000";
+const baseUrl = "http://127.0.0.1:7012";
 const healthUrl = `${baseUrl}/health`;
 
 const dataDir = path.join(process.cwd(), "data");
@@ -39,7 +39,7 @@ async function ensureIpdb() {
 }
 
 describe("api e2e", () => {
-  const port = 3000;
+  const port = 7012;
   const server = spawn("bun", ["run", "src/index.ts"], {
     env: { ...process.env, PORT: String(port) },
     stdio: "ignore",
