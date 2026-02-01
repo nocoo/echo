@@ -1,6 +1,12 @@
 import path from "node:path";
 import { readFile } from "node:fs/promises";
-import { IPv4, IPv6, loadContentFromFile, newWithBuffer } from "ip2region.js";
+import {
+  IPv4,
+  IPv6,
+  loadContentFromFile,
+  newWithBuffer,
+  type Searcher,
+} from "ip2region.js";
 
 type IpdbType = "v4" | "v6";
 
@@ -46,6 +52,7 @@ type LoadClientDeps = {
   readFileFn?: (filePath: string) => Promise<unknown>;
   loadContent?: (filePath: string) => Buffer;
   createSearcher?: (opts: { v4: Buffer; v6: Buffer }) => Ip2RegionClient;
+  createSearchers?: () => { v4: Searcher; v6: Searcher };
 };
 
 export async function loadClient(deps: LoadClientDeps = {}): Promise<Ip2RegionClient> {
@@ -65,17 +72,26 @@ export async function loadClient(deps: LoadClientDeps = {}): Promise<Ip2RegionCl
     return deps.createSearcher({ v4: v4Buffer, v6: v6Buffer });
   }
 
-  const v4Searcher = newWithBuffer(IPv4, v4Buffer);
-  const v6Searcher = newWithBuffer(IPv6, v6Buffer);
+  const created = deps.createSearchers?.();
+  const v4Searcher = created?.v4 ?? newWithBuffer(IPv4, v4Buffer);
+  const v6Searcher = created?.v6 ?? newWithBuffer(IPv6, v6Buffer);
 
   return {
     search: async (ip: string) => {
-      const searcher = ip.includes(":") ? v6Searcher : v4Searcher;
+      const searcher = pickSearcher(ip, v4Searcher, v6Searcher);
       return searcher.search(ip);
     },
     getIOCount: () => 0,
     close: () => undefined,
   } satisfies Ip2RegionClient;
+}
+
+export function isIpv6(ip: string) {
+  return ip.includes(":");
+}
+
+export function pickSearcher(ip: string, v4Searcher: Searcher, v6Searcher: Searcher) {
+  return isIpv6(ip) ? v6Searcher : v4Searcher;
 }
 
 export type CacheRefresh = {

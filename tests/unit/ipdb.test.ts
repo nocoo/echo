@@ -1,9 +1,12 @@
 import { beforeEach, describe, expect, test } from "bun:test";
+import type { Searcher } from "ip2region.js";
 import {
   CACHE_TTL_MS,
   getClient,
   isExpired,
+  isIpv6,
   loadClient,
+  pickSearcher,
   refreshClient,
 } from "../../src/services/ipdb";
 
@@ -106,6 +109,22 @@ describe("ipdb cache", () => {
     expect(payload).toContain("region|");
   });
 
+  test("loadClient uses provided searchers", async () => {
+    const readFileFn = async () => {};
+    const v4Searcher = { search: async () => "v4" } as unknown as Searcher;
+    const v6Searcher = { search: async () => "v6" } as unknown as Searcher;
+
+    const client = await loadClient({
+      dataDirOverride: "custom-data",
+      readFileFn,
+      loadContent: () => Buffer.from("IPDB"),
+      createSearchers: () => ({ v4: v4Searcher, v6: v6Searcher }),
+    });
+
+    expect(await client.search("1.2.3.4")).toBe("v4");
+    expect(await client.search("2001:db8::1")).toBe("v6");
+  });
+
   test("loadClient uses default searcher when no factory provided", async () => {
     const readCalls: string[] = [];
     const readFileFn = async (filePath: string) => {
@@ -138,5 +157,34 @@ describe("ipdb cache", () => {
     } finally {
       Date.now = realNow;
     }
+  });
+
+  test("pickSearcher chooses v6 for ipv6", () => {
+    const v4 = { search: async () => "v4" } as unknown as Searcher;
+    const v6 = { search: async () => "v6" } as unknown as Searcher;
+
+    expect(pickSearcher("2001:db8::1", v4, v6)).toBe(v6);
+  });
+
+  test("pickSearcher chooses v4 for ipv4", () => {
+    const v4 = { search: async () => "v4" } as unknown as Searcher;
+    const v6 = { search: async () => "v6" } as unknown as Searcher;
+
+    expect(pickSearcher("1.2.3.4", v4, v6)).toBe(v4);
+  });
+
+  test("pickSearcher chooses v4 when ip has no colon", () => {
+    const v4 = { search: async () => "v4" } as unknown as Searcher;
+    const v6 = { search: async () => "v6" } as unknown as Searcher;
+
+    expect(pickSearcher("127.0.0.1", v4, v6)).toBe(v4);
+  });
+
+  test("isIpv6 returns true for ipv6", () => {
+    expect(isIpv6("2001:db8::1")).toBe(true);
+  });
+
+  test("isIpv6 returns false for ipv4", () => {
+    expect(isIpv6("1.2.3.4")).toBe(false);
   });
 });
