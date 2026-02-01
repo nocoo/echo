@@ -1,5 +1,5 @@
-import { getClient } from "./ipdb";
-import { parseClientIp } from "../utils/ip";
+import { getClient } from "./ipdb.js";
+import { parseClientIp } from "../utils/ip.js";
 
 export type IpLocation = {
   country: string;

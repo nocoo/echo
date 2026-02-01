@@ -8,7 +8,7 @@ import {
   loadClient,
   pickSearcher,
   refreshClient,
-} from "../../src/services/ipdb";
+} from "../../src/services/ipdb.js";
 
 type CacheState = {
   v4?: { client: unknown; loadedAt: number };

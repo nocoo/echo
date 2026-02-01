@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { lookupIp, parseRegion } from "../../src/services/ipLookup";
-import { globalCache } from "../../src/services/ipdb";
+import { lookupIp, parseRegion } from "../../src/services/ipLookup.js";
+import { globalCache } from "../../src/services/ipdb.js";
 
 describe("lookupIp", () => {
   test("returns null for invalid ip", async () => {

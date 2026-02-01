@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { extractClientIp } from "./utils/ip";
-import { lookupIp, type LookupResult } from "./services/ipLookup";
+import { extractClientIp } from "./utils/ip.js";
+import { lookupIp, type LookupResult } from "./services/ipLookup.js";
 
 type LookupFn = (ip: string | null) => Promise<LookupResult | null>;
 

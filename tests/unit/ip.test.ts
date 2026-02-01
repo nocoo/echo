@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { extractClientIp, normalizeIp, parseClientIp } from "../../src/utils/ip";
+import { extractClientIp, normalizeIp, parseClientIp } from "../../src/utils/ip.js";
 
 describe("ip utils", () => {
   test("extracts ip from x-forwarded-for", () => {
