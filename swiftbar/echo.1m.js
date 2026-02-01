@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global fetch, performance, console */
 
 // 这里使用原生的 fetch (Node.js 18+ 内置) 避免安装依赖
 const API_URL = "https://echo.nocoo.cloud/api/ip";
