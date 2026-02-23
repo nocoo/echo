@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { createApp } from "../../src/server.js";
-import pkg from "../../package.json";
+import pkg from "../../package.json" with { type: "json" };
 
 const testApiKey = "test-secret-key";
 
