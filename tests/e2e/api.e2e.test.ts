@@ -4,7 +4,7 @@ import { access } from "node:fs/promises";
 import path from "node:path";
 
 const baseUrl = "http://127.0.0.1:7012";
-const healthUrl = `${baseUrl}/health`;
+const liveUrl = `${baseUrl}/api/live`;
 
 const dataDir = path.join(process.cwd(), "data");
 const v4Path = path.join(dataDir, "ip2region_v4.xdb");
@@ -14,12 +14,12 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function waitForHealth(timeoutMs = 5_000) {
+async function waitForLive(timeoutMs = 5_000) {
   const started = Date.now();
 
   while (Date.now() - started < timeoutMs) {
     try {
-      const res = await fetch(healthUrl);
+      const res = await fetch(liveUrl);
       if (res.ok) {
         return;
       }
@@ -47,15 +47,15 @@ describe("api e2e", () => {
 
   beforeAll(async () => {
     await ensureIpdb();
-    await waitForHealth();
+    await waitForLive();
   });
 
   afterAll(() => {
     server.kill();
   });
 
-  test("health endpoint returns ok", async () => {
-    const res = await fetch(healthUrl);
+  test("live endpoint returns ok", async () => {
+    const res = await fetch(liveUrl);
 
     expect(res.status).toBe(200);
 

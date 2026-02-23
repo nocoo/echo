@@ -1,10 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { createApp } from "../../src/server.js";
 
-describe("GET /health", () => {
+const testApiKey = "test-secret-key";
+
+describe("GET /api/live", () => {
   test("returns ok status", async () => {
     const app = createApp();
-    const res = await app.request("/health");
+    const res = await app.request("/api/live");
 
     expect(res.status).toBe(200);
 
@@ -14,7 +16,7 @@ describe("GET /health", () => {
 });
 
 describe("GET /", () => {
-  test("returns service info", async () => {
+  test("returns service info with updated endpoints", async () => {
     const app = createApp();
     const res = await app.request("/");
 
@@ -24,7 +26,7 @@ describe("GET /", () => {
     expect(body).toMatchObject({
       name: "echo",
       status: "ok",
-      endpoints: ["/health", "/api/ip"],
+      endpoints: ["/api/live", "/api/ip"],
     });
   });
 });
@@ -43,7 +45,7 @@ describe("GET /api/ip", () => {
     });
   });
 
-  test("returns 200 for valid ip", async () => {
+  test("returns 200 for valid ip from header", async () => {
     const app = createApp(async () => ({
       ip: "1.2.3.4",
       version: 4,
@@ -80,5 +82,129 @@ describe("GET /api/ip", () => {
       error: { code: "lookup_failed" },
       source: "ip2region",
     });
+  });
+
+  test("uses query ip when authenticated with valid api key", async () => {
+    let receivedIp: string | null = null;
+    const app = createApp(async (ip) => {
+      receivedIp = ip;
+      return {
+        ip: ip!,
+        version: 4 as const,
+        location: { country: "US", province: "CA", city: "LA", isp: "ISP", iso2: "US" },
+      };
+    }, testApiKey);
+
+    const res = await app.request("/api/ip?ip=8.8.8.8", {
+      headers: {
+        "x-api-key": testApiKey,
+        "x-forwarded-for": "1.2.3.4",
+      },
+    });
+
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.ip).toBe("8.8.8.8");
+    expect(receivedIp).toBe("8.8.8.8");
+  });
+
+  test("ignores query ip when api key is missing", async () => {
+    let receivedIp: string | null = null;
+    const app = createApp(async (ip) => {
+      receivedIp = ip;
+      return {
+        ip: ip!,
+        version: 4 as const,
+        location: { country: "CN", province: "JS", city: "NJ", isp: "ISP", iso2: "CN" },
+      };
+    }, testApiKey);
+
+    const res = await app.request("/api/ip?ip=8.8.8.8", {
+      headers: {
+        "x-forwarded-for": "1.2.3.4",
+      },
+    });
+
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.ip).toBe("1.2.3.4");
+    expect(receivedIp).toBe("1.2.3.4");
+  });
+
+  test("ignores query ip when api key is wrong", async () => {
+    let receivedIp: string | null = null;
+    const app = createApp(async (ip) => {
+      receivedIp = ip;
+      return {
+        ip: ip!,
+        version: 4 as const,
+        location: { country: "CN", province: "JS", city: "NJ", isp: "ISP", iso2: "CN" },
+      };
+    }, testApiKey);
+
+    const res = await app.request("/api/ip?ip=8.8.8.8", {
+      headers: {
+        "x-api-key": "wrong-key",
+        "x-forwarded-for": "1.2.3.4",
+      },
+    });
+
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.ip).toBe("1.2.3.4");
+    expect(receivedIp).toBe("1.2.3.4");
+  });
+
+  test("falls back to source ip when authenticated but no query ip", async () => {
+    let receivedIp: string | null = null;
+    const app = createApp(async (ip) => {
+      receivedIp = ip;
+      return {
+        ip: ip!,
+        version: 4 as const,
+        location: { country: "CN", province: "JS", city: "NJ", isp: "ISP", iso2: "CN" },
+      };
+    }, testApiKey);
+
+    const res = await app.request("/api/ip", {
+      headers: {
+        "x-api-key": testApiKey,
+        "x-forwarded-for": "1.2.3.4",
+      },
+    });
+
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.ip).toBe("1.2.3.4");
+    expect(receivedIp).toBe("1.2.3.4");
+  });
+
+  test("ignores query ip when no api key is configured on server", async () => {
+    let receivedIp: string | null = null;
+    const app = createApp(async (ip) => {
+      receivedIp = ip;
+      return {
+        ip: ip!,
+        version: 4 as const,
+        location: { country: "CN", province: "JS", city: "NJ", isp: "ISP", iso2: "CN" },
+      };
+    }, undefined);
+
+    const res = await app.request("/api/ip?ip=8.8.8.8", {
+      headers: {
+        "x-api-key": "some-key",
+        "x-forwarded-for": "1.2.3.4",
+      },
+    });
+
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.ip).toBe("1.2.3.4");
+    expect(receivedIp).toBe("1.2.3.4");
   });
 });
