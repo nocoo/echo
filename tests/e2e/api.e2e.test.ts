@@ -54,13 +54,14 @@ describe("api e2e", () => {
     server.kill();
   });
 
-  test("live endpoint returns ok", async () => {
+  test("live endpoint returns ok and version", async () => {
     const res = await fetch(liveUrl);
 
     expect(res.status).toBe(200);
 
     const body = await res.json();
-    expect(body).toEqual({ status: "ok" });
+    expect(body.status).toBe("ok");
+    expect(body.version).toMatch(/^v\d+\.\d+\.\d+$/);
   });
 
   test("ip endpoint returns structured response", async () => {

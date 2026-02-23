@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { extractClientIp } from "./utils/ip.js";
 import { lookupIp, type LookupResult } from "./services/ipLookup.js";
+import pkg from "../package.json";
 
 type LookupFn = (ip: string | null) => Promise<LookupResult | null>;
 
@@ -14,7 +15,7 @@ export function createApp(
   const app = new Hono();
 
   app.get("/api/live", (c) => {
-    return c.json({ status: "ok" });
+    return c.json({ status: "ok", version: `v${pkg.version}` });
   });
 
   app.get("/", (c) => {

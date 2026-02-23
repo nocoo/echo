@@ -1,17 +1,18 @@
 import { describe, expect, test } from "bun:test";
 import { createApp } from "../../src/server.js";
+import pkg from "../../package.json";
 
 const testApiKey = "test-secret-key";
 
 describe("GET /api/live", () => {
-  test("returns ok status", async () => {
+  test("returns ok status and version", async () => {
     const app = createApp();
     const res = await app.request("/api/live");
 
     expect(res.status).toBe(200);
 
     const body = await res.json();
-    expect(body).toEqual({ status: "ok" });
+    expect(body).toEqual({ status: "ok", version: `v${pkg.version}` });
   });
 });
 

@@ -52,9 +52,15 @@ Optional env vars:
 ## API 🔌
 
 - `GET /` service info
-- `GET /health` health check
+- `GET /api/live` liveness check (returns `status` + `version`)
 - `GET /api/ip` IP + location + latency
+  - With `X-Api-Key` header + `?ip=x.x.x.x`, looks up a specific IP
+  - Without valid key, silently falls back to source IP
   - Errors return `error.code` and `error.message`
+
+Env vars:
+
+- `ECHO_API_KEY` — enables authenticated IP query via `?ip=`
 
 Default port: 7012
 
