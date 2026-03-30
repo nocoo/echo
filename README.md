@@ -62,7 +62,7 @@ Env vars:
 
 - `ECHO_API_KEY` — enables authenticated IP query via `?ip=`
 
-Default port: 7012
+Default port: 7010
 
 ## Deploy 🚢
 
@@ -75,7 +75,7 @@ Default port: 7012
 
 ```bash
 docker build -t echo .
-docker run -p 7012:7012 echo
+docker run -p 7010:7010 echo
 ```
 
 With SwiftBar + your deployed API, you get a self-hosted latency monitor in macOS menu bar.

@@ -1,6 +1,6 @@
 import app from "./server.js";
 
-const port = Number(process.env.PORT ?? 7012);
+const port = Number(process.env.PORT ?? 7010);
 
 const server = Bun.serve({
   fetch: app.fetch,

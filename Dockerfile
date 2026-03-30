@@ -8,6 +8,6 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN bun run ipdb:fetch
-ENV PORT=7012
-EXPOSE 7012
+ENV PORT=7010
+EXPOSE 7010
 CMD ["bun", "run", "src/index.ts"]

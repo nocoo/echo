@@ -32,7 +32,7 @@ bun run dev
 
 ## 运行说明
 
-- 默认端口：7012
+- 默认端口：7010
 - 根路径：GET /
 - 健康检查：GET /health
 - IP 查询：GET /api/ip
@@ -41,5 +41,5 @@ bun run dev
 
 ```bash
 docker build -t echo .
-docker run -p 7012:7012 echo
+docker run -p 7010:7010 echo
 ```
