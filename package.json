@@ -12,6 +12,7 @@
     "test:all": "bun run test && bun run test:e2e",
     "test:coverage": "bun test tests/unit --coverage --coverage-reporter=text --coverage-reporter=lcov",
     "lint": "eslint --max-warnings=0 .",
+    "release": "bun run scripts/release.ts",
     "prepare": "husky"
   },
   "dependencies": {
