@@ -16,7 +16,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "hono": "^4.12.12",
+    "hono": "^4.12.14",
     "ip2region.js": "^3.1.6"
   },
   "devDependencies": {
