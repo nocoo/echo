@@ -1,18 +1,25 @@
 import { describe, expect, test } from "bun:test";
 import { createApp } from "../../src/server.js";
-import pkg from "../../package.json" with { type: "json" };
+import { version } from "../../src/lib/version.js";
 
 const testApiKey = "test-secret-key";
 
 describe("GET /api/live", () => {
-  test("returns ok status and version", async () => {
+  test("returns surety-standard health response", async () => {
     const app = createApp();
     const res = await app.request("/api/live");
 
     expect(res.status).toBe(200);
+    expect(res.headers.get("cache-control")).toBe("no-store");
 
     const body = await res.json();
-    expect(body).toEqual({ status: "ok", version: `v${pkg.version}` });
+    expect(body.status).toBe("ok");
+    expect(body.version).toBe(version);
+    expect(body.component).toBe("echo");
+    expect(typeof body.timestamp).toBe("string");
+    expect(new Date(body.timestamp).toISOString()).toBe(body.timestamp);
+    expect(typeof body.uptime).toBe("number");
+    expect(body.uptime).toBeGreaterThanOrEqual(0);
   });
 });
 
