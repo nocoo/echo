@@ -1,12 +1,14 @@
 import { Hono } from "hono";
 import { extractClientIp } from "./utils/ip.js";
 import { lookupIp, type LookupResult } from "./services/ipLookup.js";
-import pkg from "../package.json" with { type: "json" };
+import { version } from "./lib/version.js";
 
 type LookupFn = (ip: string | null) => Promise<LookupResult | null>;
 
 const attribution =
   "IP2Region data provided by https://ip2region.net (Apache-2.0).";
+
+const bootedAt = Date.now();
 
 export function createApp(
   lookup: LookupFn = lookupIp,
@@ -15,7 +17,14 @@ export function createApp(
   const app = new Hono();
 
   app.get("/api/live", (c) => {
-    return c.json({ status: "ok", version: `v${pkg.version}` });
+    c.header("Cache-Control", "no-store");
+    return c.json({
+      status: "ok",
+      version,
+      component: "echo",
+      timestamp: new Date().toISOString(),
+      uptime: Math.round((Date.now() - bootedAt) / 1000),
+    });
   });
 
   app.get("/", (c) => {
