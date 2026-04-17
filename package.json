@@ -13,7 +13,8 @@
     "test:coverage": "bun test tests/unit --coverage --coverage-reporter=text --coverage-reporter=lcov",
     "lint": "eslint --max-warnings=0 .",
     "release": "bun run scripts/release.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "hono": "^4.12.14",
@@ -26,5 +27,10 @@
     "husky": "^9.1.7",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.54.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --max-warnings=0"
+    ]
   }
 }
