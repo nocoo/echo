@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { extractClientIp, normalizeIp, parseClientIp } from "../../src/utils/ip.js";
 
 describe("ip utils", () => {
@@ -32,5 +32,13 @@ describe("ip utils", () => {
   test("returns null when no headers", () => {
     const headers = new Headers();
     expect(extractClientIp(headers)).toBeNull();
+  });
+
+  test("parseClientIp returns null for null input", () => {
+    expect(parseClientIp(null)).toBeNull();
+  });
+
+  test("parseClientIp returns null for empty string", () => {
+    expect(parseClientIp("")).toBeNull();
   });
 });

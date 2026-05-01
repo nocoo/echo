@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, test } from "vitest";
 import type { Searcher } from "ip2region.js";
 import {
   CACHE_TTL_MS,
@@ -141,6 +141,22 @@ describe("ipdb cache", () => {
     expect(readCalls.length).toBe(2);
   });
 
+  test("loadClient default-built client exposes getIOCount and close", async () => {
+    const v4Searcher = { search: async () => "v4" } as unknown as Searcher;
+    const v6Searcher = { search: async () => "v6" } as unknown as Searcher;
+
+    const client = await loadClient({
+      dataDirOverride: "default-data",
+      readFileFn: async () => {},
+      loadContent: () => Buffer.from("IPDB"),
+      createSearchers: () => ({ v4: v4Searcher, v6: v6Searcher }),
+    });
+
+    expect(client.getIOCount?.()).toBe(0);
+    expect(client.close?.()).toBeUndefined();
+  });
+
+
 
 
   test("isExpired returns true when ttl exceeded", () => {
@@ -186,5 +202,61 @@ describe("ipdb cache", () => {
 
   test("isIpv6 returns false for ipv4", () => {
     expect(isIpv6("1.2.3.4")).toBe(false);
+  });
+
+  test("loadClient uses default dataDir when no override provided", async () => {
+    const readFileFn = async () => {};
+    const v4Searcher = { search: async () => "v4" } as unknown as Searcher;
+    const v6Searcher = { search: async () => "v6" } as unknown as Searcher;
+
+    const client = await loadClient({
+      readFileFn,
+      loadContent: () => Buffer.from("IPDB"),
+      createSearchers: () => ({ v4: v4Searcher, v6: v6Searcher }),
+    });
+
+    expect(typeof client.search).toBe("function");
+  });
+
+  test("getClient initializes __ipdbCache when undefined and reuses on next call", async () => {
+    delete globalCache.__ipdbCache;
+
+    // First call: __ipdbCache undefined → enters init branch.
+    // We can't mock loadClient cleanly, but after init, by setting a fresh entry on the
+    // freshly-created cache object before refreshClient runs is impossible.
+    // So instead: verify the init branch by triggering it and then catching the load
+    // via spying on the module's loadClient export through dynamic import is overkill.
+    // Simpler proof: assign __ipdbCache to undefined, then to a Proxy that traps the
+    // empty assignment and pre-fills with v4 fresh entry.
+    const fresh = { client: { search: async () => "ok" }, loadedAt: Date.now() };
+    let assigned = false;
+    Object.defineProperty(globalCache, "__ipdbCache", {
+      configurable: true,
+      get() {
+        return (this as { __v?: CacheState }).__v;
+      },
+      set(v) {
+        const self = this as { __v?: CacheState };
+        if (!assigned && v && Object.keys(v).length === 0) {
+          self.__v = { v4: fresh };
+          assigned = true;
+        } else {
+          self.__v = v;
+        }
+      },
+    });
+
+    try {
+      const client = await getClient("v4");
+      expect(client).toBe(fresh.client);
+      expect(assigned).toBe(true);
+    } finally {
+      const value = globalCache.__ipdbCache;
+      Object.defineProperty(globalCache, "__ipdbCache", {
+        configurable: true,
+        writable: true,
+        value,
+      });
+    }
   });
 });

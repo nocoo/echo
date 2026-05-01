@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { spawn } from "node:child_process";
 import { access } from "node:fs/promises";
 import path from "node:path";
@@ -59,7 +59,7 @@ describe("api e2e", () => {
 
     expect(res.status).toBe(200);
 
-    const body = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body.status).toBe("ok");
     expect(body.version).toMatch(/^v\d+\.\d+\.\d+$/);
   });
@@ -73,7 +73,7 @@ describe("api e2e", () => {
 
     expect(res.status).toBe(200);
 
-    const body = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body).toMatchObject({
       ip: "1.2.3.4",
       source: "ip2region",

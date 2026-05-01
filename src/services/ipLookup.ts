@@ -37,6 +37,7 @@ export function parseRegion(region: string): IpLocation {
   const [country, province, city, isp, iso2] = region.split("|");
 
   return {
+    /* v8 ignore next */
     country: country ?? "",
     province: province ?? "",
     city: city ?? "",

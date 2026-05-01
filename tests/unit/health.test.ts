@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { createApp } from "../../src/server.js";
 import { version } from "../../src/lib/version.js";
 
@@ -12,12 +12,12 @@ describe("GET /api/live", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("cache-control")).toBe("no-store");
 
-    const body = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body.status).toBe("ok");
     expect(body.version).toBe(version);
     expect(body.component).toBe("echo");
     expect(typeof body.timestamp).toBe("string");
-    expect(new Date(body.timestamp).toISOString()).toBe(body.timestamp);
+    expect(new Date(body.timestamp as string).toISOString()).toBe(body.timestamp);
     expect(typeof body.uptime).toBe("number");
     expect(body.uptime).toBeGreaterThanOrEqual(0);
   });
@@ -30,7 +30,7 @@ describe("GET /", () => {
 
     expect(res.status).toBe(200);
 
-    const body = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body).toMatchObject({
       name: "echo",
       status: "ok",
@@ -46,7 +46,7 @@ describe("GET /api/ip", () => {
 
     expect(res.status).toBe(400);
 
-    const body = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body).toMatchObject({
       error: { code: "invalid_ip" },
       source: "ip2region",
@@ -68,7 +68,7 @@ describe("GET /api/ip", () => {
 
     expect(res.status).toBe(200);
 
-    const body = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body).toMatchObject({
       ip: "1.2.3.4",
       version: 4,
@@ -85,7 +85,7 @@ describe("GET /api/ip", () => {
 
     expect(res.status).toBe(500);
 
-    const body = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body).toMatchObject({
       error: { code: "lookup_failed" },
       source: "ip2region",
@@ -112,7 +112,7 @@ describe("GET /api/ip", () => {
 
     expect(res.status).toBe(200);
 
-    const body = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body.ip).toBe("8.8.8.8");
     expect(receivedIp).toBe("8.8.8.8");
   });
@@ -136,7 +136,7 @@ describe("GET /api/ip", () => {
 
     expect(res.status).toBe(200);
 
-    const body = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body.ip).toBe("1.2.3.4");
     expect(receivedIp).toBe("1.2.3.4");
   });
@@ -161,7 +161,7 @@ describe("GET /api/ip", () => {
 
     expect(res.status).toBe(200);
 
-    const body = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body.ip).toBe("1.2.3.4");
     expect(receivedIp).toBe("1.2.3.4");
   });
@@ -186,7 +186,7 @@ describe("GET /api/ip", () => {
 
     expect(res.status).toBe(200);
 
-    const body = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body.ip).toBe("1.2.3.4");
     expect(receivedIp).toBe("1.2.3.4");
   });
@@ -211,7 +211,7 @@ describe("GET /api/ip", () => {
 
     expect(res.status).toBe(200);
 
-    const body = await res.json();
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body.ip).toBe("1.2.3.4");
     expect(receivedIp).toBe("1.2.3.4");
   });
