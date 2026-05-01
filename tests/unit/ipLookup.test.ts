@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { lookupIp, parseRegion } from "../../src/services/ipLookup.js";
 import { globalCache } from "../../src/services/ipdb.js";
 
@@ -54,6 +54,16 @@ describe("lookupIp", () => {
     expect(parseRegion("US|CA")).toEqual({
       country: "US",
       province: "CA",
+      city: "",
+      isp: "",
+      iso2: "",
+    });
+  });
+
+  test("parseRegion handles empty string", () => {
+    expect(parseRegion("")).toEqual({
+      country: "",
+      province: "",
       city: "",
       isp: "",
       iso2: "",

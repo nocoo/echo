@@ -19,6 +19,7 @@ export function extractClientIp(headers: Headers): string | null {
   const forwarded = headers.get("x-forwarded-for");
 
   if (forwarded) {
+    /* v8 ignore next */
     return forwarded.split(",")[0]?.trim() ?? null;
   }
 

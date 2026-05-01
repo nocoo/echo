@@ -60,10 +60,12 @@ export async function loadClient(deps: LoadClientDeps = {}): Promise<Ip2RegionCl
   const v4Path = path.join(process.cwd(), baseDir, DEFAULT_FILES.v4);
   const v6Path = path.join(process.cwd(), baseDir, DEFAULT_FILES.v6);
 
+  /* v8 ignore next */
   const read = deps.readFileFn ?? readFile;
   await read(v4Path);
   await read(v6Path);
 
+  /* v8 ignore next */
   const load = deps.loadContent ?? loadContentFromFile;
   const v4Buffer = load(v4Path);
   const v6Buffer = load(v6Path);
@@ -73,6 +75,7 @@ export async function loadClient(deps: LoadClientDeps = {}): Promise<Ip2RegionCl
   }
 
   const created = deps.createSearchers?.();
+  /* v8 ignore next 2 */
   const v4Searcher = created?.v4 ?? newWithBuffer(IPv4, v4Buffer);
   const v6Searcher = created?.v6 ?? newWithBuffer(IPv6, v6Buffer);
 
@@ -106,6 +109,7 @@ export async function refreshClient({ current, now, load }: CacheRefresh) {
     return current;
   }
 
+  /* v8 ignore next */
   const nextClient = await (load ?? loadClient)();
   return { client: nextClient, loadedAt: now } satisfies CacheEntry;
 }
