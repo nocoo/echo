@@ -1,6 +1,10 @@
-import { describe, expect, test } from "vitest";
-import { lookupIp, parseRegion } from "../../src/services/ipLookup.js";
+import { describe, expect, test, beforeEach } from "vitest";
+import { lookupIp, getProvider, resetProvider } from "../../src/services/ipLookup.js";
 import { globalCache } from "../../src/services/ipdb.js";
+
+beforeEach(() => {
+  resetProvider();
+});
 
 describe("lookupIp", () => {
   test("returns null for invalid ip", async () => {
@@ -8,7 +12,12 @@ describe("lookupIp", () => {
     expect(result).toBeNull();
   });
 
-  test("returns parsed info for ipv4", async () => {
+  test("returns null for null input", async () => {
+    const result = await lookupIp(null);
+    expect(result).toBeNull();
+  });
+
+  test("returns parsed info for ipv4 with provider metadata", async () => {
     globalCache.__ipdbCache = {
       v4: {
         client: {
@@ -29,14 +38,16 @@ describe("lookupIp", () => {
         isp: "电信",
         iso2: "CN",
       },
+      source: "ip2region",
+      attribution: expect.stringContaining("ip2region.net"),
     });
   });
 
-  test("returns null location for empty region", async () => {
+  test("returns result for ipv6", async () => {
     globalCache.__ipdbCache = {
       v6: {
         client: {
-          search: async () => "",
+          search: async () => "美国|||Google|US",
         },
         loadedAt: Date.now(),
       },
@@ -46,27 +57,28 @@ describe("lookupIp", () => {
     expect(result).toEqual({
       ip: "2001:db8::1",
       version: 6,
-      location: { country: "", province: "", city: "", isp: "", iso2: "" },
+      location: {
+        country: "美国",
+        province: "",
+        city: "",
+        isp: "Google",
+        iso2: "US",
+      },
+      source: "ip2region",
+      attribution: expect.stringContaining("ip2region.net"),
     });
   });
 
-  test("parseRegion handles missing fields", () => {
-    expect(parseRegion("US|CA")).toEqual({
-      country: "US",
-      province: "CA",
-      city: "",
-      isp: "",
-      iso2: "",
-    });
+  test("getProvider returns singleton", () => {
+    const p1 = getProvider();
+    const p2 = getProvider();
+    expect(p1).toBe(p2);
   });
 
-  test("parseRegion handles empty string", () => {
-    expect(parseRegion("")).toEqual({
-      country: "",
-      province: "",
-      city: "",
-      isp: "",
-      iso2: "",
-    });
+  test("resetProvider clears singleton", () => {
+    const p1 = getProvider();
+    resetProvider();
+    const p2 = getProvider();
+    expect(p1).not.toBe(p2);
   });
 });

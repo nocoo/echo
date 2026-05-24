@@ -58,6 +58,8 @@ describe("GET /api/ip", () => {
       ip: "1.2.3.4",
       version: 4,
       location: { country: "CN", province: "JS", city: "NJ", isp: "ISP", iso2: "CN" },
+      source: "ip2region",
+      attribution: "test",
     }));
 
     const res = await app.request("/api/ip", {
@@ -100,6 +102,8 @@ describe("GET /api/ip", () => {
         ip: ip!,
         version: 4 as const,
         location: { country: "US", province: "CA", city: "LA", isp: "ISP", iso2: "US" },
+        source: "ip2region",
+        attribution: "test",
       };
     }, testApiKey);
 
@@ -125,6 +129,8 @@ describe("GET /api/ip", () => {
         ip: ip!,
         version: 4 as const,
         location: { country: "CN", province: "JS", city: "NJ", isp: "ISP", iso2: "CN" },
+        source: "ip2region",
+        attribution: "test",
       };
     }, testApiKey);
 
@@ -149,6 +155,8 @@ describe("GET /api/ip", () => {
         ip: ip!,
         version: 4 as const,
         location: { country: "CN", province: "JS", city: "NJ", isp: "ISP", iso2: "CN" },
+        source: "ip2region",
+        attribution: "test",
       };
     }, testApiKey);
 
@@ -174,6 +182,8 @@ describe("GET /api/ip", () => {
         ip: ip!,
         version: 4 as const,
         location: { country: "CN", province: "JS", city: "NJ", isp: "ISP", iso2: "CN" },
+        source: "ip2region",
+        attribution: "test",
       };
     }, testApiKey);
 
@@ -199,6 +209,8 @@ describe("GET /api/ip", () => {
         ip: ip!,
         version: 4 as const,
         location: { country: "CN", province: "JS", city: "NJ", isp: "ISP", iso2: "CN" },
+        source: "ip2region",
+        attribution: "test",
       };
     }, undefined);
 

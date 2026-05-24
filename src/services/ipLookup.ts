@@ -1,6 +1,5 @@
-import { getClient } from "./ipdb.js";
+import { createProvider, type IpLocation, type IpProvider } from "./ipProvider.js";
 import { parseClientIp } from "../utils/ip.js";
-import type { IpLocation } from "./ipProvider.js";
 
 export type { IpLocation };
 
@@ -8,7 +7,20 @@ export type LookupResult = {
   ip: string;
   version: 4 | 6;
   location: IpLocation | null;
+  source: string;
+  attribution: string;
 };
+
+let provider: IpProvider | undefined;
+
+export function getProvider(): IpProvider {
+  if (!provider) provider = createProvider();
+  return provider;
+}
+
+export function resetProvider(): void {
+  provider = undefined;
+}
 
 export async function lookupIp(ip: string | null): Promise<LookupResult | null> {
   const parsed = parseClientIp(ip);
@@ -17,26 +29,14 @@ export async function lookupIp(ip: string | null): Promise<LookupResult | null> 
     return null;
   }
 
-  const client = await getClient(parsed.version === 4 ? "v4" : "v6");
-  const region = await client.search(parsed.ip);
-  const location = parseRegion(region);
+  const p = getProvider();
+  const location = await p.lookup(parsed.ip);
 
   return {
     ip: parsed.ip,
     version: parsed.version,
     location,
-  };
-}
-
-export function parseRegion(region: string): IpLocation {
-  const [country, province, city, isp, iso2] = region.split("|");
-
-  return {
-    /* v8 ignore next */
-    country: country ?? "",
-    province: province ?? "",
-    city: city ?? "",
-    isp: isp ?? "",
-    iso2: iso2 ?? "",
+    source: p.name,
+    attribution: p.attribution,
   };
 }
