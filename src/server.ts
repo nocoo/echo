@@ -1,12 +1,9 @@
 import { Hono } from "hono";
 import { extractClientIp } from "./utils/ip.js";
-import { lookupIp, type LookupResult } from "./services/ipLookup.js";
+import { lookupIp, getProvider, type LookupResult } from "./services/ipLookup.js";
 import { version } from "./lib/version.js";
 
 type LookupFn = (ip: string | null) => Promise<LookupResult | null>;
-
-const attribution =
-  "IP2Region data provided by https://ip2region.net (Apache-2.0).";
 
 const bootedAt = Date.now();
 
@@ -43,9 +40,10 @@ export function createApp(
     const headerKey = c.req.header("x-api-key") ?? null;
     const authenticated = Boolean(apiKey && headerKey === apiKey);
 
-    // Use query IP only when authenticated; silently fall back to source IP
     const targetIp =
       authenticated && queryIp ? queryIp : extractClientIp(c.req.raw.headers);
+
+    const defaultProvider = getProvider();
 
     try {
       const result = await lookup(targetIp);
@@ -56,8 +54,8 @@ export function createApp(
           {
             error: { code: "invalid_ip", message: "invalid ip" },
             ip: targetIp,
-            source: "ip2region",
-            attribution,
+            source: defaultProvider.name,
+            attribution: defaultProvider.attribution,
             latencyMs,
           },
           400,
@@ -69,8 +67,8 @@ export function createApp(
         version: result.version,
         location: result.location,
         latencyMs,
-        source: "ip2region",
-        attribution,
+        source: result.source,
+        attribution: result.attribution,
       });
     } catch {
       const latencyMs = Math.round(performance.now() - started);
@@ -78,8 +76,8 @@ export function createApp(
         {
           error: { code: "lookup_failed", message: "lookup failed" },
           ip: targetIp,
-          source: "ip2region",
-          attribution,
+          source: defaultProvider.name,
+          attribution: defaultProvider.attribution,
           latencyMs,
         },
         500,
