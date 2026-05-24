@@ -1,13 +1,8 @@
 import { getClient } from "./ipdb.js";
 import { parseClientIp } from "../utils/ip.js";
+import type { IpLocation } from "./ipProvider.js";
 
-export type IpLocation = {
-  country: string;
-  province: string;
-  city: string;
-  isp: string;
-  iso2: string;
-};
+export type { IpLocation };
 
 export type LookupResult = {
   ip: string;
