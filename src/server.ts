@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { extractClientIp } from "./utils/ip.js";
 import { lookupIp, getProvider, type LookupResult } from "./services/ipLookup.js";
+import type { IpProvider } from "./services/ipProvider.js";
 import { version } from "./lib/version.js";
 
 type LookupFn = (ip: string | null) => Promise<LookupResult | null>;
@@ -10,6 +11,7 @@ const bootedAt = Date.now();
 export function createApp(
   lookup: LookupFn = lookupIp,
   apiKey: string | undefined = process.env.ECHO_API_KEY,
+  provider: IpProvider = getProvider(),
 ) {
   const app = new Hono();
 
@@ -43,8 +45,6 @@ export function createApp(
     const targetIp =
       authenticated && queryIp ? queryIp : extractClientIp(c.req.raw.headers);
 
-    const defaultProvider = getProvider();
-
     try {
       const result = await lookup(targetIp);
       const latencyMs = Math.round(performance.now() - started);
@@ -54,8 +54,8 @@ export function createApp(
           {
             error: { code: "invalid_ip", message: "invalid ip" },
             ip: targetIp,
-            source: defaultProvider.name,
-            attribution: defaultProvider.attribution,
+            source: provider.name,
+            attribution: provider.attribution,
             latencyMs,
           },
           400,
@@ -76,8 +76,8 @@ export function createApp(
         {
           error: { code: "lookup_failed", message: "lookup failed" },
           ip: targetIp,
-          source: defaultProvider.name,
-          attribution: defaultProvider.attribution,
+          source: provider.name,
+          attribution: provider.attribution,
           latencyMs,
         },
         500,

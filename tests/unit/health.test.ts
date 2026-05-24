@@ -1,6 +1,8 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { createApp } from "../../src/server.js";
 import { version } from "../../src/lib/version.js";
+import { createProvider } from "../../src/services/ipProvider.js";
+import { resetProvider } from "../../src/services/ipLookup.js";
 
 const testApiKey = "test-secret-key";
 
@@ -226,5 +228,21 @@ describe("GET /api/ip", () => {
     const body = (await res.json()) as Record<string, unknown>;
     expect(body.ip).toBe("1.2.3.4");
     expect(receivedIp).toBe("1.2.3.4");
+  });
+});
+
+describe("createApp fail-fast on invalid provider", () => {
+  test("throws at startup when IP_PROVIDER is unsupported", () => {
+    resetProvider();
+    vi.stubEnv("IP_PROVIDER", "nonexistent");
+    expect(() => createApp()).toThrow("Unknown IP provider: nonexistent");
+    vi.unstubAllEnvs();
+    resetProvider();
+  });
+
+  test("throws when explicitly passed unsupported provider name", () => {
+    expect(() => createProvider("bad-provider")).toThrow(
+      "Unknown IP provider: bad-provider",
+    );
   });
 });
