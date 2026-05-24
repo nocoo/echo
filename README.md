@@ -48,6 +48,7 @@ Optional env vars:
 - `IPDB_DIR` (default: data)
 - `IPDB_URL_V4`
 - `IPDB_URL_V6`
+- `IP_PROVIDER` — IP lookup provider (default: `ip2region`). Unsupported values cause the app to crash at startup.
 
 ## API 🔌
 

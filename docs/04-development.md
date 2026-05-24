@@ -23,6 +23,7 @@ bun run ipdb:fetch
 - IPDB_DIR：数据目录，默认 data
 - IPDB_URL_V4：IPv4 数据下载地址
 - IPDB_URL_V6：IPv6 数据下载地址
+- IP_PROVIDER：IP 查询 provider 选择，默认 `ip2region`。当前支持值：`ip2region`。设置为不支持的值时应用启动即报错（fail-fast）。
 
 3. 启动开发服务
 
