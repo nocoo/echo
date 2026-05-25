@@ -134,4 +134,15 @@ describe("selectBest", () => {
     expect(result?.location.city).toBe("Mountain View");
     expect(result?.location.asn).toBe(15169);
   });
+
+  test("does not mutate the original provider result when enriching ASN", () => {
+    const ip2regionResult = makeResult("ip2region", { country: "中国", countryCode: "CN", city: "南京" });
+    const circlResult = makeResult("circl", { countryCode: "CN", asn: 4134, asOrg: "CHINANET" });
+    const results = [ip2regionResult, circlResult];
+
+    selectBest(results);
+
+    expect(ip2regionResult.location!.asn).toBeNull();
+    expect(ip2regionResult.location!.asOrg).toBe("");
+  });
 });

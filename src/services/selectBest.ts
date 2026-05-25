@@ -46,11 +46,13 @@ function enrichAsn(
   chosen: ProviderResult & { location: IpLocation },
   all: Array<ProviderResult & { location: IpLocation }>,
 ): SelectionResult {
-  if (chosen.location.asn === null) {
+  let location = chosen.location;
+
+  if (location.asn === null) {
     const asnSource = all.find((r) => r.location.asn !== null);
     if (asnSource) {
-      chosen.location = {
-        ...chosen.location,
+      location = {
+        ...location,
         asn: asnSource.location.asn,
         asOrg: asnSource.location.asOrg,
       };
@@ -58,7 +60,7 @@ function enrichAsn(
   }
 
   return {
-    location: chosen.location,
+    location,
     source: chosen.name,
   };
 }
