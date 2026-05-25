@@ -121,4 +121,17 @@ describe("selectBest", () => {
     expect(result?.source).toBe("ip-location-db");
     expect(result?.location.asn).toBe(7018);
   });
+
+  test("ASN-only ip-location-db does not win over ip2region with location", () => {
+    const results = [
+      makeResult("ip2region", { country: "United States", countryCode: "US", province: "California", city: "Mountain View" }),
+      makeResult("ip-location-db", { asn: 15169, asOrg: "GOOGLE" }),
+      makeResult("iplocate", { countryCode: "US", asn: 15169, asOrg: "GOOGLE" }),
+    ];
+
+    const result = selectBest(results);
+    expect(result?.source).toBe("ip2region");
+    expect(result?.location.city).toBe("Mountain View");
+    expect(result?.location.asn).toBe(15169);
+  });
 });

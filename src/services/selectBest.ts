@@ -13,6 +13,10 @@ export type SelectionResult = {
   source: string;
 };
 
+function hasLocation(loc: IpLocation): boolean {
+  return loc.countryCode !== "" || loc.city !== "";
+}
+
 export function selectBest(results: ProviderResult[]): SelectionResult | null {
   const valid = results.filter(
     (r): r is ProviderResult & { location: IpLocation } => r.location !== null,
@@ -28,7 +32,9 @@ export function selectBest(results: ProviderResult[]): SelectionResult | null {
     return enrichAsn(top, valid);
   }
 
-  const ipLocationDb = valid.find((r) => r.name === "ip-location-db");
+  const ipLocationDb = valid.find(
+    (r) => r.name === "ip-location-db" && hasLocation(r.location),
+  );
   if (ipLocationDb) {
     return enrichAsn(ipLocationDb, valid);
   }
