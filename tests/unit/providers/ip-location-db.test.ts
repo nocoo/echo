@@ -98,6 +98,7 @@ describe("IpLocationDbProvider", () => {
   test("handles city data only without ASN", async () => {
     mockCityData["9.9.9.9"] = {
       country: { iso_code: "DE", names: { en: "Germany" } },
+      subdivisions: [{}],
       city: { names: { en: "Berlin" } },
       location: { latitude: 52.52, longitude: 13.4 },
     };

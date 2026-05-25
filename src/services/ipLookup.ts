@@ -1,5 +1,12 @@
-import { createProvider, type IpLocation, type IpProvider } from "./ipProvider.js";
+import type { IpLocation, IpProvider } from "./ipProvider.js";
+import type { ProviderResult, CachedLookup } from "./cache.js";
+import { getCached, setCached, resetCache } from "./cache.js";
+import { selectBest } from "./selectBest.js";
 import { parseClientIp } from "../utils/ip.js";
+import { Ip2RegionProvider } from "./providers/ip2region.js";
+import { IplocateProvider } from "./providers/iplocate.js";
+import { IpLocationDbProvider } from "./providers/ip-location-db.js";
+import { CirclProvider } from "./providers/circl.js";
 
 export type { IpLocation };
 
@@ -8,35 +15,97 @@ export type LookupResult = {
   version: 4 | 6;
   location: IpLocation | null;
   source: string;
-  attribution: string;
+  attribution: string[];
+  latencyMs: number;
+  providers?: ProviderResult[];
 };
 
-let provider: IpProvider | undefined;
+let providers: IpProvider[] | undefined;
 
-export function getProvider(): IpProvider {
-  if (!provider) provider = createProvider();
-  return provider;
+export function getProviders(): IpProvider[] {
+  if (!providers) {
+    providers = [
+      new Ip2RegionProvider(),
+      new IplocateProvider(),
+      new IpLocationDbProvider(),
+      new CirclProvider(),
+    ];
+  }
+  return providers;
 }
 
-export function resetProvider(): void {
-  provider = undefined;
+export function resetProviders(): void {
+  providers = undefined;
+  resetCache();
 }
 
-export async function lookupIp(ip: string | null): Promise<LookupResult | null> {
+async function queryProvider(provider: IpProvider, ip: string): Promise<ProviderResult> {
+  const started = performance.now();
+  try {
+    const location = await provider.lookup(ip);
+    return {
+      name: provider.name,
+      attribution: provider.attribution,
+      location,
+      latencyMs: Math.round(performance.now() - started),
+    };
+  } catch {
+    return {
+      name: provider.name,
+      attribution: provider.attribution,
+      location: null,
+      latencyMs: Math.round(performance.now() - started),
+    };
+  }
+}
+
+export async function lookupIp(
+  ip: string | null,
+  detail = false,
+): Promise<LookupResult | null> {
   const parsed = parseClientIp(ip);
+  if (!parsed) return null;
 
-  if (!parsed) {
-    return null;
+  const cached = getCached(parsed.ip);
+  if (cached) {
+    return buildResult(parsed.ip, parsed.version, cached, detail);
   }
 
-  const p = getProvider();
-  const location = await p.lookup(parsed.ip);
+  const allProviders = getProviders();
+  const results = await Promise.all(
+    allProviders.map((p) => queryProvider(p, parsed.ip)),
+  );
 
-  return {
-    ip: parsed.ip,
-    version: parsed.version,
-    location,
-    source: p.name,
-    attribution: p.attribution,
+  const lookup: CachedLookup = { results };
+  setCached(parsed.ip, lookup);
+
+  return buildResult(parsed.ip, parsed.version, lookup, detail);
+}
+
+function buildResult(
+  ip: string,
+  version: 4 | 6,
+  cached: CachedLookup,
+  detail: boolean,
+): LookupResult {
+  const selection = selectBest(cached.results);
+  const totalLatency = Math.max(...cached.results.map((r) => r.latencyMs));
+  const attribution = cached.results
+    .filter((r) => r.location !== null)
+    .map((r) => r.attribution);
+
+  const result: LookupResult = {
+    ip,
+    version,
+    location: selection?.location ?? null,
+    source: selection?.source ?? "",
+    attribution,
+    latencyMs: totalLatency,
   };
+
+  if (detail) {
+    result.providers = cached.results;
+  }
+
+  return result;
 }

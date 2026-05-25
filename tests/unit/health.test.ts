@@ -1,10 +1,20 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import { createApp } from "../../src/server.js";
 import { version } from "../../src/lib/version.js";
-import { createProvider } from "../../src/services/ipProvider.js";
-import { resetProvider } from "../../src/services/ipLookup.js";
 
 const testApiKey = "test-secret-key";
+
+const mockLocation = {
+  country: "CN",
+  countryCode: "CN",
+  province: "JS",
+  city: "NJ",
+  latitude: null,
+  longitude: null,
+  isp: "ISP",
+  asn: null,
+  asOrg: "",
+};
 
 describe("GET /api/live", () => {
   test("returns surety-standard health response", async () => {
@@ -51,7 +61,6 @@ describe("GET /api/ip", () => {
     const body = (await res.json()) as Record<string, unknown>;
     expect(body).toMatchObject({
       error: { code: "invalid_ip" },
-      source: "ip2region",
     });
   });
 
@@ -59,15 +68,14 @@ describe("GET /api/ip", () => {
     const app = createApp(async () => ({
       ip: "1.2.3.4",
       version: 4,
-      location: { country: "CN", countryCode: "CN", province: "JS", city: "NJ", latitude: null, longitude: null, isp: "ISP", asn: null, asOrg: "" },
+      location: mockLocation,
       source: "ip2region",
-      attribution: "test",
+      attribution: ["test attribution"],
+      latencyMs: 1,
     }));
 
     const res = await app.request("/api/ip", {
-      headers: {
-        "x-forwarded-for": "1.2.3.4",
-      },
+      headers: { "x-forwarded-for": "1.2.3.4" },
     });
 
     expect(res.status).toBe(200);
@@ -78,6 +86,7 @@ describe("GET /api/ip", () => {
       version: 4,
       source: "ip2region",
     });
+    expect(body.attribution).toBeInstanceOf(Array);
   });
 
   test("returns 500 when lookup throws", async () => {
@@ -92,7 +101,6 @@ describe("GET /api/ip", () => {
     const body = (await res.json()) as Record<string, unknown>;
     expect(body).toMatchObject({
       error: { code: "lookup_failed" },
-      source: "ip2region",
     });
   });
 
@@ -103,9 +111,10 @@ describe("GET /api/ip", () => {
       return {
         ip: ip!,
         version: 4 as const,
-        location: { country: "US", countryCode: "US", province: "CA", city: "LA", latitude: null, longitude: null, isp: "ISP", asn: null, asOrg: "" },
+        location: mockLocation,
         source: "ip2region",
-        attribution: "test",
+        attribution: ["test"],
+        latencyMs: 1,
       };
     }, testApiKey);
 
@@ -130,16 +139,15 @@ describe("GET /api/ip", () => {
       return {
         ip: ip!,
         version: 4 as const,
-        location: { country: "CN", countryCode: "CN", province: "JS", city: "NJ", latitude: null, longitude: null, isp: "ISP", asn: null, asOrg: "" },
+        location: mockLocation,
         source: "ip2region",
-        attribution: "test",
+        attribution: ["test"],
+        latencyMs: 1,
       };
     }, testApiKey);
 
     const res = await app.request("/api/ip?ip=8.8.8.8", {
-      headers: {
-        "x-forwarded-for": "1.2.3.4",
-      },
+      headers: { "x-forwarded-for": "1.2.3.4" },
     });
 
     expect(res.status).toBe(200);
@@ -156,9 +164,10 @@ describe("GET /api/ip", () => {
       return {
         ip: ip!,
         version: 4 as const,
-        location: { country: "CN", countryCode: "CN", province: "JS", city: "NJ", latitude: null, longitude: null, isp: "ISP", asn: null, asOrg: "" },
+        location: mockLocation,
         source: "ip2region",
-        attribution: "test",
+        attribution: ["test"],
+        latencyMs: 1,
       };
     }, testApiKey);
 
@@ -183,9 +192,10 @@ describe("GET /api/ip", () => {
       return {
         ip: ip!,
         version: 4 as const,
-        location: { country: "CN", countryCode: "CN", province: "JS", city: "NJ", latitude: null, longitude: null, isp: "ISP", asn: null, asOrg: "" },
+        location: mockLocation,
         source: "ip2region",
-        attribution: "test",
+        attribution: ["test"],
+        latencyMs: 1,
       };
     }, testApiKey);
 
@@ -210,9 +220,10 @@ describe("GET /api/ip", () => {
       return {
         ip: ip!,
         version: 4 as const,
-        location: { country: "CN", countryCode: "CN", province: "JS", city: "NJ", latitude: null, longitude: null, isp: "ISP", asn: null, asOrg: "" },
+        location: mockLocation,
         source: "ip2region",
-        attribution: "test",
+        attribution: ["test"],
+        latencyMs: 1,
       };
     }, undefined);
 
@@ -229,20 +240,51 @@ describe("GET /api/ip", () => {
     expect(body.ip).toBe("1.2.3.4");
     expect(receivedIp).toBe("1.2.3.4");
   });
-});
 
-describe("createApp fail-fast on invalid provider", () => {
-  test("throws at startup when IP_PROVIDER is unsupported", () => {
-    resetProvider();
-    vi.stubEnv("IP_PROVIDER", "nonexistent");
-    expect(() => createApp()).toThrow("Unknown IP provider: nonexistent");
-    vi.unstubAllEnvs();
-    resetProvider();
+  test("returns providers array when detail=true", async () => {
+    const providers = [
+      { name: "ip2region", attribution: "test", location: mockLocation, latencyMs: 1 },
+      { name: "iplocate", attribution: "test2", location: null, latencyMs: 2 },
+    ];
+
+    const app = createApp(async () => ({
+      ip: "1.2.3.4",
+      version: 4 as const,
+      location: mockLocation,
+      source: "ip2region",
+      attribution: ["test"],
+      latencyMs: 1,
+      providers,
+    }));
+
+    const res = await app.request("/api/ip?detail=true", {
+      headers: { "x-forwarded-for": "1.2.3.4" },
+    });
+
+    expect(res.status).toBe(200);
+
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.providers).toBeInstanceOf(Array);
+    expect((body.providers as unknown[]).length).toBe(2);
   });
 
-  test("throws when explicitly passed unsupported provider name", () => {
-    expect(() => createProvider("bad-provider")).toThrow(
-      "Unknown IP provider: bad-provider",
-    );
+  test("does not include providers when detail is not true", async () => {
+    const app = createApp(async () => ({
+      ip: "1.2.3.4",
+      version: 4 as const,
+      location: mockLocation,
+      source: "ip2region",
+      attribution: ["test"],
+      latencyMs: 1,
+    }));
+
+    const res = await app.request("/api/ip", {
+      headers: { "x-forwarded-for": "1.2.3.4" },
+    });
+
+    expect(res.status).toBe(200);
+
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.providers).toBeUndefined();
   });
 });

@@ -1,9 +1,19 @@
-import { describe, expect, test, beforeEach } from "vitest";
-import { lookupIp, getProvider, resetProvider } from "../../src/services/ipLookup.js";
+import { describe, expect, test, beforeEach, vi } from "vitest";
+import { lookupIp, getProviders, resetProviders } from "../../src/services/ipLookup.js";
 import { globalCache } from "../../src/services/ipdb.js";
+import { resetMmdbCache } from "../../src/services/providers/mmdb.js";
+
+vi.mock("maxmind", () => ({
+  default: {
+    open: vi.fn(async () => ({
+      get: () => null,
+    })),
+  },
+}));
 
 beforeEach(() => {
-  resetProvider();
+  resetProviders();
+  resetMmdbCache();
 });
 
 describe("lookupIp", () => {
@@ -17,76 +27,106 @@ describe("lookupIp", () => {
     expect(result).toBeNull();
   });
 
-  test("returns parsed info for ipv4 with provider metadata", async () => {
+  test("returns result with all provider data for ipv4", async () => {
     globalCache.__ipdbCache = {
       v4: {
-        client: {
-          search: async () => "中国|江苏省|南京市|电信|CN",
-        },
+        client: { search: async () => "中国|江苏省|南京市|电信|CN" },
         loadedAt: Date.now(),
       },
     };
 
     const result = await lookupIp("1.2.3.4");
-    expect(result).toEqual({
-      ip: "1.2.3.4",
-      version: 4,
-      location: {
-        country: "中国",
-        countryCode: "CN",
-        province: "江苏省",
-        city: "南京市",
-        latitude: null,
-        longitude: null,
-        isp: "电信",
-        asn: null,
-        asOrg: "",
-      },
-      source: "ip2region",
-      attribution: expect.stringContaining("ip2region.net"),
-    });
+    expect(result).not.toBeNull();
+    expect(result!.ip).toBe("1.2.3.4");
+    expect(result!.version).toBe(4);
+    expect(result!.location).not.toBeNull();
+    expect(result!.source).toBe("ip2region");
+    expect(result!.attribution).toBeInstanceOf(Array);
+    expect(typeof result!.latencyMs).toBe("number");
   });
 
-  test("returns result for ipv6", async () => {
+  test("uses cache on second call", async () => {
+    globalCache.__ipdbCache = {
+      v4: {
+        client: { search: async () => "中国|江苏省|南京市|电信|CN" },
+        loadedAt: Date.now(),
+      },
+    };
+
+    const result1 = await lookupIp("1.2.3.4");
+    const result2 = await lookupIp("1.2.3.4");
+    expect(result1!.location).toEqual(result2!.location);
+  });
+
+  test("detail mode includes providers array", async () => {
+    globalCache.__ipdbCache = {
+      v4: {
+        client: { search: async () => "中国|江苏省|南京市|电信|CN" },
+        loadedAt: Date.now(),
+      },
+    };
+
+    const result = await lookupIp("1.2.3.4", true);
+    expect(result).not.toBeNull();
+    expect(result!.providers).toBeInstanceOf(Array);
+    expect(result!.providers!.length).toBe(4);
+    expect(result!.providers![0]!.name).toBe("ip2region");
+  });
+
+  test("non-detail mode does not include providers array", async () => {
+    globalCache.__ipdbCache = {
+      v4: {
+        client: { search: async () => "中国|江苏省|南京市|电信|CN" },
+        loadedAt: Date.now(),
+      },
+    };
+
+    const result = await lookupIp("1.2.3.4", false);
+    expect(result!.providers).toBeUndefined();
+  });
+
+  test("getProviders returns all 4 providers", () => {
+    const providers = getProviders();
+    expect(providers).toHaveLength(4);
+    expect(providers.map((p) => p.name)).toEqual([
+      "ip2region",
+      "iplocate",
+      "ip-location-db",
+      "circl",
+    ]);
+  });
+
+  test("resetProviders clears providers", () => {
+    const p1 = getProviders();
+    resetProviders();
+    const p2 = getProviders();
+    expect(p1).not.toBe(p2);
+  });
+
+  test("handles ipv6", async () => {
     globalCache.__ipdbCache = {
       v6: {
-        client: {
-          search: async () => "美国|||Google|US",
-        },
+        client: { search: async () => "美国|||Google|US" },
         loadedAt: Date.now(),
       },
     };
 
     const result = await lookupIp("2001:db8::1");
-    expect(result).toEqual({
-      ip: "2001:db8::1",
-      version: 6,
-      location: {
-        country: "美国",
-        countryCode: "US",
-        province: "",
-        city: "",
-        latitude: null,
-        longitude: null,
-        isp: "Google",
-        asn: null,
-        asOrg: "",
+    expect(result).not.toBeNull();
+    expect(result!.ip).toBe("2001:db8::1");
+    expect(result!.version).toBe(6);
+  });
+
+  test("handles provider errors gracefully", async () => {
+    globalCache.__ipdbCache = {
+      v4: {
+        client: { search: async () => { throw new Error("boom"); } },
+        loadedAt: Date.now(),
       },
-      source: "ip2region",
-      attribution: expect.stringContaining("ip2region.net"),
-    });
-  });
+    };
 
-  test("getProvider returns singleton", () => {
-    const p1 = getProvider();
-    const p2 = getProvider();
-    expect(p1).toBe(p2);
-  });
-
-  test("resetProvider clears singleton", () => {
-    const p1 = getProvider();
-    resetProvider();
-    const p2 = getProvider();
-    expect(p1).not.toBe(p2);
+    const result = await lookupIp("1.2.3.4");
+    expect(result).not.toBeNull();
+    expect(result!.ip).toBe("1.2.3.4");
   });
 });

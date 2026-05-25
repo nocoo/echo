@@ -1,17 +1,15 @@
 import { Hono } from "hono";
 import { extractClientIp } from "./utils/ip.js";
-import { lookupIp, getProvider, type LookupResult } from "./services/ipLookup.js";
-import type { IpProvider } from "./services/ipProvider.js";
+import { lookupIp, type LookupResult } from "./services/ipLookup.js";
 import { version } from "./lib/version.js";
 
-type LookupFn = (ip: string | null) => Promise<LookupResult | null>;
+type LookupFn = (ip: string | null, detail?: boolean) => Promise<LookupResult | null>;
 
 const bootedAt = Date.now();
 
 export function createApp(
   lookup: LookupFn = lookupIp,
   apiKey: string | undefined = process.env.ECHO_API_KEY,
-  provider: IpProvider = getProvider(),
 ) {
   const app = new Hono();
 
@@ -39,6 +37,7 @@ export function createApp(
     const started = performance.now();
 
     const queryIp = c.req.query("ip") ?? null;
+    const detail = c.req.query("detail") === "true";
     const headerKey = c.req.header("x-api-key") ?? null;
     const authenticated = Boolean(apiKey && headerKey === apiKey);
 
@@ -46,7 +45,7 @@ export function createApp(
       authenticated && queryIp ? queryIp : extractClientIp(c.req.raw.headers);
 
     try {
-      const result = await lookup(targetIp);
+      const result = await lookup(targetIp, detail);
       const latencyMs = Math.round(performance.now() - started);
 
       if (!result) {
@@ -54,30 +53,32 @@ export function createApp(
           {
             error: { code: "invalid_ip", message: "invalid ip" },
             ip: targetIp,
-            source: provider.name,
-            attribution: provider.attribution,
             latencyMs,
           },
           400,
         );
       }
 
-      return c.json({
+      const response: Record<string, unknown> = {
         ip: result.ip,
         version: result.version,
         location: result.location,
         latencyMs,
         source: result.source,
         attribution: result.attribution,
-      });
+      };
+
+      if (result.providers) {
+        response.providers = result.providers;
+      }
+
+      return c.json(response);
     } catch {
       const latencyMs = Math.round(performance.now() - started);
       return c.json(
         {
           error: { code: "lookup_failed", message: "lookup failed" },
           ip: targetIp,
-          source: provider.name,
-          attribution: provider.attribution,
           latencyMs,
         },
         500,

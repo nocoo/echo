@@ -75,6 +75,30 @@ describe("CirclProvider", () => {
     delete mockData["192.168.1.1"];
   });
 
+  test("handles record without country field", async () => {
+    mockData["172.16.0.1"] = {
+      autonomous_system_number: 1234,
+      autonomous_system_organization: "TEST-NET",
+    };
+
+    const provider = new CirclProvider();
+    const result = await provider.lookup("172.16.0.1");
+
+    expect(result).toEqual({
+      country: "",
+      countryCode: "",
+      province: "",
+      city: "",
+      latitude: null,
+      longitude: null,
+      isp: "",
+      asn: 1234,
+      asOrg: "TEST-NET",
+    });
+
+    delete mockData["172.16.0.1"];
+  });
+
   test("name and attribution are correct", () => {
     const provider = new CirclProvider();
     expect(provider.name).toBe("circl");
