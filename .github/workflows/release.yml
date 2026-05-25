@@ -17,13 +17,21 @@ jobs:
       - run: bun run test:coverage
       - run: bun run typecheck
       - name: Deploy to Vercel
+        id: deploy
         run: |
           bunx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
           bunx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-          bunx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+          url=$(bunx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> "$GITHUB_OUTPUT"
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: Health check
+        run: |
+          sleep 10
+          response=$(curl -sf "${{ steps.deploy.outputs.url }}/api/live")
+          echo "$response"
+          echo "$response" | jq -e '.status == "ok"'
 
   weekly-bump:
     if: github.event_name == 'schedule'

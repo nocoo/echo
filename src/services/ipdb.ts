@@ -1,4 +1,3 @@
-import path from "node:path";
 import { readFile } from "node:fs/promises";
 import {
   IPv4,
@@ -7,6 +6,7 @@ import {
   newWithBuffer,
   type Searcher,
 } from "ip2region.js";
+import { resolveDataFile } from "../lib/dataFile.js";
 
 type IpdbType = "v4" | "v6";
 
@@ -33,8 +33,6 @@ const DEFAULT_FILES: Record<IpdbType, string> = {
   v6: "ip2region_v6.xdb",
 };
 
-const dataDir = process.env.IPDB_DIR ?? "data";
-
 export const globalCache = globalThis as typeof globalThis & {
   __ipdbCache?: CacheState;
 };
@@ -56,9 +54,8 @@ type LoadClientDeps = {
 };
 
 export async function loadClient(deps: LoadClientDeps = {}): Promise<Ip2RegionClient> {
-  const baseDir = deps.dataDirOverride ?? dataDir;
-  const v4Path = path.join(process.cwd(), baseDir, DEFAULT_FILES.v4);
-  const v6Path = path.join(process.cwd(), baseDir, DEFAULT_FILES.v6);
+  const v4Path = await resolveDataFile(DEFAULT_FILES.v4);
+  const v6Path = await resolveDataFile(DEFAULT_FILES.v6);
 
   /* v8 ignore next */
   const read = deps.readFileFn ?? readFile;
