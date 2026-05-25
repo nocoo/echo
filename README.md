@@ -1,116 +1,145 @@
-# echo 🚀
+# echo
 
-An API-only IP lookup service for Vercel and Railway. Fast, Bun + TypeScript, strict TDD.
+An API-only IP lookup service for Vercel. Queries 4 data sources in parallel, selects the best result, and returns structured location data with sub-millisecond latency.
 
-## What it does ✅
+## Features
 
-- Returns the client IP (IPv4/IPv6)
-- Looks up `ip2region.xdb` and returns structured location
-- Returns server-side latency (ms)
-- API-only, no UI
+- Multi-provider parallel IP lookup (ip2region, iplocate, ip-location-db, CIRCL)
+- Best-answer selection: prefers ip2region for Chinese IPs, ip-location-db for international
+- ASN enrichment across providers
+- LRU cache (100 entries, 10min TTL)
+- IPv4 and IPv6 support
+- API key authentication for arbitrary IP lookups
+- Weekly automated deployment keeps IP databases fresh
 
-## SwiftBar plugin 🧭
+## API
 
-This repo ships a SwiftBar plugin so you can turn your self-hosted API into a menu bar latency monitor on macOS.
+### `GET /api/ip`
 
-- Plugin: `swiftbar/echo.1m.js` (refresh every 1 minute)
-- Menu bar example (color-coded RTT):
+Returns IP location for the requesting client.
 
-```text
-🇨🇳 42ms | color=green
+```json
+{
+  "ip": "1.2.3.4",
+  "version": 4,
+  "location": {
+    "country": "China",
+    "countryCode": "CN",
+    "province": "Jiangsu",
+    "city": "Nanjing",
+    "latitude": 32.06,
+    "longitude": 118.79,
+    "isp": "China Telecom",
+    "asn": 4134,
+    "asOrg": "CHINANET-BACKBONE"
+  },
+  "source": "ip2region",
+  "attribution": [
+    "IP2Region data provided by https://ip2region.net (Apache-2.0).",
+    "ip-location-db data provided by https://github.com/sapics/ip-location-db (CC BY-SA 4.0).",
+    "IPLocate data provided by https://iplocate.io (CC BY-SA 4.0).",
+    "CIRCL data provided by https://www.circl.lu (open data)."
+  ],
+  "latencyMs": 2
+}
 ```
 
-Dropdown shows:
-- IP
-- Country
-- Location (province | city)
-- ISP
-- RTT + Server latency
+### `GET /api/ip?detail=true`
 
-## Project structure 📁
+Returns all provider results in addition to the selected best result:
 
-- `src/` services and routes
-- `tests/` unit + e2e
-- `scripts/` build/deploy scripts
-- `docs/` documentation
-- `swiftbar/` SwiftBar plugin
+```json
+{
+  "ip": "1.2.3.4",
+  "version": 4,
+  "location": { "..." },
+  "source": "ip2region",
+  "attribution": ["..."],
+  "latencyMs": 3,
+  "providers": [
+    { "name": "ip2region", "attribution": "...", "location": { "..." }, "latencyMs": 1 },
+    { "name": "iplocate", "attribution": "...", "location": { "..." }, "latencyMs": 2 },
+    { "name": "ip-location-db", "attribution": "...", "location": { "..." }, "latencyMs": 3 },
+    { "name": "circl", "attribution": "...", "location": { "..." }, "latencyMs": 1 }
+  ]
+}
+```
 
-## Run locally 🧪
+### `GET /api/ip?ip=x.x.x.x`
+
+Look up a specific IP (requires `X-Api-Key` header matching `ECHO_API_KEY` env var).
+
+### `GET /api/live`
+
+Health check. Returns `status`, `version`, `uptime`.
+
+### `GET /`
+
+Service info with available endpoints.
+
+## Data Sources
+
+| Provider | Data | License |
+|----------|------|---------|
+| [ip2region](https://ip2region.net) | Country, province, city, ISP (best for China) | Apache-2.0 |
+| [iplocate](https://iplocate.io) | ASN, country | CC BY-SA 4.0 |
+| [ip-location-db](https://github.com/sapics/ip-location-db) | City, coordinates, ASN | CC BY-SA 4.0 |
+| [CIRCL](https://www.circl.lu) | Country, ASN | Open data |
+
+## Run locally
 
 ```bash
 bun install
-bun run ipdb:fetch
-bun run dev
+bun run ipdb:fetch        # download all 7 database files
+bun run dev               # start on port 7010
 ```
 
-Optional env vars:
-
-- `IPDB_DIR` (default: data)
-- `IPDB_URL_V4`
-- `IPDB_URL_V6`
-- `IP_PROVIDER` — IP lookup provider (default: `ip2region`). Unsupported values cause the app to crash at startup.
-
-## API 🔌
-
-- `GET /` service info
-- `GET /api/live` liveness check (returns `status` + `version`)
-- `GET /api/ip` IP + location + latency
-  - With `X-Api-Key` header + `?ip=x.x.x.x`, looks up a specific IP
-  - Without valid key, silently falls back to source IP
-  - Errors return `error.code` and `error.message`
-
-Env vars:
-
-- `ECHO_API_KEY` — enables authenticated IP query via `?ip=`
-
-Default port: 7010
-
-## Deploy 🚢
-
-### Vercel
-
-- Uses `vercel.json`
-- Build: `bun install && bun run ipdb:fetch`
-
-### Railway (Docker)
+Verify databases after download:
 
 ```bash
-docker build -t echo .
-docker run -p 7010:7010 echo
+bun run ipdb:fetch --verify
 ```
 
-With SwiftBar + your deployed API, you get a self-hosted latency monitor in macOS menu bar.
+## Environment variables
 
-## Tests & docs 📌
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `IPDB_DIR` | `data` | Directory for database files |
+| `ECHO_API_KEY` | — | Enables authenticated IP query via `?ip=` |
+| `PORT` | `7010` | Server port |
 
-- Unit test coverage target: 90%+
-- Lint: 0 warnings/errors
-- E2E must pass
-- Code changes must update docs
+## Deploy
+
+### Vercel (recommended)
+
+Uses `vercel.json`. Build step downloads all databases and bundles them.
+
+GitHub Actions workflow (`.github/workflows/release.yml`) handles:
+- Deploy on version tags (`v*`)
+- Weekly Monday deploy (fresh IP data)
+- Manual dispatch
+
+Required secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`.
+
+## Tests
 
 ```bash
-bun run test
-bun run test:e2e
-bun run test:all
+bun run test              # unit tests
+bun run test:coverage     # with coverage (95% threshold)
+bun run test:e2e          # e2e (requires ipdb:fetch first)
+bun run typecheck         # type checking
 ```
 
-E2E requires xdb files:
+## SwiftBar plugin
 
-```bash
-bun run ipdb:fetch
-```
+Menu bar latency monitor for macOS: `swiftbar/echo.1m.js`
 
-## Atomic commits 🧱
+## Project structure
 
-- One logical change per commit
-- Commit after tests pass
-- Conventional Commits
-
-## Docs tree 📚
-
-- docs/01-overview.md
-- docs/02-features.md
-- docs/03-architecture.md
-- docs/04-development.md
-- docs/05-testing.md
-- docs/06-docs-rules.md
+- `src/services/providers/` — IP data providers
+- `src/services/selectBest.ts` — best-answer selection logic
+- `src/services/cache.ts` — LRU cache
+- `src/services/ipLookup.ts` — parallel query orchestrator
+- `src/server.ts` — Hono HTTP routes
+- `scripts/ipdb-fetch.ts` — database downloader
+- `tests/` — unit + e2e tests

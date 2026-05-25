@@ -1,7 +1,5 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { IpProvider, IpLocation } from "../../src/services/ipProvider.js";
-import { createProvider } from "../../src/services/ipProvider.js";
-import { Ip2RegionProvider } from "../../src/services/providers/ip2region.js";
 
 describe("IpProvider interface", () => {
   test("a compliant provider satisfies the interface contract", async () => {
@@ -47,38 +45,5 @@ describe("IpProvider interface", () => {
 
     const result = await mockProvider.lookup("0.0.0.0");
     expect(result).toBeNull();
-  });
-});
-
-describe("createProvider", () => {
-  test("returns Ip2RegionProvider by default", () => {
-    const provider = createProvider();
-    expect(provider).toBeInstanceOf(Ip2RegionProvider);
-    expect(provider.name).toBe("ip2region");
-  });
-
-  test("returns Ip2RegionProvider when explicitly named", () => {
-    const provider = createProvider("ip2region");
-    expect(provider).toBeInstanceOf(Ip2RegionProvider);
-  });
-
-  test("respects IP_PROVIDER env var", () => {
-    vi.stubEnv("IP_PROVIDER", "ip2region");
-    const provider = createProvider();
-    expect(provider).toBeInstanceOf(Ip2RegionProvider);
-    vi.unstubAllEnvs();
-  });
-
-  test("throws for unknown provider name", () => {
-    expect(() => createProvider("nonexistent")).toThrow(
-      "Unknown IP provider: nonexistent",
-    );
-  });
-
-  test("explicit name takes precedence over env var", () => {
-    vi.stubEnv("IP_PROVIDER", "nonexistent");
-    const provider = createProvider("ip2region");
-    expect(provider).toBeInstanceOf(Ip2RegionProvider);
-    vi.unstubAllEnvs();
   });
 });

@@ -76,10 +76,23 @@ describe("api e2e", () => {
     const body = (await res.json()) as Record<string, unknown>;
     expect(body).toMatchObject({
       ip: "1.2.3.4",
-      source: "ip2region",
+      source: expect.any(String),
     });
     expect(body).toHaveProperty("location");
     expect(body).toHaveProperty("latencyMs");
-    expect(body).toHaveProperty("attribution");
+    expect(body.attribution).toBeInstanceOf(Array);
+  });
+
+  test("ip endpoint with detail=true returns providers", async () => {
+    const res = await fetch(`${baseUrl}/api/ip?detail=true`, {
+      headers: {
+        "x-forwarded-for": "1.2.3.4",
+      },
+    });
+
+    expect(res.status).toBe(200);
+
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.providers).toBeInstanceOf(Array);
   });
 });
