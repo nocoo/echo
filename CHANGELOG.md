@@ -1,5 +1,10 @@
 # Changelog
 
+## [v2.0.3] - 2026-05-25
+
+### Fixed
+- Use production domain for health check with retry
+
 ## [v2.0.2] - 2026-05-25
 
 ### Added
