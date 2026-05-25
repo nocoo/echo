@@ -1,5 +1,38 @@
 # Changelog
 
+## [v2.0.1] - 2026-05-25
+
+### Added
+- Expand fetch script to download all 4 provider databases
+- Parallel query orchestrator with best-answer selection
+- Add LRU cache (100 entries, 10min TTL) for lookup results
+- Implement CirclProvider for country + ASN lookup
+- Implement IpLocationDbProvider for city + ASN lookup
+- Implement IplocateProvider for ASN + country lookup
+- Add shared MMDB reader utility with singleton cache
+- Expand IpLocation schema with geo coordinates and ASN fields
+
+### Changed
+- Disable Vercel Git auto-deploy, deploy only via release CI
+- Add commands & version management sections to CLAUDE.md
+- Check all MMDB files and validate multi-provider response
+- Update development guide for multi-provider 2.0 architecture
+- Update README and clean up dead code for multi-provider architecture
+- Add release workflow with Vercel CLI deploy and weekly cron
+- Document IP_PROVIDER env var and supported values
+- Use provider metadata in API response instead of hardcoded values
+- Wire ipLookup to use IpProvider abstraction
+- Add provider factory with env-var selection
+- Implement Ip2RegionProvider wrapping existing ipdb logic
+- Add IpProvider interface and source-agnostic IpLocation model
+
+### Fixed
+- Empty-location ip2region no longer wins over valid providers
+- SelectBest no longer mutates original ProviderResult
+- ASN-only ip-location-db no longer wins over complete results
+- Return 500 when all providers fail instead of silent 200
+- Fail fast on unsupported IP_PROVIDER at app startup
+
 ## [v1.1.2] - 2026-05-24
 
 ### Added
