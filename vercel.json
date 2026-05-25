@@ -1,4 +1,7 @@
 {
+  "git": {
+    "deploymentEnabled": false
+  },
   "buildCommand": "bun install && bun run ipdb:fetch",
   "devCommand": "bun run dev",
   "installCommand": "bun install"

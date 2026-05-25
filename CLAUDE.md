@@ -13,7 +13,8 @@ README.md
 ## Version Management
 
 - Source of truth: `package.json` → `src/lib/version.ts` (generated)
-- Tag format: `v{version}` — triggers CI deploy on push
+- Tag format: `v{version}` — triggers CI deploy via `release.yml` (Vercel CLI)
+- Vercel Git auto-deploy is disabled (`vercel.json`); only CI deploys to production
 - Release script: `scripts/release.ts` — bumps version, generates CHANGELOG, tags, pushes, creates GitHub release
 - Requires: `gh` CLI (authenticated), `rg` (ripgrep)
 
