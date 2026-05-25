@@ -18,28 +18,35 @@ function hasLocation(loc: IpLocation): boolean {
 }
 
 export function selectBest(results: ProviderResult[]): SelectionResult | null {
-  const valid = results.filter(
+  const nonNull = results.filter(
     (r): r is ProviderResult & { location: IpLocation } => r.location !== null,
   );
 
-  if (valid.length === 0) return null;
+  if (nonNull.length === 0) return null;
 
-  valid.sort((a, b) => (PRIORITY[a.name] ?? 99) - (PRIORITY[b.name] ?? 99));
+  const withLocation = nonNull.filter((r) => hasLocation(r.location));
 
-  const top = valid[0]!;
+  if (withLocation.length === 0) {
+    nonNull.sort((a, b) => (PRIORITY[a.name] ?? 99) - (PRIORITY[b.name] ?? 99));
+    return enrichAsn(nonNull[0]!, nonNull);
+  }
+
+  withLocation.sort((a, b) => (PRIORITY[a.name] ?? 99) - (PRIORITY[b.name] ?? 99));
+
+  const top = withLocation[0]!;
 
   if (top.name === "ip2region" && top.location.countryCode === "CN") {
-    return enrichAsn(top, valid);
+    return enrichAsn(top, nonNull);
   }
 
-  const ipLocationDb = valid.find(
-    (r) => r.name === "ip-location-db" && hasLocation(r.location),
+  const ipLocationDb = withLocation.find(
+    (r) => r.name === "ip-location-db",
   );
   if (ipLocationDb) {
-    return enrichAsn(ipLocationDb, valid);
+    return enrichAsn(ipLocationDb, nonNull);
   }
 
-  return enrichAsn(top, valid);
+  return enrichAsn(top, nonNull);
 }
 
 function enrichAsn(

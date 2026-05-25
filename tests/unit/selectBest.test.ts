@@ -135,6 +135,40 @@ describe("selectBest", () => {
     expect(result?.location.asn).toBe(15169);
   });
 
+  test("empty-location ip2region does not beat provider with real location", () => {
+    const results = [
+      makeResult("ip2region", {}),
+      makeResult("iplocate", { country: "United States", countryCode: "US", city: "Seattle" }),
+    ];
+
+    const result = selectBest(results);
+    expect(result?.source).toBe("iplocate");
+    expect(result?.location.countryCode).toBe("US");
+  });
+
+  test("ASN-only results still participate in enrichment when no location winner has ASN", () => {
+    const results = [
+      makeResult("ip2region", {}),
+      makeResult("ip-location-db", { asn: 15169, asOrg: "GOOGLE" }),
+      makeResult("iplocate", { country: "United States", countryCode: "US", city: "Seattle" }),
+    ];
+
+    const result = selectBest(results);
+    expect(result?.source).toBe("iplocate");
+    expect(result?.location.asn).toBe(15169);
+  });
+
+  test("returns ASN-only result when no provider has real location", () => {
+    const results = [
+      makeResult("ip2region", {}),
+      makeResult("ip-location-db", { asn: 15169, asOrg: "GOOGLE" }),
+    ];
+
+    const result = selectBest(results);
+    expect(result).not.toBeNull();
+    expect(result?.location.asn).toBe(15169);
+  });
+
   test("does not mutate the original provider result when enriching ASN", () => {
     const ip2regionResult = makeResult("ip2region", { country: "中国", countryCode: "CN", city: "南京" });
     const circlResult = makeResult("circl", { countryCode: "CN", asn: 4134, asOrg: "CHINANET" });
