@@ -19,10 +19,14 @@ describe("Ip2RegionProvider", () => {
 
     expect(result).toEqual({
       country: "中国",
+      countryCode: "CN",
       province: "江苏省",
       city: "南京市",
+      latitude: null,
+      longitude: null,
       isp: "电信",
-      iso2: "CN",
+      asn: null,
+      asOrg: "",
     });
   });
 
@@ -39,10 +43,14 @@ describe("Ip2RegionProvider", () => {
 
     expect(result).toEqual({
       country: "美国",
+      countryCode: "US",
       province: "加利福尼亚",
       city: "洛杉矶",
+      latitude: null,
+      longitude: null,
       isp: "Google",
-      iso2: "US",
+      asn: null,
+      asOrg: "",
     });
   });
 
@@ -57,40 +65,56 @@ describe("parseRegion", () => {
   test("parses full region string", () => {
     expect(parseRegion("中国|江苏省|南京市|电信|CN")).toEqual({
       country: "中国",
+      countryCode: "CN",
       province: "江苏省",
       city: "南京市",
+      latitude: null,
+      longitude: null,
       isp: "电信",
-      iso2: "CN",
+      asn: null,
+      asOrg: "",
     });
   });
 
   test("handles missing fields", () => {
     expect(parseRegion("US|CA")).toEqual({
       country: "US",
+      countryCode: "",
       province: "CA",
       city: "",
+      latitude: null,
+      longitude: null,
       isp: "",
-      iso2: "",
+      asn: null,
+      asOrg: "",
     });
   });
 
   test("handles empty string", () => {
     expect(parseRegion("")).toEqual({
       country: "",
+      countryCode: "",
       province: "",
       city: "",
+      latitude: null,
+      longitude: null,
       isp: "",
-      iso2: "",
+      asn: null,
+      asOrg: "",
     });
   });
 
   test("handles all fields empty", () => {
     expect(parseRegion("||||")).toEqual({
       country: "",
+      countryCode: "",
       province: "",
       city: "",
+      latitude: null,
+      longitude: null,
       isp: "",
-      iso2: "",
+      asn: null,
+      asOrg: "",
     });
   });
 });

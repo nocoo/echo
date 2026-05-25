@@ -59,7 +59,7 @@ describe("GET /api/ip", () => {
     const app = createApp(async () => ({
       ip: "1.2.3.4",
       version: 4,
-      location: { country: "CN", province: "JS", city: "NJ", isp: "ISP", iso2: "CN" },
+      location: { country: "CN", countryCode: "CN", province: "JS", city: "NJ", latitude: null, longitude: null, isp: "ISP", asn: null, asOrg: "" },
       source: "ip2region",
       attribution: "test",
     }));
@@ -103,7 +103,7 @@ describe("GET /api/ip", () => {
       return {
         ip: ip!,
         version: 4 as const,
-        location: { country: "US", province: "CA", city: "LA", isp: "ISP", iso2: "US" },
+        location: { country: "US", countryCode: "US", province: "CA", city: "LA", latitude: null, longitude: null, isp: "ISP", asn: null, asOrg: "" },
         source: "ip2region",
         attribution: "test",
       };
@@ -130,7 +130,7 @@ describe("GET /api/ip", () => {
       return {
         ip: ip!,
         version: 4 as const,
-        location: { country: "CN", province: "JS", city: "NJ", isp: "ISP", iso2: "CN" },
+        location: { country: "CN", countryCode: "CN", province: "JS", city: "NJ", latitude: null, longitude: null, isp: "ISP", asn: null, asOrg: "" },
         source: "ip2region",
         attribution: "test",
       };
@@ -156,7 +156,7 @@ describe("GET /api/ip", () => {
       return {
         ip: ip!,
         version: 4 as const,
-        location: { country: "CN", province: "JS", city: "NJ", isp: "ISP", iso2: "CN" },
+        location: { country: "CN", countryCode: "CN", province: "JS", city: "NJ", latitude: null, longitude: null, isp: "ISP", asn: null, asOrg: "" },
         source: "ip2region",
         attribution: "test",
       };
@@ -183,7 +183,7 @@ describe("GET /api/ip", () => {
       return {
         ip: ip!,
         version: 4 as const,
-        location: { country: "CN", province: "JS", city: "NJ", isp: "ISP", iso2: "CN" },
+        location: { country: "CN", countryCode: "CN", province: "JS", city: "NJ", latitude: null, longitude: null, isp: "ISP", asn: null, asOrg: "" },
         source: "ip2region",
         attribution: "test",
       };
@@ -210,7 +210,7 @@ describe("GET /api/ip", () => {
       return {
         ip: ip!,
         version: 4 as const,
-        location: { country: "CN", province: "JS", city: "NJ", isp: "ISP", iso2: "CN" },
+        location: { country: "CN", countryCode: "CN", province: "JS", city: "NJ", latitude: null, longitude: null, isp: "ISP", asn: null, asOrg: "" },
         source: "ip2region",
         attribution: "test",
       };

@@ -2,10 +2,14 @@ import { Ip2RegionProvider } from "./providers/ip2region.js";
 
 export type IpLocation = {
   country: string;
+  countryCode: string;
   province: string;
   city: string;
+  latitude: number | null;
+  longitude: number | null;
   isp: string;
-  iso2: string;
+  asn: number | null;
+  asOrg: string;
 };
 
 export interface IpProvider {

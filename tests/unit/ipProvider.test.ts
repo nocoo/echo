@@ -10,10 +10,14 @@ describe("IpProvider interface", () => {
       attribution: "Mock data",
       lookup: async (): Promise<IpLocation | null> => ({
         country: "US",
+        countryCode: "US",
         province: "CA",
         city: "LA",
+        latitude: 34.05,
+        longitude: -118.24,
         isp: "Mock ISP",
-        iso2: "US",
+        asn: 12345,
+        asOrg: "Mock Org",
       }),
     };
 
@@ -23,10 +27,14 @@ describe("IpProvider interface", () => {
     const result = await mockProvider.lookup("1.2.3.4");
     expect(result).toEqual({
       country: "US",
+      countryCode: "US",
       province: "CA",
       city: "LA",
+      latitude: 34.05,
+      longitude: -118.24,
       isp: "Mock ISP",
-      iso2: "US",
+      asn: 12345,
+      asOrg: "Mock Org",
     });
   });
 
