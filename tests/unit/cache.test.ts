@@ -30,6 +30,7 @@ const makeLookup = (country: string): CachedLookup => ({
       asOrg: "",
     },
     latencyMs: 1,
+    error: false,
   }],
 });
 

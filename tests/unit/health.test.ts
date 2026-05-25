@@ -243,8 +243,8 @@ describe("GET /api/ip", () => {
 
   test("returns providers array when detail=true", async () => {
     const providers = [
-      { name: "ip2region", attribution: "test", location: mockLocation, latencyMs: 1 },
-      { name: "iplocate", attribution: "test2", location: null, latencyMs: 2 },
+      { name: "ip2region", attribution: "test", location: mockLocation, latencyMs: 1, error: false },
+      { name: "iplocate", attribution: "test2", location: null, latencyMs: 2, error: false },
     ];
 
     const app = createApp(async () => ({

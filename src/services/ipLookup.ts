@@ -48,6 +48,7 @@ async function queryProvider(provider: IpProvider, ip: string): Promise<Provider
       attribution: provider.attribution,
       location,
       latencyMs: Math.round(performance.now() - started),
+      error: false,
     };
   } catch {
     return {
@@ -55,6 +56,7 @@ async function queryProvider(provider: IpProvider, ip: string): Promise<Provider
       attribution: provider.attribution,
       location: null,
       latencyMs: Math.round(performance.now() - started),
+      error: true,
     };
   }
 }
@@ -75,6 +77,11 @@ export async function lookupIp(
   const results = await Promise.all(
     allProviders.map((p) => queryProvider(p, parsed.ip)),
   );
+
+  const allFailed = results.every((r) => r.error);
+  if (allFailed) {
+    throw new Error("all providers failed");
+  }
 
   const lookup: CachedLookup = { results };
   setCached(parsed.ip, lookup);

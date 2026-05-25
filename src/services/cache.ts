@@ -6,6 +6,7 @@ export type ProviderResult = {
   attribution: string;
   location: IpLocation | null;
   latencyMs: number;
+  error: boolean;
 };
 
 export type CachedLookup = {

@@ -20,6 +20,7 @@ function makeResult(name: string, location: Partial<IpLocation> | null): Provide
       ...location,
     } : null,
     latencyMs: 5,
+    error: false,
   };
 }
 

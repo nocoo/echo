@@ -125,8 +125,24 @@ describe("lookupIp", () => {
       },
     };
 
+    // ip2region throws but MMDB providers return null (mocked) — not all errored
     const result = await lookupIp("1.2.3.4");
     expect(result).not.toBeNull();
     expect(result!.ip).toBe("1.2.3.4");
+  });
+
+  test("throws when all providers fail", async () => {
+    globalCache.__ipdbCache = {
+      v4: {
+        client: { search: async () => { throw new Error("boom"); } },
+        loadedAt: Date.now(),
+      },
+    };
+
+    // Mock maxmind to throw for all MMDB providers
+    const maxmind = await import("maxmind");
+    vi.mocked(maxmind.default.open).mockRejectedValue(new Error("file not found"));
+
+    await expect(lookupIp("1.2.3.4")).rejects.toThrow("all providers failed");
   });
 });
