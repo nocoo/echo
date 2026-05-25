@@ -87,6 +87,31 @@ describe("IplocateProvider", () => {
     delete mockAsnData["8.8.8.8"];
   });
 
+  test("handles partial data (country only)", async () => {
+    mockCountryData["9.9.9.9"] = {
+      continent_code: "EU",
+      country_code: "DE",
+      country_name: "Germany",
+    };
+
+    const provider = new IplocateProvider();
+    const result = await provider.lookup("9.9.9.9");
+
+    expect(result).toEqual({
+      country: "Germany",
+      countryCode: "DE",
+      province: "",
+      city: "",
+      latitude: null,
+      longitude: null,
+      isp: "",
+      asn: null,
+      asOrg: "",
+    });
+
+    delete mockCountryData["9.9.9.9"];
+  });
+
   test("name and attribution are correct", () => {
     const provider = new IplocateProvider();
     expect(provider.name).toBe("iplocate");
