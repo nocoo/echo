@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "bun run src/index.ts",
     "ipdb:fetch": "bun run scripts/ipdb-fetch.ts",
+    "ipdb:update": "bun run ipdb:fetch -- --verify && bun run release -- patch --yes",
     "test": "vitest run",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "test:all": "bun run test && bun run test:e2e",
