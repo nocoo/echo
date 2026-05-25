@@ -1,5 +1,13 @@
 # Changelog
 
+## [v2.0.2] - 2026-05-25
+
+### Added
+- Compress data files at build, decompress to /tmp at runtime
+
+### Changed
+- Ignore .claude/ directory
+
 ## [v2.0.1] - 2026-05-25
 
 ### Added
