@@ -1,43 +1,130 @@
 import path from "node:path";
 import { mkdir } from "node:fs/promises";
 
-type IpdbType = "v4" | "v6";
-
-const DEFAULT_URLS: Record<IpdbType, string> = {
-  v4: "https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v4.xdb",
-  v6: "https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb",
+type Source = {
+  name: string;
+  url: string;
+  minSize: number;
 };
 
-const dataDir = process.env.IPDB_DIR ?? "data";
-const targets: Array<{ type: IpdbType; url: string; filename: string }> = [
+const SOURCES: Source[] = [
   {
-    type: "v4",
-    url: process.env.IPDB_URL_V4 ?? DEFAULT_URLS.v4,
-    filename: "ip2region_v4.xdb",
+    name: "ip2region_v4.xdb",
+    url: "https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v4.xdb",
+    minSize: 1_000_000,
   },
   {
-    type: "v6",
-    url: process.env.IPDB_URL_V6 ?? DEFAULT_URLS.v6,
-    filename: "ip2region_v6.xdb",
+    name: "ip2region_v6.xdb",
+    url: "https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb",
+    minSize: 500_000,
+  },
+  {
+    name: "iplocate-asn.mmdb",
+    url: "https://github.com/iplocate/ip-address-databases/raw/main/ip-to-asn/ip-to-asn.mmdb",
+    minSize: 1_000_000,
+  },
+  {
+    name: "iplocate-country.mmdb",
+    url: "https://github.com/iplocate/ip-address-databases/raw/main/ip-to-country/ip-to-country.mmdb",
+    minSize: 500_000,
+  },
+  {
+    name: "ip-location-db-asn.mmdb",
+    url: "https://cdn.jsdelivr.net/npm/@ip-location-db/asn-mmdb/asn.mmdb",
+    minSize: 1_000_000,
+  },
+  {
+    name: "ip-location-db-city.mmdb",
+    url: "https://github.com/sapics/ip-location-db/raw/main/dbip-city-mmdb/dbip-city-ipv4.mmdb",
+    minSize: 5_000_000,
+  },
+  {
+    name: "circl-country-asn.mmdb",
+    url: "https://cra.circl.lu/opendata/geo-open/mmdb-country-asn/latest.mmdb",
+    minSize: 1_000_000,
   },
 ];
 
+const dataDir = process.env.IPDB_DIR ?? "data";
+const maxRetries = 3;
+const verify = process.argv.includes("--verify");
+
+async function downloadWithRetry(source: Source): Promise<void> {
+  const filePath = path.join(dataDir, source.name);
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch(source.url);
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      const buffer = new Uint8Array(await res.arrayBuffer());
+
+      if (buffer.byteLength < source.minSize) {
+        throw new Error(
+          `file too small: ${buffer.byteLength} bytes (min ${source.minSize})`,
+        );
+      }
+
+      await Bun.write(filePath, buffer);
+      console.log(
+        `✓ ${source.name} (${(buffer.byteLength / 1024 / 1024).toFixed(1)} MB)`,
+      );
+      return;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (attempt === maxRetries) {
+        throw new Error(
+          `failed to download ${source.name} after ${maxRetries} attempts: ${msg}`,
+          { cause: err },
+        );
+      }
+      console.warn(`⚠ ${source.name} attempt ${attempt} failed: ${msg}, retrying...`);
+      await new Promise((r) => setTimeout(r, 1000 * attempt));
+    }
+  }
+}
+
 await mkdir(dataDir, { recursive: true });
 
-for (const target of targets) {
-  const filePath = path.join(dataDir, target.filename);
-  const res = await fetch(target.url);
+console.log(`Downloading ${SOURCES.length} database files to ${dataDir}/\n`);
 
-  if (!res.ok) {
-    throw new Error(`failed to download ${target.type}: ${res.status}`);
+const results = await Promise.allSettled(SOURCES.map(downloadWithRetry));
+
+const failed = results.filter((r) => r.status === "rejected");
+if (failed.length > 0) {
+  console.error(`\n✗ ${failed.length} download(s) failed:`);
+  for (const f of failed) {
+    console.error(`  - ${(f as PromiseRejectedResult).reason}`);
+  }
+  process.exit(1);
+}
+
+console.log(`\n✓ All ${SOURCES.length} files downloaded successfully.`);
+
+if (verify) {
+  console.log("\nVerifying databases...");
+  const maxmind = await import("maxmind");
+
+  for (const source of SOURCES) {
+    const filePath = path.join(process.cwd(), dataDir, source.name);
+
+    if (source.name.endsWith(".mmdb")) {
+      try {
+        const reader = await maxmind.default.open(filePath);
+        const result = reader.get("1.1.1.1");
+        console.log(`  ✓ ${source.name}: ${result ? "data found" : "no data for 1.1.1.1 (may be normal)"}`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`  ✗ ${source.name}: ${msg}`);
+        process.exit(1);
+      }
+    } else {
+      console.log(`  ✓ ${source.name}: skipped (xdb format)`);
+    }
   }
 
-  const buffer = new Uint8Array(await res.arrayBuffer());
-
-  if (buffer.byteLength === 0) {
-    throw new Error(`empty download for ${target.type}`);
-  }
-
-  await Bun.write(filePath, buffer);
-  console.log(`downloaded ${target.type} xdb to ${filePath}`);
+  console.log("\n✓ All databases verified.");
 }
