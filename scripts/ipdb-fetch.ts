@@ -1,11 +1,11 @@
 import path from "node:path";
 import { mkdir } from "node:fs/promises";
 
-type Source = {
+interface Source {
   name: string;
   url: string;
   minSize: number;
-};
+}
 
 const SOURCES: Source[] = [
   {

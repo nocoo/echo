@@ -10,21 +10,21 @@ import { resolveDataFile } from "../lib/dataFile.js";
 
 type IpdbType = "v4" | "v6";
 
-export type Ip2RegionClient = {
+export interface Ip2RegionClient {
   search: (ip: string) => Promise<string>;
   getIOCount?: () => number;
   close?: () => void;
-};
+}
 
-export type CacheEntry = {
+export interface CacheEntry {
   client: Ip2RegionClient;
   loadedAt: number;
-};
+}
 
-export type CacheState = {
+export interface CacheState {
   v4?: CacheEntry;
   v6?: CacheEntry;
-};
+}
 
 export const CACHE_TTL_MS = 60 * 60 * 1000;
 
@@ -45,13 +45,13 @@ export function isExpired(entry: CacheEntry) {
   return now() - entry.loadedAt > CACHE_TTL_MS;
 }
 
-type LoadClientDeps = {
+interface LoadClientDeps {
   dataDirOverride?: string;
   readFileFn?: (filePath: string) => Promise<unknown>;
   loadContent?: (filePath: string) => Buffer;
   createSearcher?: (opts: { v4: Buffer; v6: Buffer }) => Ip2RegionClient;
   createSearchers?: () => { v4: Searcher; v6: Searcher };
-};
+}
 
 export async function loadClient(deps: LoadClientDeps = {}): Promise<Ip2RegionClient> {
   const v4Path = await resolveDataFile(DEFAULT_FILES.v4);
@@ -94,12 +94,12 @@ export function pickSearcher(ip: string, v4Searcher: Searcher, v6Searcher: Searc
   return isIpv6(ip) ? v6Searcher : v4Searcher;
 }
 
-export type CacheRefresh = {
+export interface CacheRefresh {
   type: IpdbType;
   current: CacheEntry | undefined;
   now: number;
   load?: () => Promise<Ip2RegionClient>;
-};
+}
 
 export async function refreshClient({ current, now, load }: CacheRefresh) {
   if (current && now - current.loadedAt <= CACHE_TTL_MS) {
@@ -112,9 +112,7 @@ export async function refreshClient({ current, now, load }: CacheRefresh) {
 }
 
 export async function getClient(type: IpdbType): Promise<Ip2RegionClient> {
-  if (!globalCache.__ipdbCache) {
-    globalCache.__ipdbCache = {};
-  }
+  globalCache.__ipdbCache ??= {};
 
   const entry = globalCache.__ipdbCache[type];
   const loaded = await refreshClient({ type, current: entry, now: now() });

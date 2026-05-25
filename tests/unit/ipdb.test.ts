@@ -10,10 +10,10 @@ import {
   refreshClient,
 } from "../../src/services/ipdb.js";
 
-type CacheState = {
+interface CacheState {
   v4?: { client: unknown; loadedAt: number };
   v6?: { client: unknown; loadedAt: number };
-};
+}
 
 const globalCache = globalThis as typeof globalThis & {
   __ipdbCache?: CacheState;

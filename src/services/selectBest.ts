@@ -8,18 +8,24 @@ const PRIORITY: Record<string, number> = {
   "circl": 4,
 };
 
-export type SelectionResult = {
+export interface SelectionResult {
   location: IpLocation;
   source: string;
-};
+}
 
 function hasLocation(loc: IpLocation): boolean {
   return loc.countryCode !== "" || loc.city !== "";
 }
 
+type ValidResult = ProviderResult & { location: IpLocation };
+
+function sortByPriority(arr: ValidResult[]): ValidResult[] {
+  return arr.sort((a, b) => (PRIORITY[a.name] ?? 99) - (PRIORITY[b.name] ?? 99));
+}
+
 export function selectBest(results: ProviderResult[]): SelectionResult | null {
   const nonNull = results.filter(
-    (r): r is ProviderResult & { location: IpLocation } => r.location !== null,
+    (r): r is ValidResult => r.location !== null,
   );
 
   if (nonNull.length === 0) return null;
@@ -27,13 +33,12 @@ export function selectBest(results: ProviderResult[]): SelectionResult | null {
   const withLocation = nonNull.filter((r) => hasLocation(r.location));
 
   if (withLocation.length === 0) {
-    nonNull.sort((a, b) => (PRIORITY[a.name] ?? 99) - (PRIORITY[b.name] ?? 99));
-    return enrichAsn(nonNull[0]!, nonNull);
+    const sorted = sortByPriority(nonNull);
+    return enrichAsn(sorted[0] as ValidResult, nonNull);
   }
 
-  withLocation.sort((a, b) => (PRIORITY[a.name] ?? 99) - (PRIORITY[b.name] ?? 99));
-
-  const top = withLocation[0]!;
+  const sorted = sortByPriority(withLocation);
+  const top = sorted[0] as ValidResult;
 
   if (top.name === "ip2region" && top.location.countryCode === "CN") {
     return enrichAsn(top, nonNull);
@@ -50,8 +55,8 @@ export function selectBest(results: ProviderResult[]): SelectionResult | null {
 }
 
 function enrichAsn(
-  chosen: ProviderResult & { location: IpLocation },
-  all: Array<ProviderResult & { location: IpLocation }>,
+  chosen: ValidResult,
+  all: ValidResult[],
 ): SelectionResult {
   let location = chosen.location;
 

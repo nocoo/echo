@@ -1,17 +1,17 @@
 import { LRUCache } from "lru-cache";
 import type { IpLocation } from "./ipProvider.js";
 
-export type ProviderResult = {
+export interface ProviderResult {
   name: string;
   attribution: string;
   location: IpLocation | null;
   latencyMs: number;
   error: boolean;
-};
+}
 
-export type CachedLookup = {
+export interface CachedLookup {
   results: ProviderResult[];
-};
+}
 
 export const CACHE_MAX = 100;
 export const CACHE_TTL_MS = 10 * 60 * 1000;

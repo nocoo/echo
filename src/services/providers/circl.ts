@@ -1,11 +1,11 @@
 import type { IpProvider, IpLocation } from "../ipProvider.js";
 import { openMmdb } from "./mmdb.js";
 
-type CirclRecord = {
+interface CirclRecord {
   country?: { iso_code?: string };
   autonomous_system_number?: number;
   autonomous_system_organization?: string;
-};
+}
 
 export class CirclProvider implements IpProvider {
   readonly name = "circl";

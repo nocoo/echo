@@ -1,17 +1,17 @@
 import type { IpProvider, IpLocation } from "../ipProvider.js";
 import { openMmdb } from "./mmdb.js";
 
-type IpLocationDbAsnRecord = {
+interface IpLocationDbAsnRecord {
   autonomous_system_number?: number;
   autonomous_system_organization?: string;
-};
+}
 
-type IpLocationDbCityRecord = {
+interface IpLocationDbCityRecord {
   country?: { iso_code?: string; names?: { en?: string } };
-  subdivisions?: Array<{ names?: { en?: string } }>;
+  subdivisions?: { names?: { en?: string } }[];
   city?: { names?: { en?: string } };
   location?: { latitude?: number; longitude?: number };
-};
+}
 
 export class IpLocationDbProvider implements IpProvider {
   readonly name = "ip-location-db";

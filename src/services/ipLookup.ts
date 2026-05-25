@@ -10,7 +10,7 @@ import { CirclProvider } from "./providers/circl.js";
 
 export type { IpLocation };
 
-export type LookupResult = {
+export interface LookupResult {
   ip: string;
   version: 4 | 6;
   location: IpLocation | null;
@@ -18,19 +18,17 @@ export type LookupResult = {
   attribution: string[];
   latencyMs: number;
   providers?: ProviderResult[];
-};
+}
 
 let providers: IpProvider[] | undefined;
 
 export function getProviders(): IpProvider[] {
-  if (!providers) {
-    providers = [
-      new Ip2RegionProvider(),
-      new IplocateProvider(),
-      new IpLocationDbProvider(),
-      new CirclProvider(),
-    ];
-  }
+  providers ??= [
+    new Ip2RegionProvider(),
+    new IplocateProvider(),
+    new IpLocationDbProvider(),
+    new CirclProvider(),
+  ];
   return providers;
 }
 

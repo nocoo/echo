@@ -1,18 +1,18 @@
 import type { IpProvider, IpLocation } from "../ipProvider.js";
 import { openMmdb } from "./mmdb.js";
 
-type IplocateAsnRecord = {
+interface IplocateAsnRecord {
   autonomous_system_number?: number;
   autonomous_system_organization?: string;
   domain?: string;
   country_code?: string;
-};
+}
 
-type IplocateCountryRecord = {
+interface IplocateCountryRecord {
   continent_code?: string;
   country_code?: string;
   country_name?: string;
-};
+}
 
 export class IplocateProvider implements IpProvider {
   readonly name = "iplocate";

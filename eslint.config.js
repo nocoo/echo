@@ -1,12 +1,13 @@
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 
-export default [
+export default tseslint.config(
   js.configs.recommended,
   {
     ignores: ["coverage/**", "dist/**", "node_modules/**"],
   },
-  ...tseslint.configs.recommended,
+  ...tseslint.configs.strict,
+  ...tseslint.configs.stylisticTypeChecked,
   {
     files: ["**/*.ts"],
     languageOptions: {
@@ -17,6 +18,11 @@ export default [
     },
     rules: {
       "no-console": "off",
+      "@typescript-eslint/non-nullable-type-assertion-style": "off",
     },
   },
-];
+  {
+    files: ["**/*.js"],
+    ...tseslint.configs.disableTypeChecked,
+  },
+);

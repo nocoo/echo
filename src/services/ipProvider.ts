@@ -1,4 +1,4 @@
-export type IpLocation = {
+export interface IpLocation {
   country: string;
   countryCode: string;
   province: string;
@@ -8,7 +8,7 @@ export type IpLocation = {
   isp: string;
   asn: number | null;
   asOrg: string;
-};
+}
 
 export interface IpProvider {
   readonly name: string;

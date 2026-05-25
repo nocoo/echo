@@ -1,9 +1,9 @@
 import { isIP } from "node:net";
 
-export type ParsedIp = {
+export interface ParsedIp {
   ip: string;
   version: 4 | 6;
-};
+}
 
 export function normalizeIp(input: string): string {
   const trimmed = input.trim();
