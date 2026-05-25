@@ -1,5 +1,11 @@
 # Changelog
 
+## [v2.0.4] - 2026-05-25
+
+### Changed
+- Fix strict lint violations in test files
+- Upgrade ESLint to strict + stylisticTypeChecked
+
 ## [v2.0.3] - 2026-05-25
 
 ### Fixed
