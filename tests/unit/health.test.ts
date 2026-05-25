@@ -109,7 +109,7 @@ describe("GET /api/ip", () => {
     const app = createApp(async (ip) => {
       receivedIp = ip;
       return {
-        ip: ip!,
+        ip: ip ?? "",
         version: 4 as const,
         location: mockLocation,
         source: "ip2region",
@@ -137,7 +137,7 @@ describe("GET /api/ip", () => {
     const app = createApp(async (ip) => {
       receivedIp = ip;
       return {
-        ip: ip!,
+        ip: ip ?? "",
         version: 4 as const,
         location: mockLocation,
         source: "ip2region",
@@ -162,7 +162,7 @@ describe("GET /api/ip", () => {
     const app = createApp(async (ip) => {
       receivedIp = ip;
       return {
-        ip: ip!,
+        ip: ip ?? "",
         version: 4 as const,
         location: mockLocation,
         source: "ip2region",
@@ -190,7 +190,7 @@ describe("GET /api/ip", () => {
     const app = createApp(async (ip) => {
       receivedIp = ip;
       return {
-        ip: ip!,
+        ip: ip ?? "",
         version: 4 as const,
         location: mockLocation,
         source: "ip2region",
@@ -218,7 +218,7 @@ describe("GET /api/ip", () => {
     const app = createApp(async (ip) => {
       receivedIp = ip;
       return {
-        ip: ip!,
+        ip: ip ?? "",
         version: 4 as const,
         location: mockLocation,
         source: "ip2region",

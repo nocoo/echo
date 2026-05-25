@@ -131,6 +131,6 @@ describe("api e2e", () => {
 
     const body = (await res.json()) as { location: { countryCode: string } | null };
     expect(body.location).not.toBeNull();
-    expect(body.location!.countryCode).toBe("US");
+    expect(body.location?.countryCode).toBe("US");
   });
 });

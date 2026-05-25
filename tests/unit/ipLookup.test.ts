@@ -37,12 +37,12 @@ describe("lookupIp", () => {
 
     const result = await lookupIp("1.2.3.4");
     expect(result).not.toBeNull();
-    expect(result!.ip).toBe("1.2.3.4");
-    expect(result!.version).toBe(4);
-    expect(result!.location).not.toBeNull();
-    expect(result!.source).toBe("ip2region");
-    expect(result!.attribution).toBeInstanceOf(Array);
-    expect(typeof result!.latencyMs).toBe("number");
+    expect(result?.ip).toBe("1.2.3.4");
+    expect(result?.version).toBe(4);
+    expect(result?.location).not.toBeNull();
+    expect(result?.source).toBe("ip2region");
+    expect(result?.attribution).toBeInstanceOf(Array);
+    expect(typeof result?.latencyMs).toBe("number");
   });
 
   test("uses cache on second call", async () => {
@@ -55,7 +55,7 @@ describe("lookupIp", () => {
 
     const result1 = await lookupIp("1.2.3.4");
     const result2 = await lookupIp("1.2.3.4");
-    expect(result1!.location).toEqual(result2!.location);
+    expect(result1?.location).toEqual(result2?.location);
   });
 
   test("detail mode includes providers array", async () => {
@@ -68,9 +68,9 @@ describe("lookupIp", () => {
 
     const result = await lookupIp("1.2.3.4", true);
     expect(result).not.toBeNull();
-    expect(result!.providers).toBeInstanceOf(Array);
-    expect(result!.providers!.length).toBe(4);
-    expect(result!.providers![0]!.name).toBe("ip2region");
+    expect(result?.providers).toBeInstanceOf(Array);
+    expect(result?.providers?.length).toBe(4);
+    expect(result?.providers?.[0]?.name).toBe("ip2region");
   });
 
   test("non-detail mode does not include providers array", async () => {
@@ -82,7 +82,7 @@ describe("lookupIp", () => {
     };
 
     const result = await lookupIp("1.2.3.4", false);
-    expect(result!.providers).toBeUndefined();
+    expect(result?.providers).toBeUndefined();
   });
 
   test("getProviders returns all 4 providers", () => {
@@ -113,8 +113,8 @@ describe("lookupIp", () => {
 
     const result = await lookupIp("2001:db8::1");
     expect(result).not.toBeNull();
-    expect(result!.ip).toBe("2001:db8::1");
-    expect(result!.version).toBe(6);
+    expect(result?.ip).toBe("2001:db8::1");
+    expect(result?.version).toBe(6);
   });
 
   test("handles provider errors gracefully", async () => {
@@ -125,10 +125,9 @@ describe("lookupIp", () => {
       },
     };
 
-    // ip2region throws but MMDB providers return null (mocked) — not all errored
     const result = await lookupIp("1.2.3.4");
     expect(result).not.toBeNull();
-    expect(result!.ip).toBe("1.2.3.4");
+    expect(result?.ip).toBe("1.2.3.4");
   });
 
   test("throws when all providers fail", async () => {
@@ -139,7 +138,6 @@ describe("lookupIp", () => {
       },
     };
 
-    // Mock maxmind to throw for all MMDB providers
     const maxmind = await import("maxmind");
     vi.mocked(maxmind.default.open).mockRejectedValue(new Error("file not found"));
 

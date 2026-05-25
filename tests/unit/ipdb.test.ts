@@ -27,9 +27,7 @@ function setCache(type: "v4" | "v6", loadedAt: number) {
       loadedAt,
     };
 
-  if (!globalCache.__ipdbCache) {
-    globalCache.__ipdbCache = {};
-  }
+  globalCache.__ipdbCache ??= {};
 
   globalCache.__ipdbCache[type] = entry;
   return entry;
@@ -110,7 +108,7 @@ describe("ipdb cache", () => {
   });
 
   test("loadClient uses provided searchers", async () => {
-    const readFileFn = async () => {};
+    const readFileFn = async () => undefined;
     const v4Searcher = { search: async () => "v4" } as unknown as Searcher;
     const v6Searcher = { search: async () => "v6" } as unknown as Searcher;
 
@@ -147,7 +145,7 @@ describe("ipdb cache", () => {
 
     const client = await loadClient({
       dataDirOverride: "default-data",
-      readFileFn: async () => {},
+      readFileFn: async () => undefined,
       loadContent: () => Buffer.from("IPDB"),
       createSearchers: () => ({ v4: v4Searcher, v6: v6Searcher }),
     });
@@ -205,7 +203,7 @@ describe("ipdb cache", () => {
   });
 
   test("loadClient uses default dataDir when no override provided", async () => {
-    const readFileFn = async () => {};
+    const readFileFn = async () => undefined;
     const v4Searcher = { search: async () => "v4" } as unknown as Searcher;
     const v6Searcher = { search: async () => "v6" } as unknown as Searcher;
 

@@ -176,7 +176,7 @@ describe("selectBest", () => {
 
     selectBest(results);
 
-    expect(ip2regionResult.location!.asn).toBeNull();
-    expect(ip2regionResult.location!.asOrg).toBe("");
+    expect(ip2regionResult.location?.asn).toBeNull();
+    expect(ip2regionResult.location?.asOrg).toBe("");
   });
 });
