@@ -17,19 +17,20 @@ jobs:
       - run: bun run test:coverage
       - run: bun run typecheck
       - name: Deploy to Vercel
-        id: deploy
         run: |
           bunx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
           bunx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-          url=$(bunx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
-          echo "url=$url" >> "$GITHUB_OUTPUT"
+          bunx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       - name: Health check
         run: |
-          sleep 10
-          response=$(curl -sf "${{ steps.deploy.outputs.url }}/api/live")
+          sleep 15
+          for i in 1 2 3; do
+            response=$(curl -sf "https://echo.nocoo.cloud/api/live") && break
+            sleep 10
+          done
           echo "$response"
           echo "$response" | jq -e '.status == "ok"'
 
