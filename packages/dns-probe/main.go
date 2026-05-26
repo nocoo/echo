@@ -83,14 +83,18 @@ func handleQuery(w dns.ResponseWriter, r *dns.Msg) {
 	w.WriteMsg(msg)
 }
 
-// extractToken parses token from "{token}.d.echo.nocoo.cloud."
+// extractToken parses token from "{token}-{seq}.d.echo.nocoo.cloud."
 func extractToken(name string) string {
-	// name format: {token}.d.echo.nocoo.cloud.
+	// name format: {token}-{seq}.d.echo.nocoo.cloud.
 	parts := strings.Split(name, ".")
 	if len(parts) < 5 {
 		return ""
 	}
-	return parts[0]
+	label := parts[0]
+	if idx := strings.LastIndex(label, "-"); idx > 0 {
+		return label[:idx]
+	}
+	return label
 }
 
 func report(token, ip, query string) {

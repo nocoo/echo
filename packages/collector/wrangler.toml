@@ -4,8 +4,7 @@ compatibility_date = "2025-05-01"
 
 [[kv_namespaces]]
 binding = "ECHO"
-id = ""
-preview_id = ""
+id = "c8b08f1809d2416db8f2c0270c0a04a9"
 
 [vars]
 ENVIRONMENT = "production"
