@@ -52,6 +52,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: oven-sh/setup-bun@v2
+      - run: sudo apt-get install -y ripgrep
       - run: bun install
         working-directory: .
       - run: bun run release -- patch --yes
