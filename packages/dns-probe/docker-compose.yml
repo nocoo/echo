@@ -1,0 +1,9 @@
+services:
+  dns-probe:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "53:53/udp"
+    environment:
+      - WORKER_URL=https://echo-collector.worker.hexly.ai
+      - RESPONSE_IP=10.255.255.1
