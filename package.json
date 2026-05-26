@@ -1,38 +1,12 @@
 {
   "name": "echo",
-  "version": "2.0.4",
-  "module": "src/index.ts",
-  "type": "module",
   "private": true,
+  "workspaces": ["packages/*"],
   "scripts": {
-    "dev": "bun run src/index.ts",
-    "ipdb:fetch": "bun run scripts/ipdb-fetch.ts",
-    "ipdb:compress": "bun run scripts/ipdb-compress.ts",
-    "ipdb:update": "bun run ipdb:fetch -- --verify && bun run release -- patch --yes",
-    "test": "vitest run",
-    "test:e2e": "vitest run --config vitest.e2e.config.ts",
-    "test:all": "bun run test && bun run test:e2e",
-    "test:coverage": "vitest run --coverage",
-    "lint": "eslint --max-warnings=0 .",
-    "release": "bun run scripts/release.ts",
-    "prepare": "husky",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "hono": "^4.12.22",
-    "ip2region.js": "^3.1.8",
-    "lru-cache": "^11.5.0",
-    "maxmind": "^5.0.6"
+    "prepare": "husky"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "@types/bun": "latest",
-    "@vitest/coverage-v8": "^4.1.7",
-    "eslint": "^10.4.0",
-    "husky": "^9.1.7",
-    "typescript": "^6.0.3",
-    "typescript-eslint": "^8.59.4",
-    "vitest": "^4.1.7"
+    "husky": "^9.1.7"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
