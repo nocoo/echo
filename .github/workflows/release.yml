@@ -9,10 +9,14 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/ip-service
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install
+        working-directory: .
       - run: bun run ipdb:fetch --verify
       - run: bun run test:coverage
       - run: bun run typecheck
@@ -25,6 +29,7 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       - name: Health check
+        working-directory: .
         run: |
           sleep 15
           for i in 1 2 3; do
@@ -37,6 +42,9 @@ jobs:
   weekly-bump:
     if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/ip-service
     permissions:
       contents: write
     steps:
@@ -44,7 +52,9 @@ jobs:
         with:
           fetch-depth: 0
       - uses: oven-sh/setup-bun@v2
+      - run: sudo apt-get install -y ripgrep
       - run: bun install
+        working-directory: .
       - run: bun run release -- patch --yes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

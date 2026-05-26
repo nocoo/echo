@@ -38,3 +38,7 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .vercel
 .env*
 .claude/
+
+# Go binaries
+packages/dns-probe/dns-probe
+packages/dns-probe/echo-dns-probe

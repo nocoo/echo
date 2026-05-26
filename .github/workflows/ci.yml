@@ -12,8 +12,9 @@ jobs:
     uses: nocoo/base-ci/.github/workflows/bun-quality.yml@v2026.2
     with:
       ignore-scripts: true
+      working-directory: packages/ip-service
       test-command: "bun run test:coverage"
-      typecheck-command: "true"
+      typecheck-command: "bun run typecheck"
       enable-l2: "true"
       l2-command: "bun run test:e2e"
     secrets: inherit

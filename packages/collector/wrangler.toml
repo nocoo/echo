@@ -1,0 +1,11 @@
+name = "echo-collector"
+main = "src/index.ts"
+compatibility_date = "2025-05-01"
+
+[[kv_namespaces]]
+binding = "ECHO"
+id = ""
+preview_id = ""
+
+[vars]
+ENVIRONMENT = "production"

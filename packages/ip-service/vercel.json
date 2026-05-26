@@ -1,0 +1,14 @@
+{
+  "git": {
+    "deploymentEnabled": false
+  },
+  "buildCommand": "bun run ipdb:fetch && bun run ipdb:compress",
+  "devCommand": "bun run dev",
+  "installCommand": "bun install",
+  "framework": "hono",
+  "functions": {
+    "src/**": {
+      "includeFiles": "data/**"
+    }
+  }
+}

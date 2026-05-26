@@ -34,8 +34,9 @@ import {
 // ---------------------------------------------------------------------------
 
 const PROJECT_ROOT = pathResolve(import.meta.dirname ?? '.', '..');
+const REPO_ROOT = pathResolve(PROJECT_ROOT, '../..');
 const PACKAGE_JSON = pathResolve(PROJECT_ROOT, 'package.json');
-const CHANGELOG_MD = pathResolve(PROJECT_ROOT, 'CHANGELOG.md');
+const CHANGELOG_MD = pathResolve(REPO_ROOT, 'CHANGELOG.md');
 
 // Auto-detect project name from package.json
 function readProjectName(): string {
@@ -364,7 +365,7 @@ async function main(): Promise<void> {
   } else {
     await runOrDie(
       'git',
-      ['add', 'package.json', 'bun.lock', 'CHANGELOG.md'],
+      ['add', PACKAGE_JSON, pathResolve(REPO_ROOT, 'bun.lock'), CHANGELOG_MD],
       'Failed to stage files',
     );
     const commitResult = await run('git', [

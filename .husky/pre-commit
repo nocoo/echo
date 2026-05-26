@@ -1,6 +1,8 @@
 # === Quality Gate: pre-commit ===
 # L1 + G1 + G2a (6DQ standard)
+cd packages/ip-service
 bun run typecheck
 bun run lint
 bun run test:coverage
+cd ../..
 gitleaks protect --staged --no-banner
