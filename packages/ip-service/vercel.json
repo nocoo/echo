@@ -2,7 +2,8 @@
   "git": {
     "deploymentEnabled": false
   },
-  "buildCommand": "bun install && bun run ipdb:fetch && bun run ipdb:compress",
+  "buildCommand": "bun run ipdb:fetch && bun run ipdb:compress",
   "devCommand": "bun run dev",
-  "installCommand": "bun install"
+  "installCommand": "bun install",
+  "framework": "hono"
 }
