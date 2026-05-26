@@ -194,6 +194,79 @@ ns2  A     <VPS2_IP>
 
 Vercel 项目设置中将 Root Directory 改为 `packages/ip-service`。
 
+## 使用方法
+
+### 命令行快速检测
+
+```bash
+# 生成随机 token
+TOKEN=$(openssl rand -hex 6)
+
+# 触发 5 轮 DNS 查询
+for i in 1 2 3 4 5; do
+  dig ${TOKEN}-${i}.d.echo.nocoo.cloud +short +timeout=3 > /dev/null &
+done
+wait
+
+# 等待 dns-probe 上报（2-3 秒）
+sleep 3
+
+# 获取结果
+curl -s https://echo-collector.worker.hexly.ai/result/${TOKEN}
+# → {"token":"<token>","dns_servers":["114.114.114.114","8.8.8.8"],"count":2}
+```
+
+结果中的 `dns_servers` 即为你的 DNS resolver 出口 IP 列表。如果出现非预期的 IP（不属于你配置的 DNS 服务商），说明存在 DNS 泄露。
+
+### 浏览器 / 客户端调用
+
+```typescript
+async function dnsLeakTest(rounds = 5) {
+  const token = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
+
+  // 1. 触发 DNS 解析（每次用不同子域名，绕过缓存）
+  for (let i = 1; i <= rounds; i++) {
+    const img = new Image();
+    img.src = `http://${token}-${i}.d.echo.nocoo.cloud/pixel.gif`;
+    await new Promise(r => setTimeout(r, 600));
+  }
+
+  // 2. 等待 dns-probe 上报
+  await new Promise(r => setTimeout(r, 3000));
+
+  // 3. 获取结果
+  const res = await fetch(`https://echo-collector.worker.hexly.ai/result/${token}`);
+  const { dns_servers, count } = await res.json();
+
+  return { dns_servers, count }; // ["114.114.114.114", ...]
+}
+```
+
+### 检测原理
+
+1. 客户端请求随机子域名 `{token}-{seq}.d.echo.nocoo.cloud`
+2. 本地 DNS resolver 递归查询，经 NS 委派到达 dns-probe（jp2:53/UDP）
+3. dns-probe 提取查询来源 IP（即 resolver 的出口 IP），上报给 collector Worker
+4. Worker 将 IP 写入 KV（key: `dns:{token}`，TTL 5 分钟，自动去重）
+5. 客户端请求 `/result/{token}` 获取所有被探测到的 resolver IP
+
+### 结果解读
+
+| 场景 | dns_servers 结果 | 含义 |
+|------|-----------------|------|
+| 正常 | 仅包含你配置的 DNS（如 1.1.1.1） | 无泄露 |
+| 泄露 | 出现 ISP 默认 DNS（如 114.114.114.114） | VPN/代理 DNS 泄露 |
+| 多个 IP | 2-3 个同运营商 IP | 正常 — DNS 负载均衡或 anycast |
+| 空结果 | `[]` | token 过期（>5min）或查询未到达 dns-probe |
+
+### API 接口
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/report/{token}` | POST | dns-probe 上报（内部使用） |
+| `/result/{token}` | GET | 获取检测结果 |
+| `/health` | GET | 健康检查 |
+
 ## 安全考量
 
 | 风险 | 缓解措施 |
@@ -203,40 +276,15 @@ Vercel 项目设置中将 Root Directory 改为 `packages/ip-service`。
 | DDoS 打 DNS probe 53 端口 | VPS 层面做 rate limit（iptables），Worker 侧 KV 写入有 CF 自身的速率保护 |
 | 返回的内网 IP 被恶意利用 | `10.255.255.1` 不可路由，浏览器发起的 HTTP 请求会超时，无实际风险 |
 
-## 客户端调用流程（snaky 或浏览器）
-
-```typescript
-async function dnsLeakTest(rounds = 5) {
-  const token = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
-
-  // 1. 触发 DNS 解析
-  for (let i = 1; i <= rounds; i++) {
-    const img = new Image();
-    img.src = `http://${token}-${i}.d.echo.nocoo.cloud/pixel.gif`;
-    await sleep(600);
-  }
-
-  // 2. 等待 DNS probe 上报
-  await sleep(2000);
-
-  // 3. 获取结果
-  const res = await fetch(`https://echo-collector.worker.hexly.ai/result/${token}`);
-  const { dns_servers } = await res.json();
-
-  return dns_servers; // ["114.114.114.114", ...]
-}
-```
-
 ## 部署清单
 
-| 步骤 | 操作 | 负责方 |
-|------|------|--------|
-| 1 | echo 项目改造为 monorepo | 开发 |
-| 2 | Cloudflare DNS 添加 NS 委派记录 | 手动配置 |
-| 3 | VPS 部署 dns-probe Docker 容器 | docker compose up -d |
-| 4 | 部署 collector Worker + 绑定 KV | wrangler deploy |
-| 5 | Vercel 项目设置 Root Directory | 手动配置 |
-| 6 | 验证端到端流程 | dig + curl 手动测试 |
+| 步骤 | 操作 | 状态 |
+|------|------|------|
+| 1 | echo 项目改造为 monorepo | ✅ Done |
+| 2 | Cloudflare DNS 添加 NS 委派记录 | ✅ Done (`d` NS → `ns1`, `ns1` A → 74.226.88.37) |
+| 3 | VPS 部署 dns-probe Docker 容器 | ✅ Done (jp2.nocoo.cloud:53/UDP) |
+| 4 | 部署 collector Worker + 绑定 KV | ✅ Done (echo-collector.worker.hexly.ai) |
+| 5 | 验证端到端流程 | ✅ Done |
 
 ## 验证方法
 
