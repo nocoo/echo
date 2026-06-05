@@ -1,6 +1,6 @@
 module github.com/nocoo/echo-dns-probe
 
-go 1.26.3
+go 1.26.4
 
 require github.com/miekg/dns v1.1.72
 
