@@ -9,12 +9,13 @@ on:
 
 jobs:
   quality:
-    uses: nocoo/base-ci/.github/workflows/bun-quality.yml@v2026.2
+    uses: nocoo/base-ci/.github/workflows/bun-quality.yml@v2026.4
     with:
       ignore-scripts: true
-      working-directory: packages/ip-service
-      test-command: "bun run test:coverage"
-      typecheck-command: "bun run typecheck"
+      test-command: "cd packages/ip-service && bun run test:coverage"
+      typecheck-command: "cd packages/ip-service && bun run typecheck"
+      lint-command: "cd packages/ip-service && bun run lint"
+      osv-config: "osv-scanner.toml"
       enable-l2: "true"
-      l2-command: "bun run test:e2e"
+      l2-command: "cd packages/ip-service && bun run test:e2e"
     secrets: inherit
