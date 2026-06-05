@@ -1,5 +1,37 @@
 # Changelog
 
+## [v2.0.5] - 2026-06-05
+
+### Added
+- Monorepo restructure with DNS leak detection packages
+- Add collector package (Cloudflare Worker for DNS results)
+- Add dns-probe package (Go authoritative DNS server)
+
+### Changed
+- Bump dns-probe alpine runtime 3.21 → 3.23
+- Bump dns-probe go directive 1.26.3 → 1.26.4
+- Bump dns-probe indirect deps
+- Bump collector dev deps
+- Bump ip-service patch/minor deps
+- Add DNS leak detection usage guide
+- Add DNS leak detection infrastructure maintenance guide
+- Update workflows for monorepo directory layout
+- Restructure as Bun workspace monorepo
+
+### Fixed
+- Dns-probe token extraction and collector KV binding
+- Deploy from packages/ip-service, remove rootDirectory dependency
+- Run vercel deploy from repo root to avoid double rootDirectory
+- Use remote Vercel build instead of local prebuilt
+- Add includeFiles for data in vercel.json, install rg in CI
+- Add DOM lib to tsconfig and update vercel.json for monorepo deploy
+- Update release script paths for monorepo layout
+- Update ip-service Dockerfile for monorepo build context
+- Remove accidentally committed Go binary, update gitignore
+
+### Removed
+- Drop bun-types, unify on @types/bun
+
 ## [v2.0.4] - 2026-05-25
 
 ### Changed
