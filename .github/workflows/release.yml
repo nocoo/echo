@@ -52,6 +52,10 @@ jobs:
       - run: sudo apt-get install -y ripgrep
       - run: bun install
         working-directory: .
+      - name: Configure git identity
+        run: |
+          git config user.name "nocoo"
+          git config user.email "nocoo@hexly.ai"
       - run: bun run release -- patch --yes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
