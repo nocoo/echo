@@ -18,7 +18,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "hono": "^4.12.23",
+    "hono": "^4.12.25",
     "ip2region.js": "^3.1.8",
     "lru-cache": "^11.5.1",
     "maxmind": "^5.0.6"
@@ -30,7 +30,7 @@
     "eslint": "^10.4.1",
     "mmdb-lib": "^3.0.2",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.60.1",
+    "typescript-eslint": "^8.61.0",
     "vitest": "^4.1.8"
   }
 }
