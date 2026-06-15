@@ -1,5 +1,21 @@
 # Changelog
 
+## [v2.0.7] - 2026-06-15
+
+### Changed
+- Bump @cloudflare/workers-types 4.20260612.1 → 4.20260613.1
+- Bump @cloudflare/workers-types 4.20260611.1 → 4.20260612.1
+- Bump eslint 10.4.1 → 10.5.0 in ip-service
+- Override esbuild to ^0.28.1 (security)
+- Bump collector dev deps
+- Bump ip-service deps
+
+### Fixed
+- Disable Git-based preview deploys at repo root
+- Disable husky in weekly-bump release job
+- Add git identity to weekly-bump job
+- Drop unsupported working-directory input, use cd in commands
+
 ## [v2.0.6] - 2026-06-05
 
 ## [v2.0.5] - 2026-06-05
