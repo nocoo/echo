@@ -35,7 +35,7 @@ const SOURCES: Source[] = [
   },
   {
     name: "ip-location-db-city.mmdb",
-    url: "https://github.com/sapics/ip-location-db/raw/main/dbip-city-mmdb/dbip-city-ipv4.mmdb",
+    url: "https://github.com/sapics/ip-location-db/releases/latest/download/dbip-city-ipv4.mmdb",
     minSize: 5_000_000,
   },
   {
