@@ -1,5 +1,26 @@
 # Changelog
 
+## [v2.0.8] - 2026-06-22
+
+### Changed
+- Bump @cloudflare/workers-types to 4.20260621.1
+- Bump @cloudflare/workers-types 4.20260619.1 → 4.20260620.1 in collector
+- Bump wrangler 4.102.0 → 4.103.0 in collector
+- Bump @cloudflare/workers-types 4.20260617.1 → 4.20260619.1 in collector
+- Bump hono 4.12.25 → 4.12.26 in ip-service
+- Pin base-ci reusable workflow to v2026.5 SHA
+- Bump wrangler to ^4.102.0 to pull undici 7.28.0
+- Bump @cloudflare/workers-types 4.20260616.1 → 4.20260617.1 (#46)
+- Bump wrangler 4.100.0 → 4.101.0
+- Bump @cloudflare/workers-types 4.20260615.1 → 4.20260616.1
+- Bump @cloudflare/workers-types 4.20260613.1 → 4.20260615.1
+- Bump typescript-eslint 8.61.0 → 8.61.1
+- Bump vitest & @vitest/coverage-v8 4.1.8 → 4.1.9
+
+### Fixed
+- Update dbip-city mmdb source to GitHub Releases
+- Pin vite & ws via root overrides to patch security advisories
+
 ## [v2.0.7] - 2026-06-15
 
 ### Changed
