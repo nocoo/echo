@@ -1,5 +1,19 @@
 # Changelog
 
+## [v2.0.9] - 2026-06-29
+
+### Changed
+- Bump @cloudflare/workers-types 4.20260626.1 → 4.20260628.1 in collector
+- Bump eslint 10.5.0 → 10.6.0 in ip-service
+- Bump @cloudflare/workers-types 4.20260625.1 → 4.20260626.1 in collector
+- Bump wrangler 4.104.0 → 4.105.0 in collector
+- Bump @cloudflare/workers-types 4.20260624.1 → 4.20260625.1 in collector
+- Bump @cloudflare/workers-types 4.20260623.1 → 4.20260624.1 in collector
+- Bump hono 4.12.26 → 4.12.27 in ip-service
+- Bump wrangler 4.103.0 → 4.104.0 in collector
+- Bump @cloudflare/workers-types 4.20260621.1 → 4.20260623.1 in collector
+- Bump typescript-eslint to 8.62.0 in ip-service (#60)
+
 ## [v2.0.8] - 2026-06-22
 
 ### Changed
