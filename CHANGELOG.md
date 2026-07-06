@@ -1,5 +1,19 @@
 # Changelog
 
+## [v2.0.10] - 2026-07-06
+
+### Changed
+- Bump @cloudflare/workers-types 5.20260704.1 → 5.20260705.1 in collector
+- Bump @cloudflare/workers-types 5.20260703.1 → 5.20260704.1 in collector
+- Bump @cloudflare/workers-types 4.20260702.1 → 5.20260703.1 in collector
+- Bump wrangler 4.106.0 → 4.107.0 in collector
+- Bump @cloudflare/workers-types 4.20260701.1 → 4.20260702.1 in collector
+- Add root .npmrc for supply chain security baseline
+- Bump @cloudflare/workers-types 4.20260630.1 → 4.20260701.1 in collector (#84)
+- Bump wrangler 4.105.0 → 4.106.0 in collector
+- Bump @cloudflare/workers-types 4.20260629.1 → 4.20260630.1 in collector
+- Upgrade dependencies (batch 2026-06-30) (#79)
+
 ## [v2.0.9] - 2026-06-29
 
 ### Changed
