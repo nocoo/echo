@@ -18,7 +18,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "hono": "^4.12.27",
+    "hono": "^4.12.28",
     "ip2region.js": "^3.1.8",
     "lru-cache": "^11.5.1",
     "maxmind": "^5.0.6"
