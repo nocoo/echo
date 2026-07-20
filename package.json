@@ -1,7 +1,9 @@
 {
   "name": "echo",
   "private": true,
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "prepare": "husky",
     "lint": "biome check .",

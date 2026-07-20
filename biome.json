@@ -8,11 +8,13 @@
   "files": {
     "ignoreUnknown": true,
     "includes": [
-      "**",
-      "!**/coverage/**",
-      "!**/dist/**",
-      "!**/data/**",
-      "!**/node_modules/**"
+      "packages/**",
+      "biome.json",
+      "package.json",
+      "!**/coverage",
+      "!**/dist",
+      "!**/data",
+      "!**/node_modules"
     ]
   },
   "formatter": {
