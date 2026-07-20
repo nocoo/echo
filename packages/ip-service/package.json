@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "@typescript/native-preview": "7.0.0-dev.20260707.2",
     "@vitest/coverage-v8": "^4.1.10",
     "mmdb-lib": "^3.0.2",
     "typescript": "7.0.2",
