@@ -1,5 +1,16 @@
 # Changelog
 
+## [v2.1.0] - 2026-07-20
+
+### Changed
+- Replace eslint with biome
+- Unify typescript to 7.0.2 across all packages
+- Scope biome check to packages
+
+### Fixed
+- Enable biome noUnusedExpressions
+- Fail biome lint on warnings
+
 ## [v2.0.11] - 2026-07-20
 
 ### Changed
