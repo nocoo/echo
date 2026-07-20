@@ -6,8 +6,8 @@
   ],
   "scripts": {
     "prepare": "husky",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write ."
+    "lint": "biome check --error-on-warnings .",
+    "lint:fix": "biome check --write --error-on-warnings ."
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.4",

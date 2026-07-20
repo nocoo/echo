@@ -13,7 +13,7 @@
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "test:all": "bun run test && bun run test:e2e",
     "test:coverage": "vitest run --coverage",
-    "lint": "biome check .",
+    "lint": "biome check --error-on-warnings .",
     "release": "bun run scripts/release.ts",
     "typecheck": "tsc --noEmit"
   },
