@@ -1,5 +1,10 @@
 # Changelog
 
+## [v2.1.1] - 2026-07-20
+
+### Fixed
+- Install @typescript/native-preview to unblock vercel
+
 ## [v2.1.0] - 2026-07-20
 
 ### Changed
