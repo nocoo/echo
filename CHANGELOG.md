@@ -1,5 +1,39 @@
 # Changelog
 
+## [v2.0.11] - 2026-07-20
+
+### Changed
+- Bump typescript ^6.0.3 → ^7.0.2 in collector
+- Bump @cloudflare/workers-types 5.20260718.1 → 5.20260719.1 in collector
+- Bump @cloudflare/workers-types 5.20260717.1 → 5.20260718.1 in collector
+- Bump hono 4.12.30 → 4.12.31 in ip-service
+- Bump wrangler 4.111.0 → 4.112.0 in collector
+- Bump @cloudflare/workers-types 5.20260716.1 → 5.20260717.1 in collector
+- Parse release.yml with yaml, cover named/chained/block-scalar steps
+- Guard weekly-bump against reintroducing `bun install`
+- Bump @cloudflare/workers-types 5.20260715.1 → 5.20260716.1 in collector
+- Bump wrangler 4.110.0 → 4.111.0 in collector
+- Bump @cloudflare/workers-types 5.20260713.1 → 5.20260715.1 in collector
+- Bump @cloudflare/workers-types 5.20260712.1 → 5.20260713.1 in collector
+- Bump typescript-eslint 8.63.0 → 8.64.0 in ip-service
+- Bump hono 4.12.29 → 4.12.30 in ip-service
+- Bump @cloudflare/workers-types 5.20260711.1 → 5.20260712.1 in collector
+- Bump @cloudflare/workers-types 5.20260710.1 → 5.20260711.1 in collector
+- Bump @cloudflare/workers-types 5.20260708.1 → 5.20260710.1 in collector
+- Bump eslint 10.6.0 → 10.7.0 in ip-service
+- Bump hono 4.12.28 → 4.12.29 in ip-service
+- Bump wrangler 4.107.1 → 4.110.0 in collector (#107)
+- Bump @cloudflare/workers-types 5.20260706.1 → 5.20260708.1 in collector
+- Bump wrangler 4.107.0 → 4.107.1 in collector
+- Bump lru-cache 11.5.1 → 11.5.2 in ip-service
+- Bump @cloudflare/workers-types 5.20260705.1 → 5.20260706.1 in collector
+- Bump hono 4.12.27 → 4.12.28 in ip-service
+- Bump typescript-eslint 8.62.1 → 8.63.0 in ip-service
+- Bump vitest & @vitest/coverage-v8 4.1.9 → 4.1.10 in ip-service
+
+### Fixed
+- Drop redundant bun install in weekly-bump
+
 ## [v2.0.10] - 2026-07-06
 
 ### Changed
