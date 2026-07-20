@@ -27,7 +27,7 @@
     "@types/bun": "latest",
     "@vitest/coverage-v8": "^4.1.10",
     "mmdb-lib": "^3.0.2",
-    "typescript": "^6.0.3",
+    "typescript": "7.0.2",
     "vitest": "^4.1.10",
     "yaml": "^2.9.0"
   }
