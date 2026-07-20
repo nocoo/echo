@@ -1,4 +1,4 @@
-import { describe, expect, test, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { CirclProvider } from "../../../src/services/providers/circl.js";
 import { resetMmdbCache } from "../../../src/services/providers/mmdb.js";
 

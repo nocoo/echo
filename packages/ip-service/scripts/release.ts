@@ -18,38 +18,38 @@
  *   Requires `rg` (ripgrep) for stale version verification.
  */
 
-import { spawn } from 'child_process';
-import { resolve as pathResolve } from 'path';
-import { readFileSync, writeFileSync } from 'fs';
-import * as readline from 'readline';
+import { spawn } from "node:child_process";
+import { readFileSync, writeFileSync } from "node:fs";
+import { resolve as pathResolve } from "node:path";
+import * as readline from "node:readline";
 import {
   bumpVersion,
+  type Commit,
   classifyCommits,
   formatChangelogSection,
-  type Commit,
-} from './release-utils.js';
+} from "./release-utils.js";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const PROJECT_ROOT = pathResolve(import.meta.dirname ?? '.', '..');
-const REPO_ROOT = pathResolve(PROJECT_ROOT, '../..');
-const PACKAGE_JSON = pathResolve(PROJECT_ROOT, 'package.json');
-const CHANGELOG_MD = pathResolve(REPO_ROOT, 'CHANGELOG.md');
+const PROJECT_ROOT = pathResolve(import.meta.dirname ?? ".", "..");
+const REPO_ROOT = pathResolve(PROJECT_ROOT, "../..");
+const PACKAGE_JSON = pathResolve(PROJECT_ROOT, "package.json");
+const CHANGELOG_MD = pathResolve(REPO_ROOT, "CHANGELOG.md");
 
 // Auto-detect project name from package.json
 function readProjectName(): string {
-  const raw = readFileSync(PACKAGE_JSON, 'utf-8');
+  const raw = readFileSync(PACKAGE_JSON, "utf-8");
   const match = /"name"\s*:\s*"([^"]+)"/.exec(raw);
-  return match?.[1] ?? 'project';
+  return match?.[1] ?? "project";
 }
 
 // Auto-detect CHANGELOG header format: `## [vx.y.z]` vs `## [x.y.z]`
 function detectChangelogVPrefix(): boolean {
   try {
-    const content = readFileSync(CHANGELOG_MD, 'utf-8');
-    return content.includes('## [v') || content.includes('## v');
+    const content = readFileSync(CHANGELOG_MD, "utf-8");
+    return content.includes("## [v") || content.includes("## v");
   } catch {
     return true;
   }
@@ -75,32 +75,28 @@ function run(
   return new Promise((resolve) => {
     const child = spawn(cmd, args, {
       cwd: opts?.cwd ?? PROJECT_ROOT,
-      stdio: opts?.inherit ? 'inherit' : ['ignore', 'pipe', 'pipe'],
+      stdio: opts?.inherit ? "inherit" : ["ignore", "pipe", "pipe"],
     });
 
-    let stdout = '';
-    let stderr = '';
+    let stdout = "";
+    let stderr = "";
 
     if (!opts?.inherit) {
-      child.stdout?.on('data', (d: Buffer) => {
+      child.stdout?.on("data", (d: Buffer) => {
         stdout += d.toString();
       });
-      child.stderr?.on('data', (d: Buffer) => {
+      child.stderr?.on("data", (d: Buffer) => {
         stderr += d.toString();
       });
     }
 
-    child.on('close', (code) => {
+    child.on("close", (code) => {
       resolve({ code: code ?? 1, stdout, stderr });
     });
   });
 }
 
-async function runOrDie(
-  cmd: string,
-  args: string[],
-  errorMsg: string,
-): Promise<string> {
+async function runOrDie(cmd: string, args: string[], errorMsg: string): Promise<string> {
   const result = await run(cmd, args);
   if (result.code !== 0) {
     console.error(`❌ ${errorMsg}`);
@@ -117,52 +113,43 @@ async function runOrDie(
 // ---------------------------------------------------------------------------
 
 async function getLastTag(): Promise<string | undefined> {
-  const result = await run('git', [
-    'describe',
-    '--tags',
-    '--abbrev=0',
-  ]);
+  const result = await run("git", ["describe", "--tags", "--abbrev=0"]);
   if (result.code !== 0) return undefined;
   return result.stdout.trim();
 }
 
-async function getCommitsSinceTag(
-  tag: string | undefined,
-): Promise<Commit[]> {
-  const range = tag ? `${tag}..HEAD` : 'HEAD';
-  const args = ['log', range, '--format=%H|||%s'];
-  const stdout = await runOrDie('git', args, 'Failed to read git log');
+async function getCommitsSinceTag(tag: string | undefined): Promise<Commit[]> {
+  const range = tag ? `${tag}..HEAD` : "HEAD";
+  const args = ["log", range, "--format=%H|||%s"];
+  const stdout = await runOrDie("git", args, "Failed to read git log");
 
   if (!stdout) return [];
 
   return stdout
-    .split('\n')
-    .filter((line) => line.includes('|||'))
+    .split("\n")
+    .filter((line) => line.includes("|||"))
     .map((line) => {
-      const sepIdx = line.indexOf('|||');
+      const sepIdx = line.indexOf("|||");
       return {
         hash: line.slice(0, sepIdx),
         subject: line.slice(sepIdx + 3),
       };
     })
-    .filter((c) => !c.subject.startsWith('chore: bump version to '));
+    .filter((c) => !c.subject.startsWith("chore: bump version to "));
 }
 
 function updateChangelog(newSection: string, vPrefix: boolean): void {
-  const content = readFileSync(CHANGELOG_MD, 'utf-8');
-  const marker = vPrefix ? '## [v' : '## [';
+  const content = readFileSync(CHANGELOG_MD, "utf-8");
+  const marker = vPrefix ? "## [v" : "## [";
   // Also check for headerless format like `## v1.1.0`
-  const idx = Math.min(
-    ...[content.indexOf(marker), content.indexOf('## v')].filter((i) => i >= 0),
-  );
+  const idx = Math.min(...[content.indexOf(marker), content.indexOf("## v")].filter((i) => i >= 0));
 
   let updated: string;
   if (idx === Infinity) {
     // No existing entries — append after header
-    updated = content.trimEnd() + '\n\n' + newSection + '\n';
+    updated = `${content.trimEnd()}\n\n${newSection}\n`;
   } else {
-    updated =
-      content.slice(0, idx) + newSection + '\n\n' + content.slice(idx);
+    updated = `${content.slice(0, idx) + newSection}\n\n${content.slice(idx)}`;
   }
 
   writeFileSync(CHANGELOG_MD, updated);
@@ -173,7 +160,7 @@ function updateChangelog(newSection: string, vPrefix: boolean): void {
 // ---------------------------------------------------------------------------
 
 function readCurrentVersion(): string {
-  const raw = readFileSync(PACKAGE_JSON, 'utf-8');
+  const raw = readFileSync(PACKAGE_JSON, "utf-8");
   const match = VERSION_FIELD_RE.exec(raw);
   if (!match) {
     console.error('❌ Could not find "version" field in package.json');
@@ -182,17 +169,17 @@ function readCurrentVersion(): string {
   const fullMatch = match[0];
   const verMatch = /\d+\.\d+\.\d+/.exec(fullMatch);
   if (!verMatch) {
-    console.error('❌ Could not parse version from package.json');
+    console.error("❌ Could not parse version from package.json");
     process.exit(1);
   }
   return verMatch[0];
 }
 
 function updatePackageJson(newVersion: string): void {
-  const raw = readFileSync(PACKAGE_JSON, 'utf-8');
+  const raw = readFileSync(PACKAGE_JSON, "utf-8");
   const updated = raw.replace(VERSION_FIELD_RE, `$1${newVersion}$2`);
   if (updated === raw) {
-    console.error('❌ Failed to update version in package.json');
+    console.error("❌ Failed to update version in package.json");
     process.exit(1);
   }
   writeFileSync(PACKAGE_JSON, updated);
@@ -211,7 +198,7 @@ function confirm(message: string): Promise<boolean> {
     rl.question(`${message} [Y/n] `, (answer) => {
       rl.close();
       const a = answer.trim().toLowerCase();
-      resolve(a === '' || a === 'y' || a === 'yes');
+      resolve(a === "" || a === "y" || a === "yes");
     });
   });
 }
@@ -222,43 +209,38 @@ function confirm(message: string): Promise<boolean> {
 
 async function main(): Promise<void> {
   // --- Parse args ---
-  const FLAGS = ['--dry-run', '--yes', '-y'];
-  const rawArgs = process.argv.slice(2).filter((a) => a !== '--');
-  const isDryRun = rawArgs.includes('--dry-run');
-  const bumpArg =
-    rawArgs.find((a) => !FLAGS.includes(a)) ?? 'patch';
+  const FLAGS = ["--dry-run", "--yes", "-y"];
+  const rawArgs = process.argv.slice(2).filter((a) => a !== "--");
+  const isDryRun = rawArgs.includes("--dry-run");
+  const bumpArg = rawArgs.find((a) => !FLAGS.includes(a)) ?? "patch";
 
   if (isDryRun) {
-    console.log('🏜️  Dry-run mode — no changes will be made\n');
+    console.log("🏜️  Dry-run mode — no changes will be made\n");
   }
 
   // --- Phase 0: Preflight ---
-  console.log('📋 Preflight checks...\n');
+  console.log("📋 Preflight checks...\n");
 
   // Clean working tree
-  const status = await runOrDie(
-    'git',
-    ['status', '--porcelain'],
-    'Failed to check git status',
-  );
+  const status = await runOrDie("git", ["status", "--porcelain"], "Failed to check git status");
   if (status) {
-    console.error('❌ Working tree is not clean. Commit or stash changes first.');
+    console.error("❌ Working tree is not clean. Commit or stash changes first.");
     console.error(status);
     process.exit(1);
   }
 
   // On a branch
   const branch = await runOrDie(
-    'git',
-    ['symbolic-ref', '--short', 'HEAD'],
-    'Detached HEAD — checkout a branch first',
+    "git",
+    ["symbolic-ref", "--short", "HEAD"],
+    "Detached HEAD — checkout a branch first",
   );
 
   // gh auth
-  const ghResult = await run('gh', ['auth', 'status']);
+  const ghResult = await run("gh", ["auth", "status"]);
   const ghAuthed = ghResult.code === 0;
   if (!ghAuthed) {
-    console.log('⚠️  gh CLI not authenticated — will skip GitHub release');
+    console.log("⚠️  gh CLI not authenticated — will skip GitHub release");
   }
 
   // Current version & bump
@@ -273,194 +255,168 @@ async function main(): Promise<void> {
   console.log(`   New version:     ${newVersion}`);
   console.log(`   Bump type:       ${bumpArg}`);
   console.log(`   Branch:          ${branch}`);
-  console.log(`   Last tag:        ${lastTag ?? '(none)'}`);
-  console.log('');
+  console.log(`   Last tag:        ${lastTag ?? "(none)"}`);
+  console.log("");
 
   // --- Phase 1: Version bump + lockfile sync ---
-  console.log('📝 Phase 1: Updating version...\n');
+  console.log("📝 Phase 1: Updating version...\n");
 
   if (isDryRun) {
-    console.log(
-      `   [dry-run] Would update package.json ${currentVersion} → ${newVersion}`,
-    );
-    console.log('   [dry-run] Would run bun install to sync lockfile');
+    console.log(`   [dry-run] Would update package.json ${currentVersion} → ${newVersion}`);
+    console.log("   [dry-run] Would run bun install to sync lockfile");
   } else {
     updatePackageJson(newVersion);
     console.log(`   ✅ package.json updated: ${currentVersion} → ${newVersion}`);
 
-    console.log('   🔄 Running bun install to sync lockfile...');
-    const installResult = await run('bun', ['install'], { inherit: true });
+    console.log("   🔄 Running bun install to sync lockfile...");
+    const installResult = await run("bun", ["install"], { inherit: true });
     if (installResult.code !== 0) {
-      console.error('❌ bun install failed');
+      console.error("❌ bun install failed");
       process.exit(1);
     }
-    console.log('   ✅ Lockfile synced');
+    console.log("   ✅ Lockfile synced");
   }
-  console.log('');
+  console.log("");
 
   // --- Phase 2: CHANGELOG ---
-  console.log('📝 Phase 2: Generating CHANGELOG...\n');
+  console.log("📝 Phase 2: Generating CHANGELOG...\n");
 
   const commits = await getCommitsSinceTag(lastTag);
   if (commits.length === 0) {
-    console.log('   ⚠️  No commits since last tag — CHANGELOG section will be empty');
+    console.log("   ⚠️  No commits since last tag — CHANGELOG section will be empty");
   }
 
   const sections = classifyCommits(commits);
   const today = new Date().toISOString().slice(0, 10);
   const changelogSection = formatChangelogSection(newVersion, today, sections, vPrefix);
 
-  console.log('   --- Generated CHANGELOG section ---');
+  console.log("   --- Generated CHANGELOG section ---");
   console.log(changelogSection);
-  console.log('   --- End ---\n');
+  console.log("   --- End ---\n");
 
   if (isDryRun) {
-    console.log('   [dry-run] Would prepend above section to CHANGELOG.md');
+    console.log("   [dry-run] Would prepend above section to CHANGELOG.md");
   } else {
     updateChangelog(changelogSection, vPrefix);
-    console.log('   ✅ CHANGELOG.md updated');
+    console.log("   ✅ CHANGELOG.md updated");
   }
-  console.log('');
+  console.log("");
 
   // --- Phase 3: Stale version verification ---
-  console.log('🔍 Phase 3: Checking for stale version strings...\n');
+  console.log("🔍 Phase 3: Checking for stale version strings...\n");
 
-  const rgResult = await run('rg', [
+  const rgResult = await run("rg", [
     currentVersion,
-    '--glob',
-    '*.ts',
-    '--glob',
-    '*.tsx',
-    '--glob',
-    '!node_modules/**',
-    '--glob',
-    '!scripts/release.ts',
-    '--glob',
-    '!tests/**',
+    "--glob",
+    "*.ts",
+    "--glob",
+    "*.tsx",
+    "--glob",
+    "!node_modules/**",
+    "--glob",
+    "!scripts/release.ts",
+    "--glob",
+    "!tests/**",
   ]);
 
   if (rgResult.code === 0 && rgResult.stdout.trim()) {
-    console.error(
-      `❌ Found stale version "${currentVersion}" in source files:`,
-    );
+    console.error(`❌ Found stale version "${currentVersion}" in source files:`);
     console.error(rgResult.stdout.trim());
     if (!isDryRun) {
-      console.error('   Aborting. Update these files before releasing.');
+      console.error("   Aborting. Update these files before releasing.");
       process.exit(1);
     } else {
-      console.log('   [dry-run] Would abort here in a real run');
+      console.log("   [dry-run] Would abort here in a real run");
     }
   } else {
-    console.log('   ✅ No stale version strings found');
+    console.log("   ✅ No stale version strings found");
   }
-  console.log('');
+  console.log("");
 
   // --- Phase 4: Commit ---
-  console.log('💾 Phase 4: Committing...\n');
+  console.log("💾 Phase 4: Committing...\n");
 
   if (isDryRun) {
-    console.log(
-      `   [dry-run] Would commit: chore: bump version to ${newVersion}`,
-    );
+    console.log(`   [dry-run] Would commit: chore: bump version to ${newVersion}`);
   } else {
     await runOrDie(
-      'git',
-      ['add', PACKAGE_JSON, pathResolve(REPO_ROOT, 'bun.lock'), CHANGELOG_MD],
-      'Failed to stage files',
+      "git",
+      ["add", PACKAGE_JSON, pathResolve(REPO_ROOT, "bun.lock"), CHANGELOG_MD],
+      "Failed to stage files",
     );
-    const commitResult = await run('git', [
-      'commit',
-      '-m',
-      `chore: bump version to ${newVersion}`,
-    ]);
+    const commitResult = await run("git", ["commit", "-m", `chore: bump version to ${newVersion}`]);
     if (commitResult.code !== 0) {
-      console.error('❌ Commit failed (pre-commit hooks?)');
+      console.error("❌ Commit failed (pre-commit hooks?)");
       if (commitResult.stderr.trim()) {
         console.error(commitResult.stderr.trim());
       }
-      console.error('   Fix the issues and retry.');
+      console.error("   Fix the issues and retry.");
       process.exit(1);
     }
     console.log(`   ✅ Committed: chore: bump version to ${newVersion}`);
   }
-  console.log('');
+  console.log("");
 
   // --- Phase 5: Push + Tag + Release ---
-  console.log('🚀 Phase 5: Push, tag & release\n');
+  console.log("🚀 Phase 5: Push, tag & release\n");
 
-  console.log('   The following actions will be performed:');
+  console.log("   The following actions will be performed:");
   console.log(`     • git push`);
   console.log(`     • git tag -a v${newVersion} -m "v${newVersion}"`);
   console.log(`     • git push --tags`);
   if (ghAuthed) {
-    console.log(
-      `     • gh release create v${newVersion} --title "v${newVersion}"`,
-    );
+    console.log(`     • gh release create v${newVersion} --title "v${newVersion}"`);
   }
-  console.log('');
+  console.log("");
 
   if (isDryRun) {
-    console.log('   [dry-run] Would perform the above actions');
+    console.log("   [dry-run] Would perform the above actions");
     console.log(`\n✅ Dry run complete for v${newVersion}`);
     process.exit(0);
   }
 
-  const skipConfirm = rawArgs.includes('--yes') || rawArgs.includes('-y');
+  const skipConfirm = rawArgs.includes("--yes") || rawArgs.includes("-y");
   if (!skipConfirm) {
-    const proceed = await confirm('   Proceed?');
+    const proceed = await confirm("   Proceed?");
     if (!proceed) {
-      console.log(
-        '\n   Aborted. Commit is preserved locally — push manually when ready.',
-      );
+      console.log("\n   Aborted. Commit is preserved locally — push manually when ready.");
       process.exit(0);
     }
   }
 
   // Push
-  console.log('\n   🔄 Pushing...');
-  const pushResult = await run('git', ['push'], { inherit: true });
+  console.log("\n   🔄 Pushing...");
+  const pushResult = await run("git", ["push"], { inherit: true });
   if (pushResult.code !== 0) {
-    console.error('❌ git push failed');
-    console.error('   Recovery commands:');
+    console.error("❌ git push failed");
+    console.error("   Recovery commands:");
     console.error(`     git push`);
-    console.error(
-      `     git tag -a v${newVersion} -m "v${newVersion}"`,
-    );
+    console.error(`     git tag -a v${newVersion} -m "v${newVersion}"`);
     console.error(`     git push --tags`);
-    console.error(
-      `     gh release create v${newVersion} --title "v${newVersion}" --notes "..."`,
-    );
+    console.error(`     gh release create v${newVersion} --title "v${newVersion}" --notes "..."`);
     process.exit(1);
   }
-  console.log('   ✅ Pushed');
+  console.log("   ✅ Pushed");
 
   // Tag
   console.log(`   🔄 Creating tag v${newVersion}...`);
-  const tagResult = await run('git', [
-    'tag',
-    '-a',
-    `v${newVersion}`,
-    '-m',
-    `v${newVersion}`,
-  ]);
+  const tagResult = await run("git", ["tag", "-a", `v${newVersion}`, "-m", `v${newVersion}`]);
   if (tagResult.code !== 0) {
     console.error(`❌ Failed to create tag v${newVersion}`);
-    if (tagResult.stderr.includes('already exists')) {
-      console.error(
-        `   Tag already exists. Delete with: git tag -d v${newVersion}`,
-      );
+    if (tagResult.stderr.includes("already exists")) {
+      console.error(`   Tag already exists. Delete with: git tag -d v${newVersion}`);
     }
     process.exit(1);
   }
 
   // Push tags
-  console.log('   🔄 Pushing tags...');
-  const pushTagResult = await run('git', ['push', '--tags'], {
+  console.log("   🔄 Pushing tags...");
+  const pushTagResult = await run("git", ["push", "--tags"], {
     inherit: true,
   });
   if (pushTagResult.code !== 0) {
-    console.error('❌ git push --tags failed');
-    console.error('   Recovery: git push --tags');
+    console.error("❌ git push --tags failed");
+    console.error("   Recovery: git push --tags");
     process.exit(1);
   }
   console.log(`   ✅ Tag v${newVersion} pushed`);
@@ -468,18 +424,18 @@ async function main(): Promise<void> {
   // GitHub Release
   if (ghAuthed) {
     console.log(`   🔄 Creating GitHub release v${newVersion}...`);
-    const releaseResult = await run('gh', [
-      'release',
-      'create',
+    const releaseResult = await run("gh", [
+      "release",
+      "create",
       `v${newVersion}`,
-      '--title',
+      "--title",
       `v${newVersion}`,
-      '--notes',
+      "--notes",
       changelogSection,
     ]);
 
     if (releaseResult.code !== 0) {
-      console.error('⚠️  GitHub release creation failed (tag is pushed)');
+      console.error("⚠️  GitHub release creation failed (tag is pushed)");
       console.error(
         `   Create manually: gh release create v${newVersion} --title "v${newVersion}"`,
       );
@@ -493,21 +449,21 @@ async function main(): Promise<void> {
   }
 
   // Summary
-  console.log('\n' + '='.repeat(50));
+  console.log(`\n${"=".repeat(50)}`);
   console.log(`✅ Released v${newVersion}`);
   console.log(`   📋 Commit:  chore: bump version to ${newVersion}`);
   console.log(`   🏷️  Tag:     v${newVersion}`);
   if (ghAuthed) {
-    const repoUrl = await run('gh', ['repo', 'view', '--json', 'url', '-q', '.url']);
+    const repoUrl = await run("gh", ["repo", "view", "--json", "url", "-q", ".url"]);
     const repo = repoUrl.stdout.trim();
     if (repo) {
       console.log(`   🔗 Release: ${repo}/releases/tag/v${newVersion}`);
     }
   }
-  console.log('='.repeat(50));
+  console.log("=".repeat(50));
 }
 
 main().catch((err: unknown) => {
-  console.error('❌ Unexpected error:', err);
+  console.error("❌ Unexpected error:", err);
   process.exit(1);
 });

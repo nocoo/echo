@@ -1,11 +1,5 @@
 import { readFile } from "node:fs/promises";
-import {
-  IPv4,
-  IPv6,
-  loadContentFromFile,
-  newWithBuffer,
-  type Searcher,
-} from "ip2region.js";
+import { IPv4, IPv6, loadContentFromFile, newWithBuffer, type Searcher } from "ip2region.js";
 import { resolveDataFile } from "../lib/dataFile.js";
 
 type IpdbType = "v4" | "v6";

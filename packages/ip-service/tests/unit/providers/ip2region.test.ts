@@ -1,9 +1,6 @@
 import { describe, expect, test } from "vitest";
-import {
-  Ip2RegionProvider,
-  parseRegion,
-} from "../../../src/services/providers/ip2region.js";
 import { globalCache } from "../../../src/services/ipdb.js";
+import { Ip2RegionProvider, parseRegion } from "../../../src/services/providers/ip2region.js";
 
 describe("Ip2RegionProvider", () => {
   test("lookup resolves IPv4 using v4 client", async () => {

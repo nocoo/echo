@@ -1,6 +1,6 @@
-import { describe, expect, test } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { describe, expect, test } from "vitest";
 import { parse as parseYaml } from "yaml";
 
 // Regression guard for the `weekly-bump` job in .github/workflows/release.yml.
@@ -78,8 +78,8 @@ function findBunInstallOffenders(steps: WorkflowStep[]): string[] {
 describe("release.yml weekly-bump job", () => {
   const job = loadWeeklyBumpJob();
   const steps: WorkflowStep[] = job.steps ?? [];
-  const runSteps = steps.filter((s): s is WorkflowStep & { run: string } =>
-    typeof s.run === "string",
+  const runSteps = steps.filter(
+    (s): s is WorkflowStep & { run: string } => typeof s.run === "string",
   );
 
   test("does not run `bun install` anywhere in the job", () => {
@@ -95,9 +95,7 @@ describe("release.yml weekly-bump job", () => {
   test("invokes the release script with --yes (non-interactive)", () => {
     // The scheduled run has no TTY; --yes skips the confirm prompt.
     const releaseStep = runSteps.find((s) => /bun\s+run\s+release\b/.test(s.run));
-    expect(releaseStep?.run, "release step missing").toMatch(
-      /bun run release -- patch --yes/,
-    );
+    expect(releaseStep?.run, "release step missing").toMatch(/bun run release -- patch --yes/);
   });
 
   test("sets HUSKY=0 on the release step so pre-commit hooks skip", () => {
@@ -125,17 +123,15 @@ describe("findBunInstallOffenders adversarial shapes", () => {
 
   test("catches a named step with `run: bun install`", () => {
     // The exact reproducer Reviewer-02 called out in STU-1955.
-    expect(
-      findBunInstallOffenders([
-        { name: "Install dependencies", run: "bun install" },
-      ]),
-    ).toEqual(["bun install"]);
+    expect(findBunInstallOffenders([{ name: "Install dependencies", run: "bun install" }])).toEqual(
+      ["bun install"],
+    );
   });
 
   test("catches `bun install --frozen-lockfile` (variants of the offending command)", () => {
-    expect(
-      findBunInstallOffenders([{ run: "bun install --frozen-lockfile" }]),
-    ).toEqual(["bun install --frozen-lockfile"]);
+    expect(findBunInstallOffenders([{ run: "bun install --frozen-lockfile" }])).toEqual([
+      "bun install --frozen-lockfile",
+    ]);
   });
 
   test("catches `bun install` chained after another command with `&&`", () => {
@@ -160,10 +156,7 @@ describe("findBunInstallOffenders adversarial shapes", () => {
 
   test("ignores steps that use actions (no `run:` key)", () => {
     expect(
-      findBunInstallOffenders([
-        { uses: "actions/checkout@v4" },
-        { uses: "oven-sh/setup-bun@v2" },
-      ]),
+      findBunInstallOffenders([{ uses: "actions/checkout@v4" }, { uses: "oven-sh/setup-bun@v2" }]),
     ).toEqual([]);
   });
 

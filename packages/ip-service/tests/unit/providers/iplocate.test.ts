@@ -1,4 +1,4 @@
-import { describe, expect, test, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { IplocateProvider } from "../../../src/services/providers/iplocate.js";
 import { resetMmdbCache } from "../../../src/services/providers/mmdb.js";
 

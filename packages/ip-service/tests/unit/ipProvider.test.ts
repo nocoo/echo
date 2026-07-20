@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import type { IpProvider, IpLocation } from "../../src/services/ipProvider.js";
+import type { IpLocation, IpProvider } from "../../src/services/ipProvider.js";
 
 describe("IpProvider interface", () => {
   test("a compliant provider satisfies the interface contract", async () => {

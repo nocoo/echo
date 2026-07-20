@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { spawn } from "node:child_process";
 import { access } from "node:fs/promises";
 import path from "node:path";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 const baseUrl = "http://127.0.0.1:7010";
 const liveUrl = `${baseUrl}/api/live`;
@@ -103,7 +103,11 @@ describe("api e2e", () => {
 
     expect(res.status).toBe(200);
 
-    interface ProviderEntry { name: string; location: unknown; error: boolean }
+    interface ProviderEntry {
+      name: string;
+      location: unknown;
+      error: boolean;
+    }
     const body = (await res.json()) as Record<string, unknown>;
     const providers = body.providers as ProviderEntry[];
 

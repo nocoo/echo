@@ -1,6 +1,6 @@
-import path from "node:path";
 import { existsSync } from "node:fs";
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { gunzipSync } from "node:zlib";
 
 const dataDir = process.env.IPDB_DIR ?? "data";
@@ -19,7 +19,7 @@ export async function resolveDataFile(filename: string): Promise<string> {
     return tmpPath;
   }
 
-  const gzPath = rawPath + ".gz";
+  const gzPath = `${rawPath}.gz`;
   await mkdir(tmpDir, { recursive: true });
   const compressed = await readFile(gzPath);
   const decompressed = gunzipSync(compressed);

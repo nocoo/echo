@@ -1,37 +1,39 @@
-import { describe, expect, test, beforeEach } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
+import type { CachedLookup } from "../../src/services/cache.js";
 import {
-  getCached,
-  setCached,
-  resetCache,
-  cacheSize,
-  getRemainingTTL,
   CACHE_MAX,
   CACHE_TTL_MS,
+  cacheSize,
+  getCached,
+  getRemainingTTL,
+  resetCache,
+  setCached,
 } from "../../src/services/cache.js";
-import type { CachedLookup } from "../../src/services/cache.js";
 
 beforeEach(() => {
   resetCache();
 });
 
 const makeLookup = (country: string): CachedLookup => ({
-  results: [{
-    name: "test",
-    attribution: "test",
-    location: {
-      country,
-      countryCode: "XX",
-      province: "",
-      city: "",
-      latitude: null,
-      longitude: null,
-      isp: "",
-      asn: null,
-      asOrg: "",
+  results: [
+    {
+      name: "test",
+      attribution: "test",
+      location: {
+        country,
+        countryCode: "XX",
+        province: "",
+        city: "",
+        latitude: null,
+        longitude: null,
+        isp: "",
+        asn: null,
+        asOrg: "",
+      },
+      latencyMs: 1,
+      error: false,
     },
-    latencyMs: 1,
-    error: false,
-  }],
+  ],
 });
 
 describe("LRU cache", () => {

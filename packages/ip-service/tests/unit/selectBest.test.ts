@@ -1,24 +1,26 @@
 import { describe, expect, test } from "vitest";
-import { selectBest } from "../../src/services/selectBest.js";
 import type { ProviderResult } from "../../src/services/cache.js";
 import type { IpLocation } from "../../src/services/ipProvider.js";
+import { selectBest } from "../../src/services/selectBest.js";
 
 function makeResult(name: string, location: Partial<IpLocation> | null): ProviderResult {
   return {
     name,
     attribution: `${name} attribution`,
-    location: location ? {
-      country: "",
-      countryCode: "",
-      province: "",
-      city: "",
-      latitude: null,
-      longitude: null,
-      isp: "",
-      asn: null,
-      asOrg: "",
-      ...location,
-    } : null,
+    location: location
+      ? {
+          country: "",
+          countryCode: "",
+          province: "",
+          city: "",
+          latitude: null,
+          longitude: null,
+          isp: "",
+          asn: null,
+          asOrg: "",
+          ...location,
+        }
+      : null,
     latencyMs: 5,
     error: false,
   };
@@ -26,17 +28,25 @@ function makeResult(name: string, location: Partial<IpLocation> | null): Provide
 
 describe("selectBest", () => {
   test("returns null when all results have null location", () => {
-    const results = [
-      makeResult("ip2region", null),
-      makeResult("iplocate", null),
-    ];
+    const results = [makeResult("ip2region", null), makeResult("iplocate", null)];
     expect(selectBest(results)).toBeNull();
   });
 
   test("prefers ip2region for Chinese IPs", () => {
     const results = [
-      makeResult("ip2region", { country: "中国", countryCode: "CN", province: "江苏", city: "南京" }),
-      makeResult("ip-location-db", { country: "China", countryCode: "CN", city: "Nanjing", latitude: 32.06, longitude: 118.79 }),
+      makeResult("ip2region", {
+        country: "中国",
+        countryCode: "CN",
+        province: "江苏",
+        city: "南京",
+      }),
+      makeResult("ip-location-db", {
+        country: "China",
+        countryCode: "CN",
+        city: "Nanjing",
+        latitude: 32.06,
+        longitude: 118.79,
+      }),
     ];
 
     const result = selectBest(results);
@@ -47,7 +57,15 @@ describe("selectBest", () => {
   test("prefers ip-location-db for non-Chinese IPs", () => {
     const results = [
       makeResult("ip2region", { country: "US", countryCode: "US", province: "CA", city: "LA" }),
-      makeResult("ip-location-db", { country: "United States", countryCode: "US", city: "Los Angeles", latitude: 34.05, longitude: -118.24, asn: 15169, asOrg: "GOOGLE" }),
+      makeResult("ip-location-db", {
+        country: "United States",
+        countryCode: "US",
+        city: "Los Angeles",
+        latitude: 34.05,
+        longitude: -118.24,
+        asn: 15169,
+        asOrg: "GOOGLE",
+      }),
     ];
 
     const result = selectBest(results);
@@ -69,7 +87,12 @@ describe("selectBest", () => {
 
   test("does not overwrite existing ASN", () => {
     const results = [
-      makeResult("ip-location-db", { country: "US", countryCode: "US", asn: 15169, asOrg: "GOOGLE" }),
+      makeResult("ip-location-db", {
+        country: "US",
+        countryCode: "US",
+        asn: 15169,
+        asOrg: "GOOGLE",
+      }),
       makeResult("circl", { countryCode: "US", asn: 99999, asOrg: "OTHER" }),
     ];
 
@@ -113,7 +136,13 @@ describe("selectBest", () => {
   test("non-CN ip2region result falls back to ip-location-db", () => {
     const results = [
       makeResult("ip2region", { country: "US", countryCode: "US", province: "CA" }),
-      makeResult("ip-location-db", { country: "United States", countryCode: "US", city: "LA", latitude: 34.0, longitude: -118.0 }),
+      makeResult("ip-location-db", {
+        country: "United States",
+        countryCode: "US",
+        city: "LA",
+        latitude: 34.0,
+        longitude: -118.0,
+      }),
       makeResult("circl", { countryCode: "US", asn: 7018, asOrg: "ATT" }),
     ];
 
@@ -124,7 +153,12 @@ describe("selectBest", () => {
 
   test("ASN-only ip-location-db does not win over ip2region with location", () => {
     const results = [
-      makeResult("ip2region", { country: "United States", countryCode: "US", province: "California", city: "Mountain View" }),
+      makeResult("ip2region", {
+        country: "United States",
+        countryCode: "US",
+        province: "California",
+        city: "Mountain View",
+      }),
       makeResult("ip-location-db", { asn: 15169, asOrg: "GOOGLE" }),
       makeResult("iplocate", { countryCode: "US", asn: 15169, asOrg: "GOOGLE" }),
     ];
@@ -170,7 +204,11 @@ describe("selectBest", () => {
   });
 
   test("does not mutate the original provider result when enriching ASN", () => {
-    const ip2regionResult = makeResult("ip2region", { country: "中国", countryCode: "CN", city: "南京" });
+    const ip2regionResult = makeResult("ip2region", {
+      country: "中国",
+      countryCode: "CN",
+      city: "南京",
+    });
     const circlResult = makeResult("circl", { countryCode: "CN", asn: 4134, asOrg: "CHINANET" });
     const results = [ip2regionResult, circlResult];
 

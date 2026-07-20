@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, test } from "vitest";
 import type { Searcher } from "ip2region.js";
+import { beforeEach, describe, expect, test } from "vitest";
 import {
   CACHE_TTL_MS,
   getClient,
@@ -22,10 +22,10 @@ const globalCache = globalThis as typeof globalThis & {
 const fixedTime = 1_700_000_000_000;
 
 function setCache(type: "v4" | "v6", loadedAt: number) {
-    const entry = {
-      client: { marker: type, search: async () => "" },
-      loadedAt,
-    };
+  const entry = {
+    client: { marker: type, search: async () => "" },
+    loadedAt,
+  };
 
   globalCache.__ipdbCache ??= {};
 
@@ -59,7 +59,10 @@ describe("ipdb cache", () => {
 
     const refreshed = await refreshClient({
       type: "v6",
-      current: current as unknown as { client: { search: () => Promise<string> }; loadedAt: number },
+      current: current as unknown as {
+        client: { search: () => Promise<string> };
+        loadedAt: number;
+      },
       now,
     });
 
@@ -73,7 +76,10 @@ describe("ipdb cache", () => {
     let called = false;
     const refreshed = await refreshClient({
       type: "v4",
-      current: current as unknown as { client: { search: () => Promise<string> }; loadedAt: number },
+      current: current as unknown as {
+        client: { search: () => Promise<string> };
+        loadedAt: number;
+      },
       now,
       load: async () => {
         called = true;
@@ -153,9 +159,6 @@ describe("ipdb cache", () => {
     expect(client.getIOCount?.()).toBe(0);
     expect(client.close?.()).toBeUndefined();
   });
-
-
-
 
   test("isExpired returns true when ttl exceeded", () => {
     const entry = {

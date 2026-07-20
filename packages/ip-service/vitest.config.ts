@@ -7,11 +7,7 @@ export default defineConfig({
     pool: "threads",
     // Unit tests only — e2e tests live under tests/e2e and are run via test:e2e.
     include: ["tests/unit/**/*.test.ts"],
-    exclude: [
-      "**/node_modules/**",
-      "**/dist/**",
-      "tests/e2e/**",
-    ],
+    exclude: ["**/node_modules/**", "**/dist/**", "tests/e2e/**"],
     coverage: {
       provider: "v8",
       // Vitest v4 uses AST-aware remapping by default; no flag required.

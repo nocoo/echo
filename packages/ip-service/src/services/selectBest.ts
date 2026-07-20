@@ -1,11 +1,11 @@
-import type { IpLocation } from "./ipProvider.js";
 import type { ProviderResult } from "./cache.js";
+import type { IpLocation } from "./ipProvider.js";
 
 const PRIORITY: Record<string, number> = {
-  "ip2region": 1,
+  ip2region: 1,
   "ip-location-db": 2,
-  "iplocate": 3,
-  "circl": 4,
+  iplocate: 3,
+  circl: 4,
 };
 
 export interface SelectionResult {
@@ -24,9 +24,7 @@ function sortByPriority(arr: ValidResult[]): ValidResult[] {
 }
 
 export function selectBest(results: ProviderResult[]): SelectionResult | null {
-  const nonNull = results.filter(
-    (r): r is ValidResult => r.location !== null,
-  );
+  const nonNull = results.filter((r): r is ValidResult => r.location !== null);
 
   if (nonNull.length === 0) return null;
 
@@ -44,9 +42,7 @@ export function selectBest(results: ProviderResult[]): SelectionResult | null {
     return enrichAsn(top, nonNull);
   }
 
-  const ipLocationDb = withLocation.find(
-    (r) => r.name === "ip-location-db",
-  );
+  const ipLocationDb = withLocation.find((r) => r.name === "ip-location-db");
   if (ipLocationDb) {
     return enrichAsn(ipLocationDb, nonNull);
   }
@@ -54,10 +50,7 @@ export function selectBest(results: ProviderResult[]): SelectionResult | null {
   return enrichAsn(top, nonNull);
 }
 
-function enrichAsn(
-  chosen: ValidResult,
-  all: ValidResult[],
-): SelectionResult {
+function enrichAsn(chosen: ValidResult, all: ValidResult[]): SelectionResult {
   let location = chosen.location;
 
   if (location.asn === null) {

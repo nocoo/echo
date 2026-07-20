@@ -1,6 +1,6 @@
-import { describe, expect, test, beforeEach, vi } from "vitest";
-import { lookupIp, getProviders, resetProviders } from "../../src/services/ipLookup.js";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { globalCache } from "../../src/services/ipdb.js";
+import { getProviders, lookupIp, resetProviders } from "../../src/services/ipLookup.js";
 import { resetMmdbCache } from "../../src/services/providers/mmdb.js";
 
 vi.mock("maxmind", () => ({
@@ -120,7 +120,11 @@ describe("lookupIp", () => {
   test("handles provider errors gracefully", async () => {
     globalCache.__ipdbCache = {
       v4: {
-        client: { search: async () => { throw new Error("boom"); } },
+        client: {
+          search: async () => {
+            throw new Error("boom");
+          },
+        },
         loadedAt: Date.now(),
       },
     };
@@ -133,7 +137,11 @@ describe("lookupIp", () => {
   test("throws when all providers fail", async () => {
     globalCache.__ipdbCache = {
       v4: {
-        client: { search: async () => { throw new Error("boom"); } },
+        client: {
+          search: async () => {
+            throw new Error("boom");
+          },
+        },
         loadedAt: Date.now(),
       },
     };

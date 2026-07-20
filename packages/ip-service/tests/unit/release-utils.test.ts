@@ -1,11 +1,11 @@
 import { describe, expect, test } from "vitest";
 import {
-  parseSemver,
-  compareSemver,
   bumpVersion,
-  classifyCommits,
-  formatChangelogSection,
   type Commit,
+  classifyCommits,
+  compareSemver,
+  formatChangelogSection,
+  parseSemver,
 } from "../../scripts/release-utils.js";
 
 describe("parseSemver", () => {
@@ -72,17 +72,13 @@ describe("bumpVersion", () => {
 
 describe("classifyCommits", () => {
   test("classifies feat as added", () => {
-    const commits: Commit[] = [
-      { hash: "abc", subject: "feat: add new endpoint" },
-    ];
+    const commits: Commit[] = [{ hash: "abc", subject: "feat: add new endpoint" }];
     const result = classifyCommits(commits);
     expect(result.added).toEqual(["Add new endpoint"]);
   });
 
   test("classifies fix as fixed", () => {
-    const commits: Commit[] = [
-      { hash: "abc", subject: "fix: resolve crash on startup" },
-    ];
+    const commits: Commit[] = [{ hash: "abc", subject: "fix: resolve crash on startup" }];
     const result = classifyCommits(commits);
     expect(result.fixed).toEqual(["Resolve crash on startup"]);
   });
@@ -98,17 +94,13 @@ describe("classifyCommits", () => {
   });
 
   test("classifies removal keywords as removed", () => {
-    const commits: Commit[] = [
-      { hash: "abc", subject: "chore: remove deprecated API" },
-    ];
+    const commits: Commit[] = [{ hash: "abc", subject: "chore: remove deprecated API" }];
     const result = classifyCommits(commits);
     expect(result.removed).toEqual(["Remove deprecated API"]);
   });
 
   test("skips merge commits", () => {
-    const commits: Commit[] = [
-      { hash: "abc", subject: "Merge pull request #42" },
-    ];
+    const commits: Commit[] = [{ hash: "abc", subject: "Merge pull request #42" }];
     const result = classifyCommits(commits);
     expect(result.added).toEqual([]);
     expect(result.changed).toEqual([]);
@@ -126,17 +118,13 @@ describe("classifyCommits", () => {
   });
 
   test("handles scoped conventional commits", () => {
-    const commits: Commit[] = [
-      { hash: "a", subject: "feat(auth): add login" },
-    ];
+    const commits: Commit[] = [{ hash: "a", subject: "feat(auth): add login" }];
     const result = classifyCommits(commits);
     expect(result.added).toEqual(["Add login"]);
   });
 
   test("handles non-conventional commits as changed", () => {
-    const commits: Commit[] = [
-      { hash: "a", subject: "update something" },
-    ];
+    const commits: Commit[] = [{ hash: "a", subject: "update something" }];
     const result = classifyCommits(commits);
     expect(result.changed).toEqual(["Update something"]);
   });

@@ -1,4 +1,4 @@
-import type { IpProvider, IpLocation } from "../ipProvider.js";
+import type { IpLocation, IpProvider } from "../ipProvider.js";
 import { openMmdb } from "./mmdb.js";
 
 interface IplocateAsnRecord {
@@ -16,8 +16,7 @@ interface IplocateCountryRecord {
 
 export class IplocateProvider implements IpProvider {
   readonly name = "iplocate";
-  readonly attribution =
-    "IPLocate data provided by https://iplocate.io (CC BY-SA 4.0).";
+  readonly attribution = "IPLocate data provided by https://iplocate.io (CC BY-SA 4.0).";
 
   async lookup(ip: string): Promise<IpLocation | null> {
     const [asnReader, countryReader] = await Promise.all([

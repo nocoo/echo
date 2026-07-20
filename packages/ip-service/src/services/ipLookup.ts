@@ -1,12 +1,12 @@
-import type { IpLocation, IpProvider } from "./ipProvider.js";
-import type { ProviderResult, CachedLookup } from "./cache.js";
-import { getCached, setCached, resetCache } from "./cache.js";
-import { selectBest } from "./selectBest.js";
 import { parseClientIp } from "../utils/ip.js";
+import type { CachedLookup, ProviderResult } from "./cache.js";
+import { getCached, resetCache, setCached } from "./cache.js";
+import type { IpLocation, IpProvider } from "./ipProvider.js";
+import { CirclProvider } from "./providers/circl.js";
+import { IpLocationDbProvider } from "./providers/ip-location-db.js";
 import { Ip2RegionProvider } from "./providers/ip2region.js";
 import { IplocateProvider } from "./providers/iplocate.js";
-import { IpLocationDbProvider } from "./providers/ip-location-db.js";
-import { CirclProvider } from "./providers/circl.js";
+import { selectBest } from "./selectBest.js";
 
 export type { IpLocation };
 
@@ -59,10 +59,7 @@ async function queryProvider(provider: IpProvider, ip: string): Promise<Provider
   }
 }
 
-export async function lookupIp(
-  ip: string | null,
-  detail = false,
-): Promise<LookupResult | null> {
+export async function lookupIp(ip: string | null, detail = false): Promise<LookupResult | null> {
   const parsed = parseClientIp(ip);
   if (!parsed) return null;
 
@@ -72,9 +69,7 @@ export async function lookupIp(
   }
 
   const allProviders = getProviders();
-  const results = await Promise.all(
-    allProviders.map((p) => queryProvider(p, parsed.ip)),
-  );
+  const results = await Promise.all(allProviders.map((p) => queryProvider(p, parsed.ip)));
 
   const allFailed = results.every((r) => r.error);
   if (allFailed) {
@@ -95,9 +90,7 @@ function buildResult(
 ): LookupResult {
   const selection = selectBest(cached.results);
   const totalLatency = Math.max(...cached.results.map((r) => r.latencyMs));
-  const attribution = cached.results
-    .filter((r) => r.location !== null)
-    .map((r) => r.attribution);
+  const attribution = cached.results.filter((r) => r.location !== null).map((r) => r.attribution);
 
   const result: LookupResult = {
     ip,

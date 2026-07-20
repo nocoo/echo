@@ -1,4 +1,4 @@
-import type { IpProvider, IpLocation } from "../ipProvider.js";
+import type { IpLocation, IpProvider } from "../ipProvider.js";
 import { openMmdb } from "./mmdb.js";
 
 interface CirclRecord {
@@ -9,8 +9,7 @@ interface CirclRecord {
 
 export class CirclProvider implements IpProvider {
   readonly name = "circl";
-  readonly attribution =
-    "CIRCL data provided by https://www.circl.lu (open data).";
+  readonly attribution = "CIRCL data provided by https://www.circl.lu (open data).";
 
   async lookup(ip: string): Promise<IpLocation | null> {
     const reader = await openMmdb("circl-country-asn.mmdb");

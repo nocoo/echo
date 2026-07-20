@@ -1,4 +1,4 @@
-import type { IpProvider, IpLocation } from "../ipProvider.js";
+import type { IpLocation, IpProvider } from "../ipProvider.js";
 import { openMmdb } from "./mmdb.js";
 
 interface IpLocationDbAsnRecord {

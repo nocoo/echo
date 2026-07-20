@@ -13,7 +13,7 @@
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "test:all": "bun run test && bun run test:e2e",
     "test:coverage": "vitest run --coverage",
-    "lint": "eslint --max-warnings=0 .",
+    "lint": "biome check .",
     "release": "bun run scripts/release.ts",
     "typecheck": "tsc --noEmit"
   },
@@ -24,13 +24,10 @@
     "maxmind": "^5.0.6"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
     "@types/bun": "latest",
     "@vitest/coverage-v8": "^4.1.10",
-    "eslint": "^10.7.0",
     "mmdb-lib": "^3.0.2",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.64.0",
     "vitest": "^4.1.10",
     "yaml": "^2.9.0"
   }

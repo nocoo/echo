@@ -1,7 +1,7 @@
 import { Hono } from "hono";
-import { extractClientIp } from "./utils/ip.js";
-import { lookupIp, type LookupResult } from "./services/ipLookup.js";
 import { version } from "./lib/version.js";
+import { type LookupResult, lookupIp } from "./services/ipLookup.js";
+import { extractClientIp } from "./utils/ip.js";
 
 type LookupFn = (ip: string | null, detail?: boolean) => Promise<LookupResult | null>;
 
@@ -41,8 +41,7 @@ export function createApp(
     const headerKey = c.req.header("x-api-key") ?? null;
     const authenticated = Boolean(apiKey && headerKey === apiKey);
 
-    const targetIp =
-      authenticated && queryIp ? queryIp : extractClientIp(c.req.raw.headers);
+    const targetIp = authenticated && queryIp ? queryIp : extractClientIp(c.req.raw.headers);
 
     try {
       const result = await lookup(targetIp, detail);

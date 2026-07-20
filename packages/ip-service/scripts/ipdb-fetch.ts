@@ -1,5 +1,5 @@
-import path from "node:path";
 import { mkdir } from "node:fs/promises";
+import path from "node:path";
 
 interface Source {
   name: string;
@@ -63,23 +63,18 @@ async function downloadWithRetry(source: Source): Promise<void> {
       const buffer = new Uint8Array(await res.arrayBuffer());
 
       if (buffer.byteLength < source.minSize) {
-        throw new Error(
-          `file too small: ${buffer.byteLength} bytes (min ${source.minSize})`,
-        );
+        throw new Error(`file too small: ${buffer.byteLength} bytes (min ${source.minSize})`);
       }
 
       await Bun.write(filePath, buffer);
-      console.log(
-        `✓ ${source.name} (${(buffer.byteLength / 1024 / 1024).toFixed(1)} MB)`,
-      );
+      console.log(`✓ ${source.name} (${(buffer.byteLength / 1024 / 1024).toFixed(1)} MB)`);
       return;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (attempt === maxRetries) {
-        throw new Error(
-          `failed to download ${source.name} after ${maxRetries} attempts: ${msg}`,
-          { cause: err },
-        );
+        throw new Error(`failed to download ${source.name} after ${maxRetries} attempts: ${msg}`, {
+          cause: err,
+        });
       }
       console.warn(`⚠ ${source.name} attempt ${attempt} failed: ${msg}, retrying...`);
       await new Promise((r) => setTimeout(r, 1000 * attempt));
@@ -115,7 +110,9 @@ if (verify) {
       try {
         const reader = await maxmind.default.open(filePath);
         const result = reader.get("1.1.1.1");
-        console.log(`  ✓ ${source.name}: ${result ? "data found" : "no data for 1.1.1.1 (may be normal)"}`);
+        console.log(
+          `  ✓ ${source.name}: ${result ? "data found" : "no data for 1.1.1.1 (may be normal)"}`,
+        );
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error(`  ✗ ${source.name}: ${msg}`);
