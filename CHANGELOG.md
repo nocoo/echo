@@ -1,5 +1,10 @@
 # Changelog
 
+## [v2.1.2] - 2026-07-21
+
+### Fixed
+- Revert ip-service to typescript 6.0.3 for vercel builder
+
 ## [v2.1.1] - 2026-07-20
 
 ### Fixed
