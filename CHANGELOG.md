@@ -1,5 +1,15 @@
 # Changelog
 
+## [v2.1.3] - 2026-07-27
+
+### Changed
+- Add root postcss ^8.5.18 override to fix GHSA-r28c-9q8g-f849
+- Bump @cloudflare/workers-types 5.20260721.1 → 5.20260722.1 in collector (#146)
+- Bump dns-probe golang.org/x/net 0.55.0 → 0.56.0
+- Add sharp ^0.35.3 override to fix GHSA-f88m-g3jw-g9cj
+- Bump collector wrangler 4.112→4.113 and @cloudflare/workers-types 5.20260719.1→5.20260721.1
+- Bump @biomejs/biome 2.5.4 → 2.5.5
+
 ## [v2.1.2] - 2026-07-21
 
 ### Fixed
