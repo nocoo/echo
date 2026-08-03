@@ -1,5 +1,14 @@
 # Changelog
 
+## [v2.1.4] - 2026-08-03
+
+### Changed
+- Bump collector wrangler 4.113.0 → 4.116.0
+- Bump ip-service mmdb-lib 3.0.2 → 3.0.3
+- Bump ip-service hono 4.12.31 → 4.12.32
+- Bump collector @cloudflare/workers-types 5.20260722.1 → 5.20260730.1
+- Bump @biomejs/biome 2.5.5 → 2.5.6
+
 ## [v2.1.3] - 2026-07-27
 
 ### Changed
