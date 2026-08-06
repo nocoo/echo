@@ -17,5 +17,5 @@ jobs:
       lint-command: "cd packages/ip-service && bun run lint"
       osv-config: "osv-scanner.toml"
       enable-l2: "true"
-      l2-command: "cd packages/ip-service && bun run test:e2e"
+      l2-command: "cd packages/ip-service && bun run test:e2e && bun run test:builder"
     secrets: inherit
