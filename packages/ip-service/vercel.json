@@ -4,7 +4,7 @@
   },
   "buildCommand": "bun run ipdb:fetch && bun run ipdb:compress",
   "devCommand": "bun run dev",
-  "installCommand": "bun install --production",
+  "installCommand": "bun install",
   "framework": "hono",
   "functions": {
     "src/**": {
