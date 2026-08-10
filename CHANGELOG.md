@@ -1,5 +1,29 @@
 # Changelog
 
+## [v2.1.5] - 2026-08-10
+
+### Changed
+- Bump workers types to 5.20260810.1
+- Bump workers types to 5.20260809.1
+- Bump workers types to 5.20260808.1
+- Bump wrangler to 4.120.0
+- Bump hono 4.13.0 to 4.13.1
+- Upgrade ip-service to TypeScript 7.0.2
+- Bump wrangler to 4.119.0
+- Bump biome 2.5.6 to 2.5.7
+- Bump workers types to 5.20260804.1
+- Bump hono 4.12.34 to 4.13.0
+- Pin undici override → ^7.29.0 (GHSA-4cwx-7wf7-3272)
+- Bump ip-service hono 4.12.33 → 4.13.0 (GHSA-8j4g-w8fx-2239)
+- Bump collector wrangler 4.116.0 → 4.118.0
+- Bump collector @cloudflare/workers-types 5.20260730.1 → 5.20260801.1
+- Bump ip-service hono 4.12.32 → 4.12.33
+- Bump ip-service maxmind 5.0.6 → 5.0.7
+
+### Fixed
+- Secure nanoid transitive dependency
+- Isolate TypeScript 7 from Vercel builder
+
 ## [v2.1.4] - 2026-08-03
 
 ### Changed
