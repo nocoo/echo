@@ -1,5 +1,20 @@
 # Changelog
 
+## [v2.1.6] - 2026-08-17
+
+### Changed
+- Bump wrangler to 4.123.0
+- Bump hono to 4.13.2
+- Bump golang.org/x/mod to v0.40.0
+- Bump workers types to 5.20260814.1
+- Bump workers types to 5.20260813.1
+- Bump wrangler to 4.122.0
+- Bump wrangler to 4.121.0
+- Bump workers types to 5.20260812.1
+- Bump @biomejs/biome 2.5.7 → 2.5.8
+- Bump wrangler to 4.120.1
+- Bump workers types to 5.20260811.1
+
 ## [v2.1.5] - 2026-08-10
 
 ### Changed
