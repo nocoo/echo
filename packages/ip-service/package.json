@@ -26,10 +26,10 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@vitest/coverage-v8": "4.1.11",
     "mmdb-lib": "^3.0.3",
     "typescript7": "npm:typescript@7.0.2",
-    "vitest": "^4.1.10",
+    "vitest": "4.1.11",
     "yaml": "^2.9.0"
   }
 }
