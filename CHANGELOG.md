@@ -1,5 +1,22 @@
 # Changelog
 
+## [v2.1.7] - 2026-08-24
+
+### Changed
+- Bump workers-types 5.20260822.1 → 5.20260823.1
+- Bump workers-types 5.20260821.1 → 5.20260822.1
+- Bump @biomejs/biome 2.5.9 → 2.5.10
+- Bump wrangler 4.124.0 → 4.125.0
+- Bump workers-types 5.20260820.1 → 5.20260821.1
+- Bump workers-types 5.20260819.1 → 5.20260820.1 (#220)
+- Bump vitest and coverage-v8 to 4.1.11
+- Bump workers-types 5.20260818.1 → 5.20260819.1
+- Bump wrangler to 4.124.0
+- Bump hono 4.13.2 → 4.13.3
+- Bump @cloudflare/workers-types 5.20260817.1 → 5.20260818.1
+- Bump @biomejs/biome 2.5.8 → 2.5.9
+- Bump workers types to 5.20260817.1
+
 ## [v2.1.6] - 2026-08-17
 
 ### Changed
