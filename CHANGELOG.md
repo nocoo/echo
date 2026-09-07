@@ -1,5 +1,18 @@
 # Changelog
 
+## [v2.1.9] - 2026-09-07
+
+### Changed
+- Bump workers-types to 5.20260906.1
+- Bump wrangler and workers-types
+- Bump hono to 4.13.7
+- Bump vitest to 5.0.0
+- Bump biome to 2.5.12
+- Bump biome to 2.5.11
+- Bump workers-types to 5.20260831.1
+- Bump wrangler to 4.127.1
+- Bump hono to 4.13.5
+
 ## [v2.1.8] - 2026-08-31
 
 ### Changed
