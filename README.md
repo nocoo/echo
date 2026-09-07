@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/brand/icon-rounded.png" alt="Echo logo" width="180" height="180" />
+</p>
+
 # echo
 
 An API-only IP lookup service for Vercel. Queries 4 data sources in parallel, selects the best result, and returns structured location data with sub-millisecond latency.
@@ -143,3 +147,5 @@ Menu bar latency monitor for macOS: `swiftbar/echo.1m.js`
 - `src/server.ts` — Hono HTTP routes
 - `scripts/ipdb-fetch.ts` — database downloader
 - `tests/` — unit + e2e tests
+
+Logo assets and usage: [guide](docs/08-logo-usage.md) · [identity study](https://hexly.ai/logos/echo).
