@@ -60,7 +60,7 @@ curl "https://echo-collector.worker.hexly.ai/result/${echo_dns_token}"
 
 返回字段为 `token`、`dns_servers` 和 `count`。上报与 KV 可见性可能延迟，空列表也可能表示查询未到达或记录已过期；可用同一个 token 稍后再取。DNS probe 目前监听 UDP，并处理该域名下的 A 查询。
 
-macOS 用户也可将 [SwiftBar 脚本](swiftbar/echo.1m.js) 安装到自己的 SwiftBar 插件目录，查看 RTT 和服务端耗时。脚本需要 Node.js 18+；其中的国旗显示仍读取旧字段 `iso2`，当前 API 使用 `countryCode`。
+macOS 用户也可将 [SwiftBar 脚本](swiftbar/echo.1m.js) 安装到自己的 SwiftBar 插件目录，查看 RTT 和服务端耗时。脚本需要 Node.js 18+。
 
 ## 开发
 

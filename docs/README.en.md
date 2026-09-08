@@ -60,7 +60,7 @@ curl "https://echo-collector.worker.hexly.ai/result/${echo_dns_token}"
 
 The response contains `token`, `dns_servers` and `count`. Reporting and KV visibility may be delayed. An empty list can also mean the query did not reach the probe or the record expired; retry with the same token after a short wait. The probe currently listens over UDP and handles A queries under the delegated domain.
 
-On macOS, install the [SwiftBar script](../swiftbar/echo.1m.js) in your SwiftBar plugin directory to display RTT and server processing time. It requires Node.js 18+. Its country-flag display still reads the old `iso2` field; the current API uses `countryCode`.
+On macOS, install the [SwiftBar script](../swiftbar/echo.1m.js) in your SwiftBar plugin directory to display RTT and server processing time. It requires Node.js 18+.
 
 ## Development
 

@@ -40,7 +40,7 @@ async function run() {
 
     const latency = data.latencyMs;
     const location = data.location || {};
-    const emoji = flagEmoji(location.iso2 || "");
+    const emoji = flagEmoji(location.countryCode || "");
     const color = latencyColor(rttMs);
 
     const title = typeof rttMs === "number" ? `${emoji} ${rttMs}ms` : `${emoji} --`;
