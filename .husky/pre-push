@@ -1,4 +1,9 @@
-bun run build && bun run test && bun run lint && bun run test:e2e
+set -eu
+
+bun run --cwd packages/ip-service test:builder
+bun run --cwd packages/ip-service test
+bun run lint
+bun run --cwd packages/ip-service test:e2e
 
 # G2b: dependency vulnerability scan
 osv-scanner scan --lockfile=bun.lock --config=osv-scanner.toml
