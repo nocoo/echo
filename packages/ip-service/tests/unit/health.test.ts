@@ -18,7 +18,14 @@ const mockLocation = {
 
 describe("GET /api/live", () => {
   test("returns surety-standard health response", async () => {
-    const app = createApp();
+    const app = createApp(async () => ({
+      ip: "1.1.1.1",
+      version: 4,
+      location: mockLocation,
+      source: "ip2region",
+      attribution: ["test"],
+      latencyMs: 1,
+    }));
     const res = await app.request("/api/live");
 
     expect(res.status).toBe(200);
@@ -28,10 +35,31 @@ describe("GET /api/live", () => {
     expect(body.status).toBe("ok");
     expect(body.version).toBe(version);
     expect(body.component).toBe("echo");
+    expect(body.database).toEqual({ connected: true });
     expect(typeof body.timestamp).toBe("string");
     expect(new Date(body.timestamp as string).toISOString()).toBe(body.timestamp);
     expect(typeof body.uptime).toBe("number");
     expect(body.uptime).toBeGreaterThanOrEqual(0);
+  });
+
+  test("returns uncached 503 when the IP databases cannot serve a query", async () => {
+    for (const lookup of [
+      async () => null,
+      async () => {
+        throw new Error("private-database-path");
+      },
+    ]) {
+      const res = await createApp(lookup).request("/api/live");
+      expect(res.status).toBe(503);
+      expect(res.headers.get("cache-control")).toBe("no-store");
+      const body = await res.json();
+      expect(body).toMatchObject({
+        status: "error",
+        version,
+        database: { connected: false },
+      });
+      expect(JSON.stringify(body)).not.toContain("private-database-path");
+    }
   });
 });
 

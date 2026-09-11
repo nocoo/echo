@@ -13,15 +13,25 @@ export function createApp(
 ) {
   const app = new Hono();
 
-  app.get("/api/live", (c) => {
+  app.get("/api/live", async (c) => {
     c.header("Cache-Control", "no-store");
-    return c.json({
-      status: "ok",
-      version,
-      component: "echo",
-      timestamp: new Date().toISOString(),
-      uptime: Math.round((Date.now() - bootedAt) / 1000),
-    });
+    let connected = false;
+    try {
+      connected = (await lookup("1.1.1.1")) !== null;
+    } catch {
+      connected = false;
+    }
+    return c.json(
+      {
+        status: connected ? "ok" : "error",
+        version,
+        component: "echo",
+        timestamp: new Date().toISOString(),
+        uptime: Math.round((Date.now() - bootedAt) / 1000),
+        database: { connected },
+      },
+      connected ? 200 : 503,
+    );
   });
 
   app.get("/", (c) => {

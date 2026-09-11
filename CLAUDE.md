@@ -18,6 +18,12 @@ README.md
 - Release script: `scripts/release.ts` — bumps version, generates CHANGELOG, tags, pushes, creates GitHub release
 - Requires: `gh` CLI (authenticated), `rg` (ripgrep)
 
+`GET /api/live` is public and uncached. It performs a local IP database lookup,
+returns the current package version and `status: "ok"` when the lookup service
+works, or HTTP 503 with `status: "error"` when it cannot serve a query. Keep
+database paths and raw diagnostics out of the response. Verify the deployed
+version after CI, including its next sample at `https://status.hexly.ai`.
+
 ## DNS Leak Detection Infrastructure
 
 ### Components
