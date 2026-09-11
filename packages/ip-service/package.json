@@ -1,6 +1,6 @@
 {
   "name": "@echo/ip-service",
-  "version": "2.1.9",
+  "version": "2.1.10",
   "module": "src/index.ts",
   "type": "module",
   "private": true,

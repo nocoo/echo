@@ -1,5 +1,23 @@
 # Changelog
 
+## [v2.1.10] - 2026-09-11
+
+### Added
+- Adopt echo object logo
+
+### Changed
+- Bump wrangler to 4.130.0
+- Upgrade Cloudflare workers types
+- Refresh bilingual project readmes
+- Bump wrangler to 4.129.1
+- Bump workers-types to 5.20260907.1
+
+### Fixed
+- Verify IP database availability in live checks
+- Upgrade sharp to 0.35.4
+- Use countryCode for SwiftBar flag emoji
+- Run workspace checks before pushing
+
 ## [v2.1.9] - 2026-09-07
 
 ### Changed
