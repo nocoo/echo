@@ -9,13 +9,16 @@ on:
 
 jobs:
   quality:
-    uses: nocoo/base-ci/.github/workflows/bun-quality.yml@aec4adc1a817c56790d1698329ef9398a15a754a  # v2026.5
+    uses: nocoo/base-ci/.github/workflows/quality.yml@2857469cc5206e7a4988171a1282209617996a67
     with:
-      ignore-scripts: true
+      package-manager: bun
+      runtime-version: "1.4.2"
+      install-policy: blocked
       test-command: "cd packages/ip-service && bun run test:coverage"
       typecheck-command: "cd packages/ip-service && bun run typecheck"
       lint-command: "cd packages/ip-service && bun run lint"
+      coverage-path: "packages/ip-service/coverage"
       osv-config: "osv-scanner.toml"
-      enable-l2: "true"
+      l2: true
       l2-command: "cd packages/ip-service && bun run test:e2e && bun run test:builder"
     secrets: inherit

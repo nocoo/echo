@@ -1,30 +1,99 @@
 name: Release & Deploy
+
 on:
   push:
     tags: ["v*"]
   schedule:
     - cron: "23 4 * * 1"
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to deploy (e.g. v2.1.10)"
+        required: false
+        type: string
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     defaults:
       run:
         working-directory: packages/ip-service
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install
-        working-directory: .
-      - run: bun run ipdb:fetch --verify
-      - run: bun run test:coverage
-      - run: bun run typecheck
+      - name: Wait for CI on tag
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          echo "Checking CI completion for tag $TAG..."
+          # Give CI up to 15 minutes to finish if tag was pushed concurrently with main
+          for i in $(seq 1 30); do
+            commit_sha=$(gh api "repos/${{ github.repository }}/git/ref/tags/${TAG}" --jq '
+              if .object.type == "commit" then .object.sha
+              else empty end
+            ')
+            if [ -z "$commit_sha" ]; then
+              tag_obj=$(gh api "repos/${{ github.repository }}/git/ref/tags/${TAG}" --jq '.object.sha')
+              commit_sha=$(gh api "repos/${{ github.repository }}/git/tags/${tag_obj}" --jq '.object.sha')
+            fi
+            
+            run_status=$(gh api "repos/${{ github.repository }}/actions/workflows/ci.yml/runs?head_sha=${commit_sha}&status=completed" --jq '.workflow_runs[] | select(.conclusion == "success" and .event == "push") | .id' | head -n 1 || true)
+            if [ -n "$run_status" ]; then
+              echo "Found successful CI run: $run_status"
+              break
+            fi
+            echo "Waiting for successful CI push run on $commit_sha (attempt $i/30)..."
+            sleep 30
+          done
+
+      - name: Resolve release source
+        id: source
+        uses: nocoo/base-ci/.github/actions/release-source@2857469cc5206e7a4988171a1282209617996a67
+        with:
+          github-token: ${{ github.token }}
+          expected-workflow-path: ".github/workflows/ci.yml"
+          expected-workflow-name: "CI"
+          expected-branch: "main"
+          tag: ${{ github.event_name == 'push' && github.ref_name || inputs.tag || '' }}
+          package-version-match: ${{ github.event_name == 'push' || inputs.tag != '' }}
+          package-json-path: "packages/ip-service/package.json"
+          require-fresh-main: false
+
+      - name: Checkout proven SHA
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.source.outputs.target-sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup JS and frozen dependencies
+        uses: nocoo/base-ci/.github/actions/setup-js@2857469cc5206e7a4988171a1282209617996a67
+        with:
+          package-manager: bun
+          runtime-version: "1.4.2"
+          working-directory: .
+          install-policy: blocked
+
+      - name: Fetch and verify IP databases
+        run: bun run ipdb:fetch --verify
+
+      - name: Run unit tests with coverage
+        run: bun run test:coverage
+
+      - name: Run typecheck
+        run: bun run typecheck
+
       - name: Deploy to Vercel
         run: bunx vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
       - name: Health check
         working-directory: .
         run: |
@@ -45,10 +114,16 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: oven-sh/setup-bun@v2
+      - name: Setup JS runtime
+        uses: nocoo/base-ci/.github/actions/setup-js@2857469cc5206e7a4988171a1282209617996a67
+        with:
+          package-manager: bun
+          runtime-version: "1.4.2"
+          working-directory: .
+          install-policy: blocked
       - run: sudo apt-get install -y ripgrep
       - name: Configure git identity
         run: |
