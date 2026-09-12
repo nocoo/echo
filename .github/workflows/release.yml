@@ -1,17 +1,23 @@
-name: Release & Deploy
-
-on:
-  push:
-    tags: ["v*"]
+name: Release
+'on':
+  workflow_run:
+    workflows:
+    - CI
+    types:
+    - completed
   schedule:
-    - cron: "23 4 * * 1"
+  - cron: 23 4 * * 1
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to deploy (e.g. v2.1.10)"
-        required: false
+        description: Existing version tag with successful CI at that tag
+        required: true
         type: string
-
+permissions:
+  contents: read
+concurrency:
+  group: release-echo-production
+  cancel-in-progress: false
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -22,89 +28,63 @@ jobs:
       run:
         working-directory: packages/ip-service
     steps:
-      - name: Wait for CI on tag
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          echo "Checking CI completion for tag $TAG..."
-          # Give CI up to 15 minutes to finish if tag was pushed concurrently with main
-          for i in $(seq 1 30); do
-            commit_sha=$(gh api "repos/${{ github.repository }}/git/ref/tags/${TAG}" --jq '
-              if .object.type == "commit" then .object.sha
-              else empty end
-            ')
-            if [ -z "$commit_sha" ]; then
-              tag_obj=$(gh api "repos/${{ github.repository }}/git/ref/tags/${TAG}" --jq '.object.sha')
-              commit_sha=$(gh api "repos/${{ github.repository }}/git/tags/${tag_obj}" --jq '.object.sha')
-            fi
-            
-            run_status=$(gh api "repos/${{ github.repository }}/actions/workflows/ci.yml/runs?head_sha=${commit_sha}&status=completed" --jq '.workflow_runs[] | select(.conclusion == "success" and .event == "push") | .id' | head -n 1 || true)
-            if [ -n "$run_status" ]; then
-              echo "Found successful CI run: $run_status"
-              break
-            fi
-            echo "Waiting for successful CI push run on $commit_sha (attempt $i/30)..."
-            sleep 30
-          done
-
-      - name: Resolve release source
-        id: source
-        uses: nocoo/base-ci/.github/actions/release-source@2857469cc5206e7a4988171a1282209617996a67
-        with:
-          github-token: ${{ github.token }}
-          expected-workflow-path: ".github/workflows/ci.yml"
-          expected-workflow-name: "CI"
-          expected-branch: "main"
-          tag: ${{ github.event_name == 'push' && github.ref_name || inputs.tag || '' }}
-          package-version-match: ${{ github.event_name == 'push' || inputs.tag != '' }}
-          package-json-path: "packages/ip-service/package.json"
-          require-fresh-main: false
-
-      - name: Checkout proven SHA
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ steps.source.outputs.target-sha }}
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Setup JS and frozen dependencies
-        uses: nocoo/base-ci/.github/actions/setup-js@2857469cc5206e7a4988171a1282209617996a67
-        with:
-          package-manager: bun
-          runtime-version: "1.4.2"
-          working-directory: .
-          install-policy: blocked
-
-      - name: Fetch and verify IP databases
-        run: bun run ipdb:fetch --verify
-
-      - name: Run unit tests with coverage
-        run: bun run test:coverage
-
-      - name: Run typecheck
-        run: bun run typecheck
-
-      - name: Deploy to Vercel
-        run: bunx vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      - name: Health check
+    - name: Resolve release source
+      id: source
+      uses: nocoo/base-ci/.github/actions/release-source@ad43150de3a2be2fa464b5cd2f921dc4fa9f8f0f
+      with:
+        github-token: ${{ github.token }}
+        expected-workflow-path: .github/workflows/ci.yml
+        expected-workflow-name: CI
+        expected-branch: ${{ github.event.workflow_run.head_branch || inputs.tag }}
+        tag: ${{ github.event.workflow_run.head_branch || inputs.tag }}
+        package-version-match: 'true'
+        package-json-path: packages/ip-service/package.json
+        require-fresh-main: 'false'
+        source-run-id: ${{ github.event_name == 'workflow_run' && format('{0}', github.event.workflow_run.id) || '' }}
+        allowed-source-events: push,workflow_dispatch
+    - name: Checkout proven SHA
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        ref: ${{ steps.source.outputs.target-sha }}
+        fetch-depth: 0
+        persist-credentials: false
+    - name: Setup JS and frozen dependencies
+      uses: nocoo/base-ci/.github/actions/setup-js@ad43150de3a2be2fa464b5cd2f921dc4fa9f8f0f
+      with:
+        package-manager: bun
+        runtime-version: 1.4.2
+        node-version: 22.23.2
         working-directory: .
-        run: |
-          sleep 15
-          for i in 1 2 3; do
-            response=$(curl -sf "https://echo.nocoo.cloud/api/live") && break
-            sleep 10
-          done
-          echo "$response"
-          echo "$response" | jq -e '.status == "ok"'
-
+        install-policy: blocked
+    - name: Fetch and verify IP databases
+      run: bun run ipdb:fetch --verify
+    - name: Run unit tests with coverage
+      run: bun run test:coverage
+    - name: Run typecheck
+      run: bun run typecheck
+    - name: Deploy to Vercel
+      run: bunx vercel@59.16.0 deploy --prod --token="$VERCEL_TOKEN"
+      env:
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    - name: Health check
+      working-directory: .
+      run: |
+        set -euo pipefail
+        expected=$(jq -r .version packages/ip-service/package.json)
+        for attempt in 1 2 3 4 5 6; do
+          status=$(curl --silent --show-error --max-time 20 --output /tmp/echo-live.json --write-out '%{http_code}' https://echo.nocoo.cloud/api/live || true)
+          if [ "$status" = 200 ] && jq -e --arg version "$expected" '.status == "ok" and .version == $version' /tmp/echo-live.json; then
+            exit 0
+          fi
+          sleep 10
+        done
+        exit 1
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository
+      && (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch') && startsWith(github.event.workflow_run.head_branch,
+      'v'))
+    timeout-minutes: 30
   weekly-bump:
     if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
@@ -113,23 +93,29 @@ jobs:
         working-directory: packages/ip-service
     permissions:
       contents: write
+      actions: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-      - name: Setup JS runtime
-        uses: nocoo/base-ci/.github/actions/setup-js@2857469cc5206e7a4988171a1282209617996a67
-        with:
-          package-manager: bun
-          runtime-version: "1.4.2"
-          working-directory: .
-          install-policy: blocked
-      - run: sudo apt-get install -y ripgrep
-      - name: Configure git identity
-        run: |
-          git config user.name "nocoo"
-          git config user.email "nocoo@hexly.ai"
-      - run: bun run release -- patch --yes
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HUSKY: "0"
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        fetch-depth: 0
+    - name: Setup Bun without installing before release preflight
+      uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+      with:
+        bun-version: 1.4.2
+    - run: sudo apt-get install -y ripgrep
+    - name: Configure git identity
+      run: |
+        git config user.name "nocoo"
+        git config user.email "nocoo@hexly.ai"
+    - run: bun run release -- patch --yes
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        HUSKY: '0'
+    - name: Run tag CI for the scheduled release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        tag="v$(jq -r .version package.json)"
+        gh workflow run ci.yml --ref "$tag"
+    timeout-minutes: 20

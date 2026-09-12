@@ -3,13 +3,14 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
     branches: [main]
   workflow_dispatch:
 
 jobs:
   quality:
-    uses: nocoo/base-ci/.github/workflows/quality.yml@2857469cc5206e7a4988171a1282209617996a67
+    uses: nocoo/base-ci/.github/workflows/quality.yml@ad43150de3a2be2fa464b5cd2f921dc4fa9f8f0f
     with:
       package-manager: bun
       runtime-version: "1.4.2"
@@ -21,4 +22,3 @@ jobs:
       osv-config: "osv-scanner.toml"
       l2: true
       l2-command: "cd packages/ip-service && bun run test:e2e && bun run test:builder"
-    secrets: inherit
