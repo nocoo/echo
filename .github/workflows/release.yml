@@ -72,7 +72,7 @@ jobs:
       working-directory: .
       run: |
         set -euo pipefail
-        expected=$(jq -r .version packages/ip-service/package.json)
+        expected=$(bun -e 'import { version } from "./packages/ip-service/src/lib/version.ts"; process.stdout.write(version)')
         for attempt in 1 2 3 4 5 6; do
           status=$(curl --silent --show-error --max-time 20 --output /tmp/echo-live.json --write-out '%{http_code}' https://echo.nocoo.cloud/api/live || true)
           if [ "$status" = 200 ] && jq -e --arg version "$expected" '.status == "ok" and .version == $version' /tmp/echo-live.json; then
