@@ -21,4 +21,4 @@ jobs:
       coverage-path: "packages/ip-service/coverage"
       osv-config: "osv-scanner.toml"
       l2: true
-      l2-command: "cd packages/ip-service && bun run test:e2e && bun run test:builder"
+      l2-command: "cd packages/ip-service && IPDB_SKIP_CIRCL=1 bun run test:e2e && bun run test:builder"

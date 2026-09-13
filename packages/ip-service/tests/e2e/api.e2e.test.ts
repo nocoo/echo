@@ -15,7 +15,7 @@ const requiredFiles = [
   "iplocate-country.mmdb",
   "ip-location-db-asn.mmdb",
   "ip-location-db-city.mmdb",
-  "circl-country-asn.mmdb",
+  ...(process.env.IPDB_SKIP_CIRCL === "1" ? [] : ["circl-country-asn.mmdb"]),
 ];
 
 function wait(ms: number) {

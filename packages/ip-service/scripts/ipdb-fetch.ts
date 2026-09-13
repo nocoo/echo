@@ -48,6 +48,10 @@ const SOURCES: Source[] = [
 const dataDir = process.env.IPDB_DIR ?? "data";
 const maxRetries = 3;
 const verify = process.argv.includes("--verify");
+const sources =
+  process.env.IPDB_SKIP_CIRCL === "1"
+    ? SOURCES.filter((source) => source.name !== "circl-country-asn.mmdb")
+    : SOURCES;
 
 async function downloadWithRetry(source: Source): Promise<void> {
   const filePath = path.join(dataDir, source.name);
@@ -84,9 +88,9 @@ async function downloadWithRetry(source: Source): Promise<void> {
 
 await mkdir(dataDir, { recursive: true });
 
-console.log(`Downloading ${SOURCES.length} database files to ${dataDir}/\n`);
+console.log(`Downloading ${sources.length} database files to ${dataDir}/\n`);
 
-const results = await Promise.allSettled(SOURCES.map(downloadWithRetry));
+const results = await Promise.allSettled(sources.map(downloadWithRetry));
 
 const failed = results.filter((r) => r.status === "rejected");
 if (failed.length > 0) {
@@ -97,13 +101,13 @@ if (failed.length > 0) {
   process.exit(1);
 }
 
-console.log(`\n✓ All ${SOURCES.length} files downloaded successfully.`);
+console.log(`\n✓ All ${sources.length} files downloaded successfully.`);
 
 if (verify) {
   console.log("\nVerifying databases...");
   const maxmind = await import("maxmind");
 
-  for (const source of SOURCES) {
+  for (const source of sources) {
     const filePath = path.join(process.cwd(), dataDir, source.name);
 
     if (source.name.endsWith(".mmdb")) {

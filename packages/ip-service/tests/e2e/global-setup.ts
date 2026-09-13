@@ -3,8 +3,15 @@ import { access } from "node:fs/promises";
 import path from "node:path";
 
 const dataDir = path.join(process.cwd(), "data");
-const v4Path = path.join(dataDir, "ip2region_v4.xdb");
-const v6Path = path.join(dataDir, "ip2region_v6.xdb");
+const requiredFiles = [
+  "ip2region_v4.xdb",
+  "ip2region_v6.xdb",
+  "iplocate-asn.mmdb",
+  "iplocate-country.mmdb",
+  "ip-location-db-asn.mmdb",
+  "ip-location-db-city.mmdb",
+  ...(process.env.IPDB_SKIP_CIRCL === "1" ? [] : ["circl-country-asn.mmdb"]),
+];
 
 async function exists(file: string): Promise<boolean> {
   try {
@@ -16,7 +23,11 @@ async function exists(file: string): Promise<boolean> {
 }
 
 export default async function setup() {
-  if ((await exists(v4Path)) && (await exists(v6Path))) {
+  if (
+    (await Promise.all(requiredFiles.map((file) => exists(path.join(dataDir, file))))).every(
+      Boolean,
+    )
+  ) {
     return;
   }
 
