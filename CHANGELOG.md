@@ -1,5 +1,19 @@
 # Changelog
 
+## [v2.1.11] - 2026-09-14
+
+### Changed
+- Bump wrangler to 4.131.1
+- Bump biome to 2.5.13
+- Bump wrangler to 4.131.0
+- Bump yaml to 2.9.1
+- Update cloudflare workers types
+- Migrate CI and release workflows to base-ci quality and release-source
+
+### Fixed
+- Verify echo release with source version
+- Release only after successful tag ci
+
 ## [v2.1.10] - 2026-09-11
 
 ### Added
