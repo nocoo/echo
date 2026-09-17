@@ -1,94 +1,95 @@
-README.md
+# Echo
+
+IP lookup API plus a separate DNS resolver-observation service.
+Profile: native-hybrid (TypeScript services and Go DNS probe).
+Direction: [README.md](README.md), [DNS design](docs/07-dns-leak-detection.md).
+
+## Sources of Truth
+
+This file is the contract; hooks, CI and config enforce it. Gaps require stronger enforcement, never a lower contract. Frameworks must not rewrite this handbook.
+
+| Fact | Where |
+| --- | --- |
+| Human docs | [README.md](README.md), [docs/README.md](docs/README.md) |
+| Version | `packages/ip-service/package.json`; generated `src/lib/version.ts` within that package |
+| Enforcement | `.husky/`, `.github/workflows/ci.yml`, IP-service Vitest configs |
+| Accidents | [Retrospective.md](Retrospective.md) |
+| Private configuration | Ignored environment files; use variable names only in docs |
+
+## Project Invariants
+
+- Preserve database attribution and source-merging semantics; local IP datasets are downloaded assets, never committed.
+- `?ip=` requires matching `X-Api-Key` / `ECHO_API_KEY`; an invalid key falls back to requester IP. Trust forwarded IP headers only behind the intended proxy.
+- Public, uncached `/api/live` performs a local database lookup and returns version plus 200/503 without database paths or raw diagnostics.
+- Collector currently has unauthenticated report/read endpoints, token deduplication and 300-second KV retention. Do not imply stronger authentication or a DNS-leak verdict.
+- DNS probe is a separate Go/Docker service on jp2; changing its IP requires updating NS address and Uptime Kuma. Preserve its UDP-only behavior.
+- Vercel Git auto-deploy stays disabled; the release workflow owns IP-service deployment. DNS probe and Collector deploy independently.
+
+## Stack / Layout
+
+| Component | Choice |
+| --- | --- |
+| IP API | Bun, Hono, TypeScript, local MMDB/ip2region files; Vercel production |
+| Collector | Cloudflare Worker and `ECHO` KV binding |
+| DNS probe | Go toolchain from `packages/dns-probe/go.mod`, Docker |
+| Quality | Bun workspaces, Biome, Vitest; Go testing gap below |
+
+`packages/ip-service/` owns the API, downloader and tests; `packages/collector/` owns KV collection; `packages/dns-probe/` owns DNS; `swiftbar/` contains the Node 18+ helper.
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `bun run release` | Patch release (default) |
-| `bun run release -- minor` / `major` / `x.y.z` | Other bump types |
-| `bun run release -- --dry-run` | Preview without side effects |
-| `bun run ipdb:fetch` | Download IP databases only |
-| `bun run ipdb:update` | Fetch + verify + patch release |
+Run from root unless a working directory is shown. CI pins Bun 1.4.2; use the Go version in go.mod.
 
-## Version Management
-
-- Source of truth: `package.json` → `src/lib/version.ts` (generated)
-- Tag format: `v{version}` — triggers CI deploy via `release.yml` (Vercel CLI)
-- Vercel Git auto-deploy is disabled (`vercel.json`); only CI deploys to production
-- Release script: `scripts/release.ts` — bumps version, generates CHANGELOG, tags, pushes, creates GitHub release
-- Requires: `gh` CLI (authenticated), `rg` (ripgrep)
-
-`GET /api/live` is public and uncached. It performs a local IP database lookup,
-returns the current package version and `status: "ok"` when the lookup service
-works, or HTTP 503 with `status: "error"` when it cannot serve a query. Keep
-database paths and raw diagnostics out of the response. Verify the deployed
-version after CI, including its next sample at `https://status.hexly.ai`.
-
-## DNS Leak Detection Infrastructure
-
-### Components
-
-| Component | Location | Address |
-|-----------|----------|---------|
-| dns-probe | jp2.nocoo.cloud (Docker) | 74.226.88.37:53/UDP |
-| collector | Cloudflare Worker | echo-collector.worker.hexly.ai |
-| NS delegation | Cloudflare DNS | `d.echo.nocoo.cloud` → `ns1.echo.nocoo.cloud` |
-
-### dns-probe Maintenance (jp2)
-
-```bash
-# SSH access
-ssh -p 52722 nocoo@jp2.nocoo.cloud
-
-# Logs
-cd ~/echo/packages/dns-probe
-docker compose logs -f
-
-# Update code and rebuild
-cd ~/echo && git pull
-cd packages/dns-probe && docker compose up -d --build
-
-# Restart without rebuild
-docker compose restart
-
-# Status check
-docker compose ps
+```sh
+bun install --frozen-lockfile
+bun run --cwd packages/ip-service dev
+bun run --cwd packages/collector dev
+bun run --cwd packages/ip-service typecheck
+bun run --cwd packages/collector typecheck
+bun run lint
+bun run --cwd packages/ip-service test:coverage
+bun run --cwd packages/ip-service test:e2e
+bun run --cwd packages/ip-service test:builder
 ```
 
-- Container has `restart: unless-stopped` — survives VPS reboot
-- `systemd-resolved` stub listener disabled (`DNSStubListener=no` in `/etc/systemd/resolved.conf`)
-- UFW rule: `53/udp ALLOW` (comment: DNS-probe)
-- WORKER_URL: `https://echo-collector.worker.hexly.ai`
+IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; obtain them with `bun run --cwd packages/ip-service ipdb:fetch --verify`. Downloads access external providers. `PORT` defaults to 7010; `ECHO_API_KEY` controls explicit-address lookup. Builder verification installs its own temporary dependencies. There is no root build script; the Vercel builder check validates packaging.
 
-### collector Worker Maintenance
+## Verification
 
-```bash
-# Deploy (from packages/collector/)
-cd packages/collector && npx wrangler deploy
+6DQ = L1/L2/L3 + G1/G2 + D1. Status: `enforced`, `planned`, `manual`, `N/A`. No skipped/focused tests; required L1 coverage is statements/branches/functions/lines each ≥95%.
 
-# Tail logs
-npx wrangler tail echo-collector
+| Piece | Requirement and current reality | Status | Evidence |
+| --- | --- | --- | --- |
+| L1 TypeScript | IP-service four metrics ≥95%; Collector and SwiftBar coverage still missing | planned | IP gate enforced in pre-commit/CI and `packages/ip-service/vitest.config.ts` |
+| L1 Go | Meaningful DNS coverage at the same contract; no suite yet | planned | `packages/dns-probe/` |
+| L2 | Real HTTP across every service endpoint/method; IP tests exist, Collector coverage incomplete | planned | IP `tests/e2e/global-setup.ts`, pre-push/CI |
+| L3 | Real client IP/DNS workflows on controlled local services | planned | No full DNS/client system gate |
+| G1 TypeScript | Strict types and lint, zero errors/warnings across both packages and helper | planned | IP checks/root Biome enforced; Collector typecheck is not in CI |
+| G1 Go | Go static checks and formatting, zero findings | planned | No Go gate in hooks/CI |
+| G2 | OSV + gitleaks; missing scanner fails; cover Bun and Go dependencies | planned | Hooks scan Bun lock/staged secrets; Go dependency gate missing |
+| D1 | Per-run state/ports and guards, separate from dev | planned | IP HTTP tests currently reuse 7010 and package data |
+| Packaging | Vercel builder succeeds | enforced | Pre-push and CI `test:builder` |
+| Docs | Keep numbered docs and commands aligned | manual | Diff/link review |
 
-# KV inspection
-npx wrangler kv key list --binding ECHO
-npx wrangler kv key get --binding ECHO "dns:<token>"
-```
+Current pre-commit checks the working tree (IP types, lint, coverage) and staged secrets; pre-push runs builder, unit, lint, HTTP and OSV. Target: check-only index snapshot L1/G1 under 30s; pre-push stdin refs with L2/G2 in parallel under 3min. Commit and branch-push hook bypass is forbidden.
 
-- KV namespace: `echo` (id: `c8b08f1809d2416db8f2c0270c0a04a9`)
-- TTL: 300s per token entry
+## Resources / Isolation
 
-### NS Records (Cloudflare)
+| Purpose | Existing resource | Current isolation |
+| --- | --- | --- |
+| IP dev / HTTP suite | 7010; package `data/` | Shared: run only after freeing the port; dedicated harness planned |
+| Collector dev | Local Wrangler KV | Separate per-run fixture guard/marker not established |
+| DNS production | jp2 UDP 53 | Never use production as an automated fixture target |
 
-| Type | Name | Value | Proxy |
-|------|------|-------|-------|
-| NS | `d` | `ns1.echo.nocoo.cloud` | Off |
-| A | `ns1` | `74.226.88.37` | Off |
+Worker test design must use local Wrangler/Miniflare, per-run persistence, local-binding checks and `_test_marker` before writes/cleanup; never create remote `-test` resources. DNS/client system tests need an independent local receiver and tokens.
 
-If jp2 IP changes, update both the `ns1` A record and Uptime Kuma monitoring.
+## Operations / Release
+
+Authorized releases run `bun run --cwd packages/ip-service release` (patch default; minor/major/explicit version or `-- --dry-run`). `ipdb:update` also releases. The script tags/pushes and creates a GitHub release; CI deploys Vercel. Collector and DNS steps are in [operations](docs/09-operations.md). Verify deployed `/api/live` and the next `status.hexly.ai` sample.
 
 ## Retrospective
 
-- **JSON import attribute**: Bun silently accepts `import x from "./foo.json"`, but Node.js (used by Vercel) requires `with { type: "json" }`. Always use the import attribute for cross-runtime compatibility.
-- **Vercel env var trailing newline**: `echo 'value' | vercel env add` appends `\n` to the value. Use `printf 'value' | vercel env add` instead to avoid silent auth mismatches.
-- **Vercel rootDirectory vs CI working-directory**: Don't set both — Vercel CLI doubles the path. Use `working-directory` in CI workflow only; leave Vercel Root Directory empty for CLI-based deploys.
-- **Vercel build sandbox lacks bun**: `vercel build` in CI can't find bun (ENOENT). Use `vercel deploy --prod` (remote build on Vercel servers) instead of `vercel build && vercel deploy --prebuilt`.
+Accident narratives live in [Retrospective.md](Retrospective.md); keep only recurring rules here. Global lessons go to nmem/rules; deterministic rules belong in tests/hooks.
+
+- Use JSON import attributes for Node/Vercel compatibility; avoid newline-contaminated environment values.
+- Keep Vercel CLI working-directory/root-directory settings unambiguous and use the supported remote build flow.
