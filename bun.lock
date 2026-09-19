@@ -11,7 +11,7 @@
     },
     "packages/collector": {
       "name": "@echo/collector",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "devDependencies": {
         "@cloudflare/workers-types": "5.20260917.1",
         "typescript7": "npm:typescript@7.0.2",

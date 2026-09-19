@@ -1,3 +1,5 @@
+import packageJson from "../package.json" with { type: "json" };
+
 interface Env {
   ECHO: KVNamespace;
 }
@@ -13,6 +15,13 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
+
+    if (request.method === "GET" && path === "/api/live") {
+      return Response.json(
+        { status: "ok", version: packageJson.version, service: "echo-collector" },
+        { headers: { "Cache-Control": "no-store" } },
+      );
+    }
 
     if (request.method === "POST" && path.startsWith("/report/")) {
       return handleReport(request, env, path);

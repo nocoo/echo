@@ -21,6 +21,7 @@ This file is the contract; hooks, CI and config enforce it. Gaps require stronge
 - Preserve database attribution and source-merging semantics; local IP datasets are downloaded assets, never committed.
 - `?ip=` requires matching `X-Api-Key` / `ECHO_API_KEY`; an invalid key falls back to requester IP. Trust forwarded IP headers only behind the intended proxy.
 - Public, uncached `/api/live` performs a local database lookup and returns version plus 200/503 without database paths or raw diagnostics.
+- Collector also exposes an uncached public `/api/live`, using its own package version; this is Worker liveness only and does not probe or write KV.
 - Collector currently has unauthenticated report/read endpoints, token deduplication and 300-second KV retention. Do not imply stronger authentication or a DNS-leak verdict.
 - DNS probe is a separate Go/Docker service on jp2; changing its IP requires updating NS address and Uptime Kuma. Preserve its UDP-only behavior.
 - Vercel Git auto-deploy stays disabled; the release workflow owns IP-service deployment. DNS probe and Collector deploy independently.

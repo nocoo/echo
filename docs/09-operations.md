@@ -54,6 +54,7 @@ npx wrangler kv key get --binding ECHO "dns:<token>"
 
 - KV namespace: `echo` (id: `c8b08f1809d2416db8f2c0270c0a04a9`)
 - TTL: 300s per token entry
+- Public liveness: `GET https://echo-collector.worker.hexly.ai/api/live` returns `{ "status": "ok", "version": "…", "service": "echo-collector" }` with `Cache-Control: no-store`. Version comes from `packages/collector/package.json`. This checks Worker liveness without reading or writing KV; existing `/health`, report and result routes retain their behavior.
 
 ### NS Records (Cloudflare)
 
