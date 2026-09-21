@@ -1,5 +1,25 @@
 # Changelog
 
+## [v2.1.12] - 2026-09-21
+
+### Added
+- Expose public versioned live endpoint
+
+### Changed
+- Update workers-types
+- Update wrangler
+- Update lru-cache
+- Align biome schema
+- Update biome
+- Standardize agent handbook and retrospective
+- Update hono
+- Align vitest 5.0.1
+- Bump workers types to 5.20260914.1
+- Bump wrangler to 4.131.2
+
+### Fixed
+- Disable worker default and preview urls
+
 ## [v2.1.11] - 2026-09-14
 
 ### Changed
