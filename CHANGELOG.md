@@ -1,5 +1,14 @@
 # Changelog
 
+## [v2.1.13] - 2026-09-28
+
+### Changed
+- Upgrade wrangler to 4.136.3 (#323)
+- Upgrade @cloudflare/workers-types to 5.20260922.1 (#322)
+- Migrate claude handbook to agents.md
+- Upgrade wrangler to 4.136.1 (#320)
+- Upgrade @cloudflare/workers-types to 5.20260921.1 (#319)
+
 ## [v2.1.12] - 2026-09-21
 
 ### Added
