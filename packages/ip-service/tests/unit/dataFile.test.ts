@@ -33,6 +33,13 @@ describe("resolveDataFile", () => {
     expect(result).not.toContain("/tmp");
   });
 
+  test("honors an absolute configured database directory", async () => {
+    vi.stubEnv("VERCEL", "");
+    vi.stubEnv("IPDB_DIR", "/isolated-ipdb-run");
+    const { resolveDataFile } = await import("../../src/lib/dataFile.js");
+    expect(await resolveDataFile("test.mmdb")).toBe("/isolated-ipdb-run/test.mmdb");
+  });
+
   test("decompresses .gz to /tmp on Vercel (cold start)", async () => {
     vi.stubEnv("VERCEL", "1");
     mockExistsSync.mockReturnValue(false);

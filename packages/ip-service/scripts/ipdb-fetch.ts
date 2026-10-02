@@ -104,7 +104,7 @@ if (verify) {
   const maxmind = await import("maxmind");
 
   for (const source of SOURCES) {
-    const filePath = path.join(process.cwd(), dataDir, source.name);
+    const filePath = path.resolve(dataDir, source.name);
 
     if (source.name.endsWith(".mmdb")) {
       try {
