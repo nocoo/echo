@@ -13,3 +13,5 @@ Accident narratives and original lessons. Historical instructions below describe
 ## 2026-10-02 — Verify floating dependency drift
 
 A targeted undici update also advanced @types/bun and bun-types because the IP service declares latest. That unrelated change was detected before review/publication and restored from the exact preceding lockfile records, including integrity values. Frozen installation and normal hooks verify consistency. Inspect effective lock deltas rather than assuming a successful targeted install changes only the requested package.
+
+The first isolated HTTP run failed readiness and executed no API cases: resolveDataFile also prefixed cwd to an absolute IPDB_DIR. A focused absolute-directory regression failed before the fix. Resolve that configured directory directly, then rerun the full local suite and normal pre-push. The timeout and skipped cases remain failure evidence, not successful validation.

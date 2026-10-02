@@ -8,7 +8,7 @@ const tmpDir = "/tmp/echo-data";
 const isVercel = Boolean(process.env.VERCEL);
 
 export async function resolveDataFile(filename: string): Promise<string> {
-  const rawPath = path.join(process.cwd(), dataDir, filename);
+  const rawPath = path.resolve(dataDir, filename);
 
   if (!isVercel) {
     return rawPath;
