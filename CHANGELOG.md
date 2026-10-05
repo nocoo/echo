@@ -1,5 +1,16 @@
 # Changelog
 
+## [v2.1.14] - 2026-10-05
+
+### Changed
+- Bump biome (#326)
+
+### Fixed
+- Honor absolute ip database directories
+- Resolve isolated ipdb verification paths
+- Retain baseline bun type lock
+- Patch undici 7.x (#325)
+
 ## [v2.1.13] - 2026-09-28
 
 ### Changed
