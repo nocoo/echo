@@ -1,5 +1,11 @@
 # Changelog
 
+## [v2.1.15] - 2026-10-12
+
+### Changed
+- Patch source-map-js (#329)
+- Patch sharp (#328)
+
 ## [v2.1.14] - 2026-10-05
 
 ### Changed

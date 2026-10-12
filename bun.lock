@@ -20,7 +20,7 @@
     },
     "packages/ip-service": {
       "name": "@echo/ip-service",
-      "version": "2.1.14",
+      "version": "2.1.15",
       "dependencies": {
         "hono": "4.13.8",
         "ip2region.js": "^3.1.8",
