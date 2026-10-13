@@ -29,7 +29,7 @@
     "@vitest/coverage-v8": "5.0.4",
     "mmdb-lib": "^3.0.3",
     "typescript7": "npm:typescript@7.0.2",
-    "vitest": "5.0.1",
+    "vitest": "5.0.4",
     "yaml": "2.9.1"
   }
 }
