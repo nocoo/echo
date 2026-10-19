@@ -1,5 +1,19 @@
 # Changelog
 
+## [v2.1.17] - 2026-10-19
+
+### Changed
+- Upgrade base-ci to v2026.9
+- Release v2.1.16
+- Bump @cloudflare/workers-types 5.20261012.1 -> 5.20261013.1
+- Bump wrangler 4.149.0 -> 4.150.0
+- Restore unrelated bun types lock entries
+- Upgrade wrangler to 4.149.0 (#335)
+- Upgrade vitest to 5.0.4 (#334)
+- Upgrade hono to 4.13.13 (#333)
+- Upgrade @vitest/coverage-v8 to 5.0.4 (#332)
+- Upgrade @cloudflare/workers-types to 5.20261012.1 (#331)
+
 ## [v2.1.15] - 2026-10-12
 
 ### Changed
