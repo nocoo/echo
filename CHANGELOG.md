@@ -1,5 +1,13 @@
 # Changelog
 
+## [v2.1.18] - 2026-10-21
+
+### Changed
+- Bump @cloudflare/workers-types 5.20261013.1 -> 5.20261019.1
+- Bump wrangler 4.150.0 -> 4.151.3
+- Bump vitest and @vitest/coverage-v8 5.0.4 -> 5.0.5
+- Patch vite override 8.0.16 -> 8.1.6
+
 ## [v2.1.17] - 2026-10-19
 
 ### Changed
