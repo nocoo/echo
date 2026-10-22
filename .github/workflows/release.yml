@@ -30,7 +30,7 @@ jobs:
     steps:
     - name: Resolve release source
       id: source
-      uses: nocoo/base-ci/.github/actions/release-source@0394178ebcff0418c442d84a84119220f31f8987 # v2026.9
+      uses: nocoo/base-ci/.github/actions/release-source@ac635753a869cb85fad1f52aae4ccbd6119f3cae # main 2026-10-22
       with:
         github-token: ${{ github.token }}
         expected-workflow-path: .github/workflows/ci.yml
@@ -49,7 +49,7 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
     - name: Setup JS and frozen dependencies
-      uses: nocoo/base-ci/.github/actions/setup-js@0394178ebcff0418c442d84a84119220f31f8987 # v2026.9
+      uses: nocoo/base-ci/.github/actions/setup-js@ac635753a869cb85fad1f52aae4ccbd6119f3cae # main 2026-10-22
       with:
         package-manager: bun
         runtime-version: 1.4.2
