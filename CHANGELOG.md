@@ -1,5 +1,20 @@
 # Changelog
 
+## [v2.1.20] - 2026-10-26
+
+### Changed
+- Release v2.1.19
+- Override undici 7.29.1 → 7.30.1 (security)
+- Bump wrangler 4.151.3 → 4.152.0
+- Bump @cloudflare/workers-types 5.20261019.1 → 5.20261024.1
+- Bump @biomejs/biome 2.5.15 → 2.6.3
+- Pin node 22.23.4 in release
+- Re-pin base-ci to ac635753
+- Patch vite override 8.0.16 -> 8.1.6
+- Bump vitest and @vitest/coverage-v8 5.0.4 -> 5.0.5
+- Bump wrangler 4.150.0 -> 4.151.3
+- Bump @cloudflare/workers-types 5.20261013.1 -> 5.20261019.1
+
 ## [v2.1.18] - 2026-10-21
 
 ### Changed
