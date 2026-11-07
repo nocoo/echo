@@ -121,7 +121,7 @@ async function readEntry(dir: string, manifest: DataManifestEntry): Promise<Data
       modifiedAt: new Date(stats.mtimeMs).toISOString(),
       ageDays,
       buildDate: manifest.filename.endsWith(".mmdb") ? await readBuildDate(filePath) : null,
-      status: ageDays > DATA_MAX_AGE_DAYS ? "stale" : "ok",
+      status: ageMs > DATA_MAX_AGE_DAYS * DAY_MS ? "stale" : "ok",
     };
   } catch {
     return {

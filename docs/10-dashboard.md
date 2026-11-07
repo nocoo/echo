@@ -191,7 +191,7 @@ CREATE TABLE refresh_runs (
 ## 认证与授权
 
 - 授权码 + PKCE，`state` 与 `code_verifier` 放短期 Cookie（`HttpOnly`、`Path=/api/auth`、10 分钟）。
-- `GET /api/auth/callback` **不校验 Origin**（浏览器顶导不带可控 Origin）；它的 CSRF 防护来自 `state`：必须与 Cookie 中的值逐字节相等，校验后立即删除 `state` 与 `code_verifier` Cookie，一次性使用。缺失或不匹配返回 400，且不交换 token。
+- `GET /api/auth/callback` **不校验 Origin**（浏览器顶导不带可控 Origin）；它的 CSRF 防护来自 `state`：必须与 Cookie 中的值逐字节相等，校验后立即删除 `state` 与 `code_verifier` Cookie，一次性使用。缺失或不匹配时重定向到 `/admin/login?error=invalid_request`（这是浏览器导航端点，返回 400 会让用户看到裸 JSON），且不交换 token。
 - 会话为签名 JWT（`jose`），`HttpOnly`、`SameSite=Lax`、`Path=/`、7 天；仅当 `PUBLIC_ORIGIN` 是 https 时加 `Secure`。
 - `PUBLIC_ORIGIN` 是唯一权威来源：OAuth `redirect_uri` 与 CSRF 校验都由它推导，不依赖请求 URL（容器内是 http，代理前是 https）。
 - `ALLOWED_EMAILS` 白名单，空值拒绝所有登录（fail closed）。
