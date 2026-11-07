@@ -1,5 +1,15 @@
 # Changelog
 
+## [v2.1.26] - 2026-11-07
+
+### Added
+- Apply the visual language to the console pages
+- Add the shared visual language
+
+### Fixed
+- Separate provider outcomes, fix contrast and density
+- Make the freshness bar mean freshness
+
 ## [v2.1.25] - 2026-11-07
 
 ### Fixed
