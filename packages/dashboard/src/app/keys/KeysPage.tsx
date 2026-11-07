@@ -10,6 +10,7 @@ import {
   DialogTitle,
   Field,
   Input,
+  LayerCard,
   toast,
   useConfirm,
 } from "@nocoo/basalt";
@@ -128,19 +129,21 @@ export default function KeysPage() {
         </p>
       ) : null}
 
-      <DataTable
-        aria-label="API key 列表"
-        data={model?.keys ?? []}
-        columns={columns}
-        loading={loading}
-        empty={
-          <span className="flex flex-col items-center gap-basalt-space-xs text-basalt-muted-foreground">
-            <KeyRound className="h-6 w-6" strokeWidth={1.5} aria-hidden="true" />
-            <span>还没有 API key，新建一个即可查询指定地址。</span>
-          </span>
-        }
-        getRowId={(row) => row.id}
-      />
+      <LayerCard>
+        <DataTable
+          aria-label="API key 列表"
+          data={model?.keys ?? []}
+          columns={columns}
+          loading={loading}
+          empty={
+            <span className="flex flex-col items-center gap-basalt-space-xs text-basalt-muted-foreground">
+              <KeyRound className="h-6 w-6" strokeWidth={1.5} aria-hidden="true" />
+              <span>还没有 API key，新建一个即可查询指定地址。</span>
+            </span>
+          }
+          getRowId={(row) => row.id}
+        />
+      </LayerCard>
 
       <Dialog
         open={dialogOpen}

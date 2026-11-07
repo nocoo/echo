@@ -3,6 +3,7 @@ import type { DatabaseEntry, IpLocation, ProviderResult } from "../../src/lib/ap
 import {
   flagForCountry,
   freshnessRatio,
+  heroBadges,
   isKnownLatency,
   latencyBucket,
   NEUTRAL_FLAG,
@@ -211,5 +212,38 @@ describe("isKnownLatency", () => {
     expect(isKnownLatency(12)).toBe(true);
     expect(isKnownLatency(Number.NaN)).toBe(false);
     expect(isKnownLatency(Number.POSITIVE_INFINITY)).toBe(false);
+  });
+});
+
+describe("heroBadges", () => {
+  test("maps isp, asn and organisation to distinct tones", () => {
+    expect(heroBadges(location())).toEqual([
+      { key: "isp", label: "移动", tone: "blue" },
+      { key: "asn", label: "ASN 9808", tone: "violet" },
+      { key: "org", label: "China Mobile", tone: "teal" },
+    ]);
+  });
+
+  test("drops empty fields and handles a missing location", () => {
+    const empty = location({ isp: "  ", asn: null, asOrg: "" });
+    expect(heroBadges(empty)).toEqual([]);
+    expect(heroBadges(null)).toEqual([]);
+  });
+});
+
+describe("providerFields country fallback", () => {
+  test("uses the country code when the provider only returns iso2", () => {
+    const fields = providerFields(
+      location({
+        country: "",
+        countryCode: "US",
+        province: "",
+        city: "",
+        isp: "",
+        asn: null,
+        asOrg: "",
+      }),
+    );
+    expect(fields).toEqual([{ label: "国家", value: "US" }]);
   });
 });

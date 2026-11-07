@@ -2,6 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
 import { Flag } from "../../src/components/visual/Flag";
 import { LatencyDots } from "../../src/components/visual/LatencyDots";
+import { MetaBadge } from "../../src/components/visual/MetaBadge";
 import { MonoIp } from "../../src/components/visual/MonoIp";
 import { ProviderCard } from "../../src/components/visual/ProviderCard";
 import type { ProviderResult } from "../../src/lib/api";
@@ -108,5 +109,15 @@ describe("ProviderCard", () => {
     expect(container.querySelectorAll(".bg-basalt-tag-danger-foreground").length).toBeGreaterThan(
       0,
     );
+  });
+});
+
+describe("MetaBadge", () => {
+  test("renders the tone classes and exposes the full value as a title", () => {
+    const { container } = render(<MetaBadge tone="violet">ASN 9808</MetaBadge>);
+    const badge = container.firstElementChild;
+    expect(badge?.textContent).toBe("ASN 9808");
+    expect(badge?.getAttribute("title")).toBe("ASN 9808");
+    expect(String(badge?.className)).toContain("bg-basalt-tag-violet");
   });
 });

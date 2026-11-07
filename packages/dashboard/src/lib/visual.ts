@@ -121,7 +121,7 @@ export function providerFields(location: IpLocation | null): ProviderField[] {
     fields.push({ label, value: text });
   };
 
-  push("国家", location.country);
+  push("国家", location.country || location.countryCode);
   push("省份", location.province);
   push("城市", location.city);
   push("ISP", location.isp);
@@ -145,4 +145,28 @@ export function outcomeTone(outcome: ProviderOutcome): StatusTone {
 
 export function outcomeLabel(outcome: ProviderOutcome): string {
   return OUTCOME_LABELS[outcome];
+}
+
+export type MetaTone = "blue" | "violet" | "teal";
+
+export interface MetaBadgeSpec {
+  key: "isp" | "asn" | "org";
+  label: string;
+  tone: MetaTone;
+}
+
+export function heroBadges(location: IpLocation | null): MetaBadgeSpec[] {
+  if (!location) return [];
+
+  const badges: MetaBadgeSpec[] = [];
+  const push = (key: MetaBadgeSpec["key"], value: string, tone: MetaTone) => {
+    const text = value.trim();
+    if (text.length > 0) badges.push({ key, label: text, tone });
+  };
+
+  push("isp", location.isp, "blue");
+  push("asn", location.asn === null ? "" : `ASN ${location.asn}`, "violet");
+  push("org", location.asOrg, "teal");
+
+  return badges;
 }

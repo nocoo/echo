@@ -1,6 +1,8 @@
-import { Badge, LayerCard } from "@nocoo/basalt";
+import { LayerCard } from "@nocoo/basalt";
 import { Flag } from "../../components/visual/Flag";
+import { MetaBadge } from "../../components/visual/MetaBadge";
 import { MonoIp } from "../../components/visual/MonoIp";
+import { heroBadges } from "../../lib/visual";
 import type { LookupViewModel } from "./use-lookup";
 
 export function LookupHero({ model }: { model: LookupViewModel }) {
@@ -8,11 +10,7 @@ export function LookupHero({ model }: { model: LookupViewModel }) {
   const place = [location?.country, location?.province, location?.city]
     .filter((part) => part && part.length > 0)
     .join(" · ");
-  const badges = [
-    location?.isp,
-    location?.asn ? `ASN ${location.asn}` : null,
-    location?.asOrg,
-  ].filter((badge): badge is string => Boolean(badge && badge.length > 0));
+  const badges = heroBadges(location ?? null);
 
   return (
     <LayerCard className="flex flex-col gap-basalt-space-sm">
@@ -29,13 +27,9 @@ export function LookupHero({ model }: { model: LookupViewModel }) {
       {badges.length > 0 ? (
         <div className="flex flex-wrap gap-basalt-space-sm">
           {badges.map((badge) => (
-            <Badge
-              key={badge}
-              variant="secondary"
-              className="max-w-full whitespace-normal break-words text-left"
-            >
-              {badge}
-            </Badge>
+            <MetaBadge key={badge.key} tone={badge.tone}>
+              {badge.label}
+            </MetaBadge>
           ))}
         </div>
       ) : null}

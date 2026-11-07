@@ -12,7 +12,7 @@ export function ProviderCard({ provider }: { provider: ProviderResult }) {
   const fields = providerFields(provider.location);
 
   return (
-    <LayerCard className="flex flex-col gap-basalt-space-sm">
+    <LayerCard className="flex h-full flex-col gap-basalt-space-sm">
       <div className="flex items-center gap-basalt-space-sm">
         <ProviderIcon provider={provider.name} />
         <div className="min-w-0 flex-1">
