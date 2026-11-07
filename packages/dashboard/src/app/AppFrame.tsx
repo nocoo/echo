@@ -1,63 +1,38 @@
 import {
   Button,
   ContentIsland,
-  Sidebar,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarIconItem,
-  SidebarItem,
-  SidebarNav,
-  SidebarPartition,
-  SidebarUser,
+  Sheet,
+  SheetContent,
+  SheetTitle,
   ThemeToggle,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
   toast,
 } from "@nocoo/basalt";
 import { AppHeader } from "@nocoo/basalt/components/app-header";
 import { AppMain, AppShell, AppSkipLink } from "@nocoo/basalt/components/app-shell";
-import { BasaltMark } from "@nocoo/basalt/components/basalt-mark";
 import { LoadingScreen } from "@nocoo/basalt/components/loading-screen";
-import { Boxes, KeyRound, PanelLeft, Search, Wrench } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Menu } from "lucide-react";
+import { Suspense, useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation, useNavigate } from "react-router";
+import { GitHubLink, HexlyLink } from "../components/header-links";
+import { IslandSkeleton } from "../components/island-skeleton";
 import type { MeResponse } from "../lib/api";
 import { apiClient, describeError } from "../lib/api";
-
-interface NavEntry {
-  href: string;
-  label: string;
-  icon: typeof Boxes;
-}
-
-const NAV_ENTRIES: NavEntry[] = [
-  { href: "/", label: "概览", icon: Boxes },
-  { href: "/lookup", label: "查询", icon: Search },
-  { href: "/tools", label: "工具", icon: Wrench },
-  { href: "/keys", label: "密钥", icon: KeyRound },
-];
-
-const PAGE_TITLES: Record<string, string> = {
-  "/": "概览",
-  "/lookup": "查询",
-  "/tools": "工具",
-  "/keys": "密钥",
-};
+import { resolvePageContext } from "../lib/navigation";
+import { useIsMobile } from "../lib/use-is-mobile";
+import { AppSidebar } from "./AppSidebar";
 
 type AuthState = "loading" | "anonymous" | "authenticated";
 
 export function AppFrame() {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [auth, setAuth] = useState<AuthState>("loading");
   const [user, setUser] = useState<MeResponse | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
+  const isMobile = useIsMobile();
   const location = useLocation();
   const navigate = useNavigate();
-
-  const title = PAGE_TITLES[location.pathname] ?? "Echo 管理台";
-  const active = (href: string) =>
-    href === "/" ? location.pathname === "/" : location.pathname.startsWith(href);
+  const page = resolvePageContext(location.pathname);
 
   useEffect(() => {
     let active = true;
@@ -68,8 +43,7 @@ export function AppFrame() {
         setUser(me);
         setAuth(me.authenticated ? "authenticated" : "anonymous");
       })
-      .catch((error) => {
-        console.error("[auth] session check failed", error);
+      .catch(() => {
         if (active) setAuth("anonymous");
       });
     return () => {
@@ -111,108 +85,62 @@ export function AppFrame() {
   return (
     <AppShell>
       <AppSkipLink>跳到主内容</AppSkipLink>
-      <Sidebar collapsed={collapsed}>
-        <SidebarHeader>
-          <div className="flex w-full items-center justify-between">
-            {collapsed ? (
-              <>
-                <BasaltMark className="h-5 w-5 shrink-0" />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="mb-basalt-space-sm self-center"
-                  onClick={() => setCollapsed(false)}
-                  aria-label="展开侧边栏"
-                >
-                  <PanelLeft aria-hidden="true" />
-                </Button>
-              </>
-            ) : (
-              <>
-                <div className="flex min-w-0 items-center gap-basalt-space-lg">
-                  <BasaltMark className="h-5 w-5 shrink-0" />
-                  <span className="truncate text-lg font-semibold text-basalt-foreground">
-                    Echo
-                  </span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 shrink-0"
-                  onClick={() => setCollapsed(true)}
-                  aria-label="收起侧边栏"
-                >
-                  <PanelLeft aria-hidden="true" />
-                </Button>
-              </>
-            )}
-          </div>
-        </SidebarHeader>
-        <SidebarNav>
-          {collapsed ? (
-            NAV_ENTRIES.map((entry) => (
-              <Tooltip key={entry.href} delayDuration={0}>
-                <TooltipTrigger asChild>
-                  <SidebarIconItem
-                    active={active(entry.href)}
-                    aria-label={entry.label}
-                    onClick={() => navigate(entry.href)}
-                  >
-                    <entry.icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
-                  </SidebarIconItem>
-                </TooltipTrigger>
-                <TooltipContent side="right" sideOffset={8}>
-                  {entry.label}
-                </TooltipContent>
-              </Tooltip>
-            ))
-          ) : (
-            <>
-              <SidebarPartition>管理</SidebarPartition>
-              <div className="flex flex-col gap-basalt-nav-gap">
-                {NAV_ENTRIES.map((entry) => (
-                  <SidebarItem
-                    key={entry.href}
-                    active={active(entry.href)}
-                    onClick={() => navigate(entry.href)}
-                  >
-                    <entry.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
-                    <span className="flex-1 truncate text-left">{entry.label}</span>
-                  </SidebarItem>
-                ))}
-              </div>
-            </>
-          )}
-        </SidebarNav>
-        <SidebarFooter>
-          <SidebarUser
-            name={user?.name ?? user?.email ?? "已登录"}
-            email={user?.email ?? "—"}
-            action={
-              <Button variant="ghost" size="sm" onClick={() => void logout()} loading={loggingOut}>
-                退出
-              </Button>
-            }
+      {!isMobile ? (
+        <AppSidebar
+          collapsed={collapsed}
+          onToggle={() => setCollapsed((value) => !value)}
+          user={user}
+          onLogout={() => void logout()}
+          loggingOut={loggingOut}
+        />
+      ) : null}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent
+          side="left"
+          className="w-[260px] max-w-[260px] border-0 bg-basalt-background p-0"
+        >
+          <SheetTitle className="sr-only">导航菜单</SheetTitle>
+          <AppSidebar
+            collapsed={false}
+            onToggle={() => setMobileOpen(false)}
+            onNavigate={() => setMobileOpen(false)}
+            user={user}
+            onLogout={() => void logout()}
+            loggingOut={loggingOut}
           />
-        </SidebarFooter>
-      </Sidebar>
+        </SheetContent>
+      </Sheet>
       <AppMain>
         <AppHeader
-          title={title}
+          density={isMobile ? "compact" : "comfortable"}
+          leading={
+            isMobile ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setMobileOpen(true)}
+                aria-label="打开导航菜单"
+              >
+                <Menu className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
+              </Button>
+            ) : null
+          }
+          breadcrumbs={page.breadcrumbs.length > 0 ? page.breadcrumbs : undefined}
+          title={page.title}
           actions={
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <span className="inline-flex">
-                  <ThemeToggle aria-label="切换主题" />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>切换主题</TooltipContent>
-            </Tooltip>
+            <div className="flex items-center gap-1">
+              <GitHubLink />
+              <HexlyLink />
+              <ThemeToggle aria-label="切换主题" />
+            </div>
           }
         />
         <div className="flex min-h-0 min-w-0 flex-1 flex-col md:px-basalt-layout-sm md:pb-basalt-layout-sm">
           <ContentIsland>
-            <Outlet />
+            <Suspense fallback={<IslandSkeleton />}>
+              <Outlet />
+            </Suspense>
           </ContentIsland>
         </div>
       </AppMain>

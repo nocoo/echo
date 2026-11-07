@@ -3,6 +3,7 @@ import { DataTable, type DataTableColumn } from "@nocoo/basalt/components/data-t
 import { PageHeader } from "@nocoo/basalt/components/page-header";
 import type { FormEvent } from "react";
 import { useState } from "react";
+import { CardSkeleton } from "../../components/card-skeleton";
 import { apiClient, type ProviderResult } from "../../lib/api";
 import { useLookup } from "./use-lookup";
 
@@ -60,6 +61,8 @@ export default function LookupPage() {
           {error}
         </p>
       ) : null}
+
+      {loading && !model ? <CardSkeleton lines={4} /> : null}
 
       {model ? (
         <>

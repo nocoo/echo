@@ -1,6 +1,6 @@
 import { Button } from "@nocoo/basalt";
-import { BasaltMark } from "@nocoo/basalt/components/basalt-mark";
 import { useSearchParams } from "react-router";
+import { Logo } from "../../components/Logo";
 
 const ERROR_MESSAGES: Record<string, string> = {
   invalid_request: "登录请求不完整，请重试。",
@@ -33,7 +33,7 @@ export default function LoginPage() {
           </span>
         </div>
         <div className="flex flex-1 flex-col items-center gap-basalt-space-lg px-basalt-space-lg py-basalt-space-lg">
-          <BasaltMark className="h-8 w-8 text-basalt-foreground" />
+          <Logo size="lg" />
           <p className="text-basalt-xl font-semibold text-basalt-foreground">管理台</p>
           <p className="text-basalt-sm text-basalt-muted-foreground">使用 Google 账号登录</p>
           {message ? (
