@@ -1,5 +1,50 @@
 # Changelog
 
+## [v2.1.23] - 2026-11-07
+
+### Added
+- Align the shell with the Basalt contracts
+- Generate the Echo mark and read the version at build time
+- Log why a callback is rejected
+- Serve the console from the IP service on one port
+- Ship the dashboard in the image and mount state
+- Build the five admin console pages
+- Serve the dashboard build from the ip service
+- Add the console backend and dashboard scaffold
+- Report data age in days and go outdated past a week
+- Expose database refresh time
+- Replace Vercel with jp4 Docker and host-side IP database refresh
+
+### Changed
+- Display the product name in lower case
+- Verify the console without shell-escaped quotes
+- Smoke the console in the container and at the edge
+- Reflect the image build and the wider dashboard gate
+- Tie PUBLIC_ORIGIN to the origin used in the browser
+- Record the admin console status
+- Record the dashboard dev port in the isolation table
+- Cover the admin boundary over real http
+- Describe the admin console and the new api key model
+- Gate the dashboard with the same L1 checks as the IP service
+- Plan the Vite + Basalt management console
+- Point the image manifest at packages/ip-service/Dockerfile
+- Join the tailnet before SSH and pass Tailscale federation secrets
+- Bump wrangler 4.152.0 → 4.156.2
+- Bump @biomejs/biome 2.6.3 → 2.6.4
+
+### Fixed
+- Bind the drawer to its sheet and tooltip the theme toggle
+- Match routes exactly and give each page its own skeleton
+- Bind the global fetch before storing it
+- Run the console container as the configured uid so sqlite is writable
+- Judge per-file staleness on elapsed time and keep dist out of the build context
+- Guard the console and gate the key dialog
+- Tighten session, oauth and freshness rules
+- Render the collapsed rail with icon items and tooltips
+
+### Removed
+- Drop the remaining Vercel configuration
+
 ## [v2.1.22] - 2026-11-03
 
 ## [v2.1.21] - 2026-11-02
