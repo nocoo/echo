@@ -2,7 +2,10 @@
 # L1 + G1 + G2a (6DQ standard)
 cd packages/ip-service
 bun run typecheck
-bun run lint
+bun run test:coverage
+cd ../dashboard
+bun run typecheck
 bun run test:coverage
 cd ../..
+bun run lint
 gitleaks protect --staged --no-banner
