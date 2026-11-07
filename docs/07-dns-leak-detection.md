@@ -39,7 +39,6 @@ echo/
 │   │   ├── tests/
 │   │   ├── data/            # IP 数据库文件
 │   │   ├── scripts/         # ipdb 下载脚本
-│   │   ├── vercel.json
 │   │   ├── Dockerfile
 │   │   ├── package.json
 │   │   └── tsconfig.json
@@ -64,7 +63,7 @@ echo/
 
 ### 关键约束
 
-- **ip-service 的 Vercel 部署不受影响**：`vercel.json` 移入 `packages/ip-service/`，Vercel 配置 root directory 指向该路径
+- **ip-service 的部署已迁到 jp4 Docker**，见 [deploy/README.md](deploy/README.md)；本节的 monorepo 划分仍然有效
 - **release action 继续正常工作**：GitHub Actions 中调整 working directory 为 `packages/ip-service`
 
 ## 组件详细设计
@@ -189,7 +188,6 @@ ns2  A     <VPS2_IP>
 - `tests/` → `packages/ip-service/tests/`
 - `data/` → `packages/ip-service/data/`
 - `scripts/` → `packages/ip-service/scripts/`
-- `vercel.json` → `packages/ip-service/vercel.json`
 - `Dockerfile` → `packages/ip-service/Dockerfile`
 
 Vercel 项目设置中将 Root Directory 改为 `packages/ip-service`。

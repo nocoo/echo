@@ -14,15 +14,16 @@ Direction: [README.md](README.md), [DNS design](docs/07-dns-leak-detection.md).
 
 - Preserve database attribution and source-merging semantics; local IP datasets are downloaded assets, never committed.
 - `?ip=` requires matching `X-Api-Key` / `ECHO_API_KEY`; an invalid key falls back to requester IP. Trust forwarded IP headers only behind the intended proxy.
-- Public, uncached `/api/live` performs a local database lookup and returns version plus 200/503 without database paths or raw diagnostics.
+- Public, uncached `/api/live` performs a local database lookup and returns version plus 200/503 without database paths or raw diagnostics. A database refresh older than seven days reports `outdated` and a non-200 status; describe staleness only in days, never as a timestamp.
+- The IP service runs as a GHCR image on jp4 behind the shared proxy-caddy. IP databases are mounted from the host, refreshed by `deploy/systemd/echo-ipdb-refresh.timer`, and never baked into the image. The proxy must overwrite `X-Forwarded-For` with `CF-Connecting-IP`.
 - Collector also exposes an uncached public `/api/live`, using its own package version; this is Worker liveness only and does not probe or write KV.
 - Collector currently has unauthenticated report/read endpoints, token deduplication and 300-second KV retention. Do not imply stronger authentication or a DNS-leak verdict.
 - DNS probe is a separate Go/Docker service on jp2; changing its IP requires updating NS address and Uptime Kuma. Preserve its UDP-only behavior.
-- Vercel Git auto-deploy stays disabled; the release workflow owns IP-service deployment. DNS probe and Collector deploy independently.
+- IP-service deployment belongs to `.github/workflows/deploy.yml` (base-ci `deploy-docker`, Tailscale WIF). DNS probe and Collector deploy independently.
 
 ## Setup and commands
 
-IP API: Bun, Hono, TypeScript, local MMDB/ip2region files, Vercel production. Collector: Cloudflare Worker with `ECHO` KV binding. DNS probe: Go toolchain from `packages/dns-probe/go.mod`, Docker. Quality: Bun workspaces, Biome, Vitest; Go testing gap below. `packages/ip-service/` owns the API, downloader and tests; `packages/collector/` owns KV collection; `packages/dns-probe/` owns DNS; `swiftbar/` contains the Node 18+ helper.
+IP API: Bun, Hono, TypeScript, local MMDB/ip2region files, GHCR image on jp4. Collector: Cloudflare Worker with `ECHO` KV binding. DNS probe: Go toolchain from `packages/dns-probe/go.mod`, Docker. Quality: Bun workspaces, Biome, Vitest; Go testing gap below. `packages/ip-service/` owns the API, downloader and tests; `packages/collector/` owns KV collection; `packages/dns-probe/` owns DNS; `swiftbar/` contains the Node 18+ helper.
 
 Run from root unless a working directory is shown. CI pins Bun 1.4.2; use the Go version in go.mod.
 
@@ -35,10 +36,9 @@ bun run --cwd packages/collector typecheck
 bun run lint
 bun run --cwd packages/ip-service test:coverage
 bun run --cwd packages/ip-service test:e2e
-bun run --cwd packages/ip-service test:builder
 ```
 
-IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; obtain them with `bun run --cwd packages/ip-service ipdb:fetch --verify`. Downloads access external providers. `PORT` defaults to 7010; `ECHO_API_KEY` controls explicit-address lookup. Builder verification installs its own temporary dependencies. There is no root build script; the Vercel builder check validates packaging.
+IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; obtain them with `bun run --cwd packages/ip-service ipdb:fetch --verify`. Downloads access external providers. `PORT` defaults to 7010; `ECHO_API_KEY` controls explicit-address lookup. There is no root build script; the image ships code only and expects a mounted data directory.
 
 ## Testing and quality contract
 
@@ -52,10 +52,10 @@ IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; o
 | L3 | Real client IP/DNS workflows on controlled local services | planned | No full DNS/client system gate |
 | G2 | OSV + gitleaks; missing scanner fails; cover Bun and Go dependencies | planned | Hooks scan Bun lock/staged secrets; Go dependency gate missing |
 | D1 | Per-run state/ports and guards, separate from dev | planned | IP HTTP tests currently reuse 7010 and package data |
-| Packaging | Vercel builder succeeds | enforced | Pre-push and CI `test:builder` |
+| Packaging | Image builds and `/api/live` reports `ok` with fresh data | enforced | `deploy.yml` remote and edge verification |
 | Docs | Keep numbered docs and commands aligned | manual | Diff/link review |
 
-Current pre-commit checks the working tree (IP types, lint, coverage) and staged secrets; pre-push runs builder, unit, lint, HTTP and OSV. Target: check-only unified L1 on the index snapshot under 30s; pre-push stdin refs with L2/G2 in parallel under 3min. Commit and branch-push hook bypass is forbidden.
+Current pre-commit checks the working tree (IP types, lint, coverage) and staged secrets; pre-push runs unit, lint, HTTP and OSV. Target: check-only unified L1 on the index snapshot under 30s; pre-push stdin refs with L2/G2 in parallel under 3min. Commit and branch-push hook bypass is forbidden.
 
 ## Resources and isolation
 
@@ -69,11 +69,11 @@ Worker test design must use local Wrangler/Miniflare, per-run persistence, local
 
 ## Operations / release
 
-Authorized releases run `bun run --cwd packages/ip-service release` (patch default; minor/major/explicit version or `-- --dry-run`). `ipdb:update` also releases. The script tags/pushes and creates a GitHub release; CI deploys Vercel. Collector and DNS steps are in [operations](docs/09-operations.md). Verify deployed `/api/live` and the next `status.hexly.ai` sample.
+Authorized releases run `bun run --cwd packages/ip-service release` (patch default; minor/major/explicit version or `-- --dry-run`). The script tags/pushes and creates a GitHub release; the deploy workflow builds and deploys the image. `ipdb:update` refreshes local databases only. Collector and DNS steps are in [operations](docs/09-operations.md). Verify deployed `/api/live` reports `ok` with a small `ageDays`.
 
 ## Retrospective
 
 Accident narratives live in [Retrospective.md](Retrospective.md); keep only recurring rules here. Global lessons go to nmem/rules; deterministic rules belong in tests/hooks.
 
-- Use JSON import attributes for Node/Vercel compatibility; avoid newline-contaminated environment values.
-- Keep Vercel CLI working-directory/root-directory settings unambiguous and use the supported remote build flow.
+- Use JSON import attributes for Node.js compatibility; avoid newline-contaminated environment values.
+- Keep the proxy's `X-Forwarded-For` rewrite in mind: `/api/ip` reports whatever the proxy forwards, and Caddy appends the Cloudflare edge IP unless it is overwritten with `CF-Connecting-IP`.

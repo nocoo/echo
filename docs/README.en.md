@@ -13,7 +13,7 @@
 
 ## What it does
 
-Echo provides an IP lookup API for network diagnostic tools. It reads local IP databases and returns country, region, city, network and ASN information for CLIs, monitoring scripts and other applications. The main service runs on Vercel or locally with Bun. It has no web dashboard.
+Echo provides an IP lookup API for network diagnostic tools. It reads local IP databases and returns country, region, city, network and ASN information for CLIs, monitoring scripts and other applications. The main service runs as a Docker image on a self-hosted VPS, or locally with Bun. It has no web dashboard.
 
 The repository also contains a separate DNS observation service. A Go program receives DNS queries for a delegated domain and reports resolver exit IPs to a Cloudflare Worker. Clients retrieve the observations using a random token. Results describe the path of those queries; the caller decides whether the resolvers are expected.
 
@@ -22,7 +22,7 @@ The repository also contains a separate DNS observation service. A Go program re
 - Look up the requesting client's IPv4 / IPv6 address, or use an API key to select an address.
 - Query ip2region, IPLocate, ip-location-db and CIRCL in parallel. Prefer ip2region for Chinese addresses and ip-location-db with location data elsewhere, and enrich missing ASN details from other providers.
 - Use `detail=true` to inspect each provider's results, error state and query time. Responses retain source names and attribution.
-- Cache recent IP lookups and expose service information through `/api/live`.
+- Cache recent IP lookups. `/api/live` reports service status, database age in days and version, and reports `outdated` once the data has not been refreshed for more than seven days.
 - Record resolver exit IPs through the DNS probe and Collector, deduplicate them by token, and retain them for five minutes after the latest report.
 
 Location information comes from downloaded databases. Fields can be empty, and IPv6 city details depend on provider coverage. Collector report and result endpoints currently have no authentication. They return observations without classifying DNS leaks.
@@ -99,7 +99,7 @@ swiftbar/               macOS menu bar script
 docs/                   Design documents and English README
 ```
 
-The IP service's Vercel configuration is in [packages/ip-service/vercel.json](../packages/ip-service/vercel.json). Deployment runs on version tags, a weekly schedule or manual workflow dispatch. Ordinary `main` pushes run CI only. Other components deploy separately; see the [DNS design document](07-dns-leak-detection.md).
+The IP service runs as a Docker container on jp4: Cloudflare, then the shared Caddy (Origin certificate plus mTLS), then the container on `:7010`. Once CI passes on `main`, the [deploy workflow](../.github/workflows/deploy.yml) builds a GHCR image through `base-ci` and deploys it. IP databases are not baked into the image; a host timer refreshes them independently. See [deploy/README.md](../deploy/README.md). Other components deploy separately; see the [DNS design document](07-dns-leak-detection.md).
 
 ## Tests
 
@@ -109,11 +109,8 @@ Run from the repository root:
 | --- | --- |
 | IP service unit tests | `bun run --cwd packages/ip-service test` |
 | IP service HTTP integration tests | `bun run --cwd packages/ip-service test:e2e` |
-| Vercel builder compatibility check | `bun run --cwd packages/ip-service test:builder` |
 
 HTTP tests require every database file in the IP service's `data/` directory and start a local server on port `7010`. Download the data as described above and stop any development server using that port first. Use `bun run --cwd packages/ip-service test:coverage` to generate a coverage report.
-
-The Vercel compatibility check installs its builder and dependencies in a temporary directory and requires a network connection.
 
 Collector and the DNS probe have no automated test suites, and there are no browser tests. TypeScript checks are available through `bun run --cwd packages/ip-service typecheck` and `bun run --cwd packages/collector typecheck`.
 
@@ -124,11 +121,11 @@ Collector and the DNS probe have no automated test suites, and there are no brow
 ![Hono](https://img.shields.io/badge/Hono-E36002?logo=hono&logoColor=white)
 ![Go](https://img.shields.io/badge/Go-00ADD8?logo=go&logoColor=white)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare_Workers-F38020?logo=cloudflareworkers&logoColor=white)
-![Vercel](https://img.shields.io/badge/Vercel-000000?logo=vercel&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
 
 | Area | Implementation |
 | --- | --- |
-| IP API | TypeScript, Bun and Hono; hosted on Vercel |
+| IP API | TypeScript, Bun and Hono; jp4 Docker behind GHCR |
 | IP data and caching | ip2region.js, MaxMind MMDB reader and lru-cache |
 | DNS probe | Go, miekg/dns and Docker |
 | Result collection | Cloudflare Workers and KV |

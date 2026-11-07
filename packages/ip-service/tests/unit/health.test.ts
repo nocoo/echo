@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { version } from "../../src/lib/version.js";
 import { createApp } from "../../src/server.js";
 
@@ -17,22 +17,22 @@ const mockLocation = {
 };
 
 describe("GET /api/live", () => {
-  const refreshedAt = "2026-11-07T04:30:00.000Z";
-  const dataVersion = async () => refreshedAt;
+  const fresh = async () => ({ ageDays: 0, stale: false });
+  const lookupOk = async () => ({
+    ip: "1.1.1.1",
+    version: 4 as const,
+    location: mockLocation,
+    source: "ip2region",
+    attribution: ["test"],
+    latencyMs: 1,
+  });
+
+  beforeEach(() => {
+    vi.useRealTimers();
+  });
 
   test("returns surety-standard health response", async () => {
-    const app = createApp(
-      async () => ({
-        ip: "1.1.1.1",
-        version: 4,
-        location: mockLocation,
-        source: "ip2region",
-        attribution: ["test"],
-        latencyMs: 1,
-      }),
-      undefined,
-      dataVersion,
-    );
+    const app = createApp(lookupOk, undefined, fresh);
     const res = await app.request("/api/live");
 
     expect(res.status).toBe(200);
@@ -42,29 +42,36 @@ describe("GET /api/live", () => {
     expect(body.status).toBe("ok");
     expect(body.version).toBe(version);
     expect(body.component).toBe("echo");
-    expect(body.database).toEqual({ connected: true, refreshedAt });
+    expect(body.database).toEqual({ connected: true, ageDays: 0 });
     expect(typeof body.timestamp).toBe("string");
     expect(new Date(body.timestamp as string).toISOString()).toBe(body.timestamp);
     expect(typeof body.uptime).toBe("number");
     expect(body.uptime).toBeGreaterThanOrEqual(0);
+    expect(JSON.stringify(body)).not.toContain("refreshedAt");
   });
 
-  test("reports refreshedAt as null when data files cannot be read", async () => {
-    const app = createApp(
-      async () => ({
-        ip: "1.1.1.1",
-        version: 4,
-        location: mockLocation,
-        source: "ip2region",
-        attribution: ["test"],
-        latencyMs: 1,
-      }),
-      undefined,
-      async () => null,
-    );
+  test("reports outdated instead of ok once the data is older than a week", async () => {
+    const app = createApp(lookupOk, undefined, async () => ({ ageDays: 12, stale: true }));
+    const res = await app.request("/api/live");
 
-    const body = (await (await app.request("/api/live")).json()) as Record<string, unknown>;
-    expect(body.database).toEqual({ connected: true, refreshedAt: null });
+    expect(res.status).toBe(503);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body).toMatchObject({
+      status: "outdated",
+      database: { connected: true, ageDays: 12 },
+    });
+  });
+
+  test("reports error when the data age cannot be determined", async () => {
+    const app = createApp(lookupOk, undefined, async () => null);
+    const res = await app.request("/api/live");
+
+    expect(res.status).toBe(503);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body).toMatchObject({
+      status: "error",
+      database: { connected: true, ageDays: null },
+    });
   });
 
   test("returns uncached 503 when the IP databases cannot serve a query", async () => {
@@ -74,7 +81,7 @@ describe("GET /api/live", () => {
         throw new Error("private-database-path");
       },
     ]) {
-      const res = await createApp(lookup, undefined, dataVersion).request("/api/live");
+      const res = await createApp(lookup, undefined, fresh).request("/api/live");
       expect(res.status).toBe(503);
       expect(res.headers.get("cache-control")).toBe("no-store");
       const body = await res.json();

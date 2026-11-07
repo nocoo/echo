@@ -55,12 +55,10 @@ bun run dev
 
 ## 部署
 
-### Vercel（推荐）
+生产环境是 jp4 上的 Docker 容器，由 GitHub Actions 在 `main` 的 CI 通过后自动发布：
 
-通过 GitHub Actions 自动部署：
+- `base-ci` 构建并推送 `ghcr.io/nocoo/echo:<commit sha>`
+- 经 Tailscale 进入 tailnet 后 SSH 到 jp4，在 `/data/echo` 拉起新镜像
+- IP 数据库不打包进镜像，由 `echo-ipdb-refresh.timer` 每周独立刷新
 
-- 推送 `v*` tag 触发部署
-- 每周一自动更新 IP 数据并部署
-- 支持手动 workflow_dispatch
-
-需配置 secrets：`VERCEL_TOKEN`、`VERCEL_ORG_ID`、`VERCEL_PROJECT_ID`。
+需在 `echo / production` Environment 配置 secrets：`VPS_HOST`、`VPS_USER`、`VPS_PORT`、`VPS_SSH_KEY`、`VPS_KNOWN_HOSTS`、`GHCR_PULL_USER`、`GHCR_PULL_TOKEN`、`TS_OAUTH_CLIENT_ID`、`TS_AUDIENCE`。主机侧步骤见 [deploy/README.md](../deploy/README.md)。

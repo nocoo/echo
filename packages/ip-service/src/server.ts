@@ -1,39 +1,44 @@
 import { Hono } from "hono";
-import { readDataRefreshedAt } from "./lib/dataVersion.js";
+import { type DataAge, readDataAge } from "./lib/dataVersion.js";
 import { version } from "./lib/version.js";
 import { type LookupResult, lookupIp } from "./services/ipLookup.js";
 import { extractClientIp } from "./utils/ip.js";
 
 type LookupFn = (ip: string | null, detail?: boolean) => Promise<LookupResult | null>;
-type DataVersionFn = () => Promise<string | null>;
+type DataAgeFn = () => Promise<DataAge | null>;
 
 const bootedAt = Date.now();
 
 export function createApp(
   lookup: LookupFn = lookupIp,
   apiKey: string | undefined = process.env.ECHO_API_KEY,
-  dataRefreshedAt: DataVersionFn = readDataRefreshedAt,
+  dataAge: DataAgeFn = readDataAge,
 ) {
   const app = new Hono();
 
   app.get("/api/live", async (c) => {
     c.header("Cache-Control", "no-store");
+
     let connected = false;
     try {
       connected = (await lookup("1.1.1.1")) !== null;
     } catch {
       connected = false;
     }
+
+    const age = await dataAge();
+    const status = !connected || !age ? "error" : age.stale ? "outdated" : "ok";
+
     return c.json(
       {
-        status: connected ? "ok" : "error",
+        status,
         version,
         component: "echo",
         timestamp: new Date().toISOString(),
         uptime: Math.round((Date.now() - bootedAt) / 1000),
-        database: { connected, refreshedAt: await dataRefreshedAt() },
+        database: { connected, ageDays: age?.ageDays ?? null },
       },
-      connected ? 200 : 503,
+      status === "ok" ? 200 : 503,
     );
   });
 

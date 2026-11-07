@@ -2,10 +2,18 @@ import { readdir, stat } from "node:fs/promises";
 import path from "node:path";
 
 const DATA_EXTENSIONS = [".mmdb", ".xdb"];
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-export async function readDataRefreshedAt(
+export const DATA_MAX_AGE_DAYS = 7;
+
+export interface DataAge {
+  ageDays: number;
+  stale: boolean;
+}
+
+export async function readDataAge(
   dataDir: string = process.env.IPDB_DIR ?? "data",
-): Promise<string | null> {
+): Promise<DataAge | null> {
   const dir = path.resolve(dataDir);
 
   try {
@@ -16,7 +24,12 @@ export async function readDataRefreshedAt(
     const times = await Promise.all(
       files.map(async (name) => (await stat(path.join(dir, name))).mtimeMs),
     );
-    return new Date(Math.max(...times)).toISOString();
+    const ageMs = Date.now() - Math.max(...times);
+
+    return {
+      ageDays: Math.max(0, Math.floor(ageMs / DAY_MS)),
+      stale: ageMs > DATA_MAX_AGE_DAYS * DAY_MS,
+    };
   } catch {
     return null;
   }

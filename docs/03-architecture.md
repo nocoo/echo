@@ -10,8 +10,8 @@
 - tests/：单元测试
 - scripts/：构建/部署时的数据下载脚本
 - docs/：项目文档
-- Dockerfile：Railway 部署
-- vercel.json：Vercel 配置
+- Dockerfile：jp4 生产镜像（只含代码，数据运行时挂载）
+- deploy/：compose、数据刷新脚本与 systemd 单元
 
 ## 关键模块
 

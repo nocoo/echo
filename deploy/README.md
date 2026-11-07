@@ -91,12 +91,22 @@ systemctl list-timers echo-ipdb-refresh.timer
 ## 验证
 
 ```bash
-# 主机环回（绕过 Cloudflare）
+# 主机环回（绕开 Cloudflare，不经 mTLS）
 curl -s -H 'Host: echo.nocoo.cloud' http://127.0.0.1:17010/api/live
 
 # 公网
 curl -s https://echo.nocoo.cloud/api/live
-curl -s -H 'X-Forwarded-For: 1.1.1.1' https://echo.nocoo.cloud/api/ip
+curl -s https://echo.nocoo.cloud/api/ip
 ```
 
-`/api/live` 的 `version` 必须与 `packages/ip-service/package.json` 一致，`database.connected` 必须为 `true`。
+`/api/live` 约定：
+
+| 字段 | 含义 |
+| --- | --- |
+| `status` | `ok` / `outdated` / `error`；只有 `ok` 返回 HTTP 200，其余 503 |
+| `database.connected` | 本地数据库能完成一次查询 |
+| `database.ageDays` | 最新数据库文件的陈旧天数；无法读取时为 `null` |
+
+`ageDays` 超过 7 天时 `status` 变为 `outdated`。`version` 必须与 `packages/ip-service/package.json` 一致。
+
+`/api/ip` 返回的 `ip` 应为真实访客地址；`Caddyfile` 里 `header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}` 负责把它从 Cloudflare 边缘 IP 纠正过来。

@@ -13,7 +13,7 @@
 
 ## 这是什么
 
-Echo 为网络诊断工具提供 IP 查询 API。它读取本地 IP 数据库，返回国家、省市、运营商及 ASN 信息，供 CLI、监控脚本或其他应用使用。主服务部署在 Vercel，也可以用 Bun 本地运行，没有 Web 控制台。
+Echo 为网络诊断工具提供 IP 查询 API。它读取本地 IP 数据库，返回国家、省市、运营商及 ASN 信息，供 CLI、监控脚本或其他应用使用。主服务以 Docker 镜像运行在自建 VPS 上，也可以用 Bun 本地运行，没有 Web 控制台。
 
 仓库还包含一套独立的 DNS 探测服务：Go 程序接收指定域名的 DNS 查询，将解析器出口 IP 上报给 Cloudflare Worker，客户端再按随机 token 取回结果。结果反映这次查询经过的解析器，是否符合预期需要调用方判断。
 
@@ -22,7 +22,7 @@ Echo 为网络诊断工具提供 IP 查询 API。它读取本地 IP 数据库，
 - 查询请求方的 IPv4 / IPv6，或使用 API key 查询指定地址。
 - 并行读取 ip2region、IPLocate、ip-location-db 和 CIRCL；中国地址优先选 ip2region，其他地址优先选有地理信息的 ip-location-db，并补充其他来源的 ASN。
 - 使用 `detail=true` 查看各数据源的结果、错误状态和查询耗时；响应保留数据来源与署名。
-- 缓存最近的 IP 查询结果，提供 `/api/live` 服务信息接口。
+- 缓存最近的 IP 查询结果；`/api/live` 返回服务状态、数据陈旧天数和版本，数据库超过 7 天未刷新时报告 `outdated`。
 - 通过 DNS probe 与 Collector 记录解析器出口 IP，按 token 去重，并在最后一次上报后保留五分钟。
 
 地理位置来自下载的数据库，字段可能为空，IPv6 的城市信息也取决于数据源覆盖范围。Collector 的上报与读取接口当前没有鉴权；它返回观察结果，不直接判定 DNS 泄露。
@@ -99,7 +99,7 @@ swiftbar/               macOS 菜单栏脚本
 docs/                   设计文档与英文 README
 ```
 
-IP 服务的 Vercel 配置位于 [packages/ip-service/vercel.json](packages/ip-service/vercel.json)。部署工作流支持版本 tag、每周定时更新和手动运行；普通 `main` 推送只运行 CI。其他组件独立部署，参考 [DNS 设计文档](docs/07-dns-leak-detection.md)。
+IP 服务的部署形态是 jp4 上的 Docker 容器：Cloudflare → 共享 Caddy（Origin 证书 + mTLS）→ 容器 `:7010`。`main` 分支 CI 通过后由 [deploy 工作流](.github/workflows/deploy.yml) 调 `base-ci` 构建 GHCR 镜像并部署；IP 数据库不打包进镜像，由主机上的定时任务独立刷新。细节见 [deploy/README.md](deploy/README.md)。其他组件独立部署，参考 [DNS 设计文档](docs/07-dns-leak-detection.md)。
 
 ## 测试
 
@@ -109,11 +109,8 @@ IP 服务的 Vercel 配置位于 [packages/ip-service/vercel.json](packages/ip-s
 | --- | --- |
 | IP 服务单元测试 | `bun run --cwd packages/ip-service test` |
 | IP 服务 HTTP 集成测试 | `bun run --cwd packages/ip-service test:e2e` |
-| Vercel 构建适配检查 | `bun run --cwd packages/ip-service test:builder` |
 
 HTTP 测试需要 IP 服务 `data/` 下的全部数据库文件，并会启动端口 `7010` 的本地服务。先按开发步骤下载数据，停止占用该端口的开发服务。`bun run --cwd packages/ip-service test:coverage` 可生成覆盖率报告。
-
-Vercel 构建适配检查会在临时目录安装 builder 及依赖，需要网络连接。
 
 Collector 和 DNS probe 目前没有自动化测试套件，也没有浏览器测试。TypeScript 检查分别使用 `bun run --cwd packages/ip-service typecheck` 和 `bun run --cwd packages/collector typecheck`。
 
@@ -124,11 +121,11 @@ Collector 和 DNS probe 目前没有自动化测试套件，也没有浏览器�
 ![Hono](https://img.shields.io/badge/Hono-E36002?logo=hono&logoColor=white)
 ![Go](https://img.shields.io/badge/Go-00ADD8?logo=go&logoColor=white)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare_Workers-F38020?logo=cloudflareworkers&logoColor=white)
-![Vercel](https://img.shields.io/badge/Vercel-000000?logo=vercel&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
 
 | 部分 | 实现 |
 | --- | --- |
-| IP API | TypeScript、Bun、Hono；Vercel 托管 |
+| IP API | TypeScript、Bun、Hono；jp4 Docker + GHCR |
 | IP 数据与缓存 | ip2region.js、MaxMind MMDB reader、lru-cache |
 | DNS probe | Go、miekg/dns、Docker |
 | 结果收集 | Cloudflare Workers、KV |
