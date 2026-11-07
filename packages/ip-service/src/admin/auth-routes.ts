@@ -94,10 +94,12 @@ export function registerAuthRoutes<E extends Env>(app: Hono<E>, deps: AuthDeps):
     deleteCookie(c, OAUTH_VERIFIER_COOKIE, { path: "/api/auth" });
 
     if (!config.publicOrigin || !code || !state || !expectedState || !verifier) {
+      console.warn("[auth] callback rejected: invalid_request");
       return c.redirect("/admin/login?error=invalid_request");
     }
 
     if (state !== expectedState) {
+      console.warn("[auth] callback rejected: state mismatch");
       return c.redirect("/admin/login?error=invalid_state");
     }
 
@@ -113,11 +115,13 @@ export function registerAuthRoutes<E extends Env>(app: Hono<E>, deps: AuthDeps):
         },
         deps.fetchImpl,
       );
-    } catch {
+    } catch (cause) {
+      console.warn(`[auth] callback rejected: ${cause instanceof Error ? cause.message : cause}`);
       return c.redirect("/admin/login?error=oauth_failed");
     }
 
     if (!isEmailAllowed(profile.email, config.allowedEmails)) {
+      console.warn(`[auth] callback rejected: email not allowed (${profile.email})`);
       return c.redirect("/admin/login?error=access_denied");
     }
 
@@ -133,6 +137,7 @@ export function registerAuthRoutes<E extends Env>(app: Hono<E>, deps: AuthDeps):
 
     setCookie(c, SESSION_COOKIE, token, sessionCookieOptions(config));
 
+    console.info(`[auth] session issued for ${profile.email}`);
     return c.redirect("/admin");
   });
 
