@@ -4,6 +4,7 @@ import {
   Sidebar,
   SidebarFooter,
   SidebarHeader,
+  SidebarIconItem,
   SidebarItem,
   SidebarNav,
   SidebarPartition,
@@ -72,35 +73,75 @@ export function AppFrame() {
       <Sidebar collapsed={collapsed}>
         <SidebarHeader>
           <div className="flex w-full items-center justify-between">
-            <div className="flex min-w-0 items-center gap-basalt-space-lg">
-              <BasaltMark className="h-5 w-5 shrink-0" />
-              <span className="truncate text-lg font-semibold text-basalt-foreground">Echo</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 shrink-0"
-              onClick={() => setCollapsed((value) => !value)}
-              aria-label={collapsed ? "展开侧边栏" : "收起侧边栏"}
-            >
-              <PanelLeft aria-hidden="true" />
-            </Button>
+            {collapsed ? (
+              <>
+                <BasaltMark className="h-5 w-5 shrink-0" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="mb-basalt-space-sm self-center"
+                  onClick={() => setCollapsed(false)}
+                  aria-label="展开侧边栏"
+                >
+                  <PanelLeft aria-hidden="true" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="flex min-w-0 items-center gap-basalt-space-lg">
+                  <BasaltMark className="h-5 w-5 shrink-0" />
+                  <span className="truncate text-lg font-semibold text-basalt-foreground">
+                    Echo
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
+                  onClick={() => setCollapsed(true)}
+                  aria-label="收起侧边栏"
+                >
+                  <PanelLeft aria-hidden="true" />
+                </Button>
+              </>
+            )}
           </div>
         </SidebarHeader>
         <SidebarNav>
-          <SidebarPartition>管理</SidebarPartition>
-          <div className="flex flex-col gap-basalt-nav-gap">
-            {NAV_ENTRIES.map((entry) => (
-              <SidebarItem
-                key={entry.href}
-                active={active(entry.href)}
-                onClick={() => navigate(entry.href)}
-              >
-                <entry.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-                <span className="flex-1 truncate text-left">{entry.label}</span>
-              </SidebarItem>
-            ))}
-          </div>
+          {collapsed ? (
+            NAV_ENTRIES.map((entry) => (
+              <Tooltip key={entry.href} delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <SidebarIconItem
+                    active={active(entry.href)}
+                    aria-label={entry.label}
+                    onClick={() => navigate(entry.href)}
+                  >
+                    <entry.icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+                  </SidebarIconItem>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={8}>
+                  {entry.label}
+                </TooltipContent>
+              </Tooltip>
+            ))
+          ) : (
+            <>
+              <SidebarPartition>管理</SidebarPartition>
+              <div className="flex flex-col gap-basalt-nav-gap">
+                {NAV_ENTRIES.map((entry) => (
+                  <SidebarItem
+                    key={entry.href}
+                    active={active(entry.href)}
+                    onClick={() => navigate(entry.href)}
+                  >
+                    <entry.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+                    <span className="flex-1 truncate text-left">{entry.label}</span>
+                  </SidebarItem>
+                ))}
+              </div>
+            </>
+          )}
         </SidebarNav>
         <SidebarFooter>
           <SidebarUser
