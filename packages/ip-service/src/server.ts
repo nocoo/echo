@@ -1,15 +1,18 @@
 import { Hono } from "hono";
+import { readDataRefreshedAt } from "./lib/dataVersion.js";
 import { version } from "./lib/version.js";
 import { type LookupResult, lookupIp } from "./services/ipLookup.js";
 import { extractClientIp } from "./utils/ip.js";
 
 type LookupFn = (ip: string | null, detail?: boolean) => Promise<LookupResult | null>;
+type DataVersionFn = () => Promise<string | null>;
 
 const bootedAt = Date.now();
 
 export function createApp(
   lookup: LookupFn = lookupIp,
   apiKey: string | undefined = process.env.ECHO_API_KEY,
+  dataRefreshedAt: DataVersionFn = readDataRefreshedAt,
 ) {
   const app = new Hono();
 
@@ -28,7 +31,7 @@ export function createApp(
         component: "echo",
         timestamp: new Date().toISOString(),
         uptime: Math.round((Date.now() - bootedAt) / 1000),
-        database: { connected },
+        database: { connected, refreshedAt: await dataRefreshedAt() },
       },
       connected ? 200 : 503,
     );

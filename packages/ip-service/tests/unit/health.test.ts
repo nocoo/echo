@@ -17,15 +17,22 @@ const mockLocation = {
 };
 
 describe("GET /api/live", () => {
+  const refreshedAt = "2026-11-07T04:30:00.000Z";
+  const dataVersion = async () => refreshedAt;
+
   test("returns surety-standard health response", async () => {
-    const app = createApp(async () => ({
-      ip: "1.1.1.1",
-      version: 4,
-      location: mockLocation,
-      source: "ip2region",
-      attribution: ["test"],
-      latencyMs: 1,
-    }));
+    const app = createApp(
+      async () => ({
+        ip: "1.1.1.1",
+        version: 4,
+        location: mockLocation,
+        source: "ip2region",
+        attribution: ["test"],
+        latencyMs: 1,
+      }),
+      undefined,
+      dataVersion,
+    );
     const res = await app.request("/api/live");
 
     expect(res.status).toBe(200);
@@ -35,11 +42,29 @@ describe("GET /api/live", () => {
     expect(body.status).toBe("ok");
     expect(body.version).toBe(version);
     expect(body.component).toBe("echo");
-    expect(body.database).toEqual({ connected: true });
+    expect(body.database).toEqual({ connected: true, refreshedAt });
     expect(typeof body.timestamp).toBe("string");
     expect(new Date(body.timestamp as string).toISOString()).toBe(body.timestamp);
     expect(typeof body.uptime).toBe("number");
     expect(body.uptime).toBeGreaterThanOrEqual(0);
+  });
+
+  test("reports refreshedAt as null when data files cannot be read", async () => {
+    const app = createApp(
+      async () => ({
+        ip: "1.1.1.1",
+        version: 4,
+        location: mockLocation,
+        source: "ip2region",
+        attribution: ["test"],
+        latencyMs: 1,
+      }),
+      undefined,
+      async () => null,
+    );
+
+    const body = (await (await app.request("/api/live")).json()) as Record<string, unknown>;
+    expect(body.database).toEqual({ connected: true, refreshedAt: null });
   });
 
   test("returns uncached 503 when the IP databases cannot serve a query", async () => {
@@ -49,7 +74,7 @@ describe("GET /api/live", () => {
         throw new Error("private-database-path");
       },
     ]) {
-      const res = await createApp(lookup).request("/api/live");
+      const res = await createApp(lookup, undefined, dataVersion).request("/api/live");
       expect(res.status).toBe(503);
       expect(res.headers.get("cache-control")).toBe("no-store");
       const body = await res.json();

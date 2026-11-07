@@ -10,7 +10,7 @@ DATA_DIR=${ECHO_DATA_DIR:-/data/echo/data}
 STAGING=${ECHO_STAGING_DIR:-/data/echo/staging}
 CONTAINER=${ECHO_CONTAINER:-echo-app}
 
-IMAGE=$(docker inspect "$CONTAINER" --format '{{.Image}}')
+IMAGE=${ECHO_IMAGE:-$(docker inspect "$CONTAINER" --format '{{.Image}}')}
 
 mkdir -p "$DATA_DIR" "$STAGING"
 find "$STAGING" -mindepth 1 -delete
