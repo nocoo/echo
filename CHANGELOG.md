@@ -1,5 +1,10 @@
 # Changelog
 
+## [v2.1.24] - 2026-11-07
+
+### Added
+- Rebuild the sign-in page as the standard badge card
+
 ## [v2.1.23] - 2026-11-07
 
 ### Added
