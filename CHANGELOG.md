@@ -1,5 +1,10 @@
 # Changelog
 
+## [v2.1.28] - 2026-11-07
+
+### Added
+- Open on the caller's own address
+
 ## [v2.1.27] - 2026-11-07
 
 ### Fixed
