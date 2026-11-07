@@ -1,5 +1,10 @@
 # Changelog
 
+## [v2.1.27] - 2026-11-07
+
+### Fixed
+- Align the lookup cards and colour the summary chips
+
 ## [v2.1.26] - 2026-11-07
 
 ### Added
