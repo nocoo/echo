@@ -101,6 +101,8 @@ bun run --cwd packages/dashboard dev
 
 `bun run build` builds the console into `packages/dashboard/dist`, which the IP service then serves directly. The console signs in with Google; an empty `ALLOWED_EMAILS` rejects every login.
 
+`PUBLIC_ORIGIN` must equal the origin you actually open in the browser: `http://localhost:7010` when you hit the service directly and `http://127.0.0.1:7011` when you use the Vite proxy. A mismatch makes every mutation fail with 403.
+
 A direct local request has no proxy-injected IP header. Use this request from another terminal:
 
 ```bash

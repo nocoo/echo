@@ -101,6 +101,8 @@ bun run --cwd packages/dashboard dev
 
 `bun run build` 会构建前端到 `packages/dashboard/dist`，之后 IP 服务直接托管该目录。管理台需要 Google 登录：`ALLOWED_EMAILS` 为空时所有登录都会被拒绝。
 
+`PUBLIC_ORIGIN` 必须等于浏览器里实际打开的 origin：直连 7010 时是 `http://localhost:7010`，走 7011 代理时是 `http://127.0.0.1:7011`。否则变更请求会因 Origin 不匹配返回 403。
+
 本地直连没有代理注入的 IP 头，可在另一个终端这样请求：
 
 ```bash
