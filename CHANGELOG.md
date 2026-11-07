@@ -1,5 +1,10 @@
 # Changelog
 
+## [v2.1.25] - 2026-11-07
+
+### Fixed
+- Normalise the 0 placeholder to an empty field
+
 ## [v2.1.24] - 2026-11-07
 
 ### Added
