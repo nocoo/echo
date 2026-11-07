@@ -1,5 +1,7 @@
 import { spawn } from "node:child_process";
-import { access } from "node:fs/promises";
+import { mkdtempSync } from "node:fs";
+import { access, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
@@ -49,8 +51,9 @@ async function ensureAllDatabases() {
 
 describe("api e2e", () => {
   const port = 7010;
+  const stateDir = mkdtempSync(path.join(tmpdir(), "echo-e2e-state-"));
   const server = spawn("bun", ["run", "src/index.ts"], {
-    env: { ...process.env, PORT: String(port) },
+    env: { ...process.env, PORT: String(port), STATE_DIR: stateDir },
     stdio: "ignore",
   });
 
@@ -59,8 +62,9 @@ describe("api e2e", () => {
     await waitForLive();
   });
 
-  afterAll(() => {
+  afterAll(async () => {
     server.kill();
+    await rm(stateDir, { recursive: true, force: true });
   });
 
   test("live endpoint returns ok and version", async () => {
@@ -136,5 +140,46 @@ describe("api e2e", () => {
     const body = (await res.json()) as { location: { countryCode: string } | null };
     expect(body.location).not.toBeNull();
     expect(body.location?.countryCode).toBe("US");
+  });
+
+  test("me endpoint reports an anonymous visitor", async () => {
+    const res = await fetch(`${baseUrl}/api/me`);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body).toMatchObject({ authenticated: false, email: null });
+  });
+
+  test("admin endpoints reject anonymous access", async () => {
+    const requests: [string, string][] = [
+      ["GET", "/api/admin/overview"],
+      ["GET", "/api/admin/keys"],
+      ["GET", "/api/admin/refresh"],
+      ["POST", "/api/admin/lookup"],
+      ["POST", "/api/admin/keys"],
+      ["POST", "/api/admin/keys/abc/revoke"],
+    ];
+
+    for (const [method, path] of requests) {
+      const res = await fetch(`${baseUrl}${path}`, { method });
+      expect(res.status, path).toBe(401);
+      expect(await res.json()).toEqual({ error: "unauthorized" });
+    }
+  });
+
+  test("ip endpoint ignores an unknown api key", async () => {
+    const res = await fetch(`${baseUrl}/api/ip?ip=8.8.8.8`, {
+      headers: {
+        "x-api-key": "echo_not-a-real-key",
+        "x-forwarded-for": "1.2.3.4",
+      },
+    });
+
+    expect(res.status).toBe(200);
+
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.ip).toBe("1.2.3.4");
   });
 });

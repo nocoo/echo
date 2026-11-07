@@ -13,6 +13,9 @@ coverage
 # data
 data
 
+# runtime state (admin sqlite database)
+state
+
 # logs
 logs
 _.log
