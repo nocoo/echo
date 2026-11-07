@@ -4,3 +4,15 @@
 @source "../../node_modules/@nocoo/basalt/dist/**/*.{js,jsx,ts,tsx}";
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-basalt-background text-basalt-foreground antialiased;
+  }
+}

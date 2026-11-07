@@ -1,10 +1,32 @@
+import { LoadingScreen } from "@nocoo/basalt/components/loading-screen";
+import { lazy, Suspense } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router";
+import { AppFrame } from "./AppFrame";
+import { BasaltProviders } from "./BasaltProviders";
+
+const LoginPage = lazy(() => import("./login/LoginPage"));
+const OverviewPage = lazy(() => import("./overview/OverviewPage"));
+const LookupPage = lazy(() => import("./lookup/LookupPage"));
+const ToolsPage = lazy(() => import("./tools/ToolsPage"));
+const KeysPage = lazy(() => import("./keys/KeysPage"));
+
 export function App() {
   return (
-    <main className="min-h-screen bg-basalt-background p-8 text-basalt-foreground">
-      <h1 className="text-2xl font-semibold">Echo 管理台</h1>
-      <p className="mt-2 text-sm text-basalt-muted-foreground">
-        骨架已就绪，登录、概览、查询、工具与密钥页面将在后续迭代接入。
-      </p>
-    </main>
+    <BrowserRouter basename="/admin">
+      <BasaltProviders>
+        <Suspense fallback={<LoadingScreen label="页面加载中" />}>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route element={<AppFrame />}>
+              <Route path="/" element={<OverviewPage />} />
+              <Route path="/lookup" element={<LookupPage />} />
+              <Route path="/tools" element={<ToolsPage />} />
+              <Route path="/keys" element={<KeysPage />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </BasaltProviders>
+    </BrowserRouter>
   );
 }
