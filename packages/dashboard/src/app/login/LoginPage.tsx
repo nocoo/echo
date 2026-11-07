@@ -1,6 +1,8 @@
 import { Button } from "@nocoo/basalt";
 import { useSearchParams } from "react-router";
+import { GitHubLink, HexlyLink } from "../../components/header-links";
 import { Logo } from "../../components/Logo";
+import { ThemeToggle } from "../../components/theme-toggle";
 import { SITE_NAME } from "../../lib/navigation";
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -10,44 +12,163 @@ const ERROR_MESSAGES: Record<string, string> = {
   access_denied: "该邮箱不在白名单内。",
 };
 
+const BAR_WIDTHS = [2, 1, 3, 1, 2, 1, 1, 3, 1, 2, 1, 3, 2, 1, 1, 2, 3, 1, 2, 1];
+
+const BARS = BAR_WIDTHS.map((width, index) => ({
+  id: BAR_WIDTHS.slice(0, index).reduce((total, value) => total + value + 1, 0),
+  width,
+  strong: index % 3 === 0,
+}));
+
+function Barcode() {
+  return (
+    <div className="flex h-full items-stretch gap-[1.5px]">
+      {BARS.map((bar) => (
+        <div
+          key={bar.id}
+          className="rounded-[0.5px] bg-basalt-primary-foreground"
+          style={{ width: `${bar.width * 1.5}px`, opacity: bar.strong ? 0.9 : 0.5 }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function GoogleMark() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+        fill="#4285F4"
+      />
+      <path
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+        fill="#34A853"
+      />
+      <path
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+        fill="#FBBC05"
+      />
+      <path
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+        fill="#EA4335"
+      />
+    </svg>
+  );
+}
+
 export default function LoginPage() {
   const [params] = useSearchParams();
   const error = params.get("error");
   const message = error ? (ERROR_MESSAGES[error] ?? "登录失败，请重试。") : null;
+  const year = new Date().getFullYear();
+  const today = new Date().toISOString().slice(0, 10).replace(/-/g, "");
 
   const signIn = () => {
     window.location.assign("/api/auth/google");
   };
 
   return (
-    <div className="basalt-ui relative flex min-h-dvh items-center justify-center bg-basalt-background p-basalt-space-lg">
+    <div className="basalt-ui relative flex min-h-dvh items-center justify-center overflow-hidden bg-basalt-background p-4">
+      <div className="absolute top-4 right-4 z-10 flex items-center gap-1">
+        <GitHubLink />
+        <HexlyLink />
+        <ThemeToggle />
+      </div>
+
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: [
+            "radial-gradient(ellipse 70% 55% at 50% 50%,",
+            "hsl(var(--basalt-foreground) / 0.045) 0%,",
+            "hsl(var(--basalt-foreground) / 0.042) 10%,",
+            "hsl(var(--basalt-foreground) / 0.036) 20%,",
+            "hsl(var(--basalt-foreground) / 0.028) 32%,",
+            "hsl(var(--basalt-foreground) / 0.020) 45%,",
+            "hsl(var(--basalt-foreground) / 0.012) 58%,",
+            "hsl(var(--basalt-foreground) / 0.006) 72%,",
+            "hsl(var(--basalt-foreground) / 0.002) 86%,",
+            "transparent 100%)",
+          ].join(" "),
+        }}
+      />
+
       <div
         data-basalt-surface-root=""
-        className="flex w-72 max-w-full flex-col overflow-hidden rounded-basalt-lg bg-basalt-card ring-1 ring-basalt-border"
+        className="relative flex aspect-[54/86] w-72 flex-col overflow-hidden rounded-basalt-lg bg-basalt-card ring-1 ring-black/[0.08] dark:ring-white/[0.06]"
+        style={{
+          boxShadow: [
+            "0 1px 2px rgba(0,0,0,0.06)",
+            "0 4px 8px rgba(0,0,0,0.04)",
+            "0 12px 24px rgba(0,0,0,0.06)",
+            "0 24px 48px rgba(0,0,0,0.04)",
+            "0 0 0 0.5px rgba(0,0,0,0.02)",
+            "0 0 60px rgba(0,0,0,0.03)",
+          ].join(", "),
+        }}
       >
-        <div className="flex items-center justify-between gap-basalt-space-lg bg-basalt-primary px-basalt-space-lg py-basalt-space-lg">
-          <span className="text-basalt-base font-semibold text-basalt-primary-foreground">
-            {SITE_NAME}
-          </span>
-          <span className="text-basalt-xs font-medium uppercase tracking-widest text-basalt-primary-foreground/80">
-            Admin
-          </span>
+        <div className="bg-basalt-primary px-5 py-4">
+          <div className="flex items-center justify-between">
+            <div
+              className="h-4 w-8 rounded-full bg-basalt-background/80"
+              style={{
+                boxShadow:
+                  "inset 0 1.5px 3px rgba(0,0,0,0.35), inset 0 -0.5px 1px rgba(255,255,255,0.1)",
+              }}
+            />
+            <span className="text-sm font-semibold text-basalt-primary-foreground">
+              {SITE_NAME}.
+            </span>
+            <span className="text-[10px] font-medium tracking-widest text-basalt-primary-foreground/60 uppercase">
+              管理员
+            </span>
+          </div>
+          <div className="mt-3 flex items-center justify-between">
+            <span className="font-mono text-[9px] tracking-wider text-basalt-primary-foreground/40">
+              ID {year}-{today.slice(4)}
+            </span>
+            <div className="h-6">
+              <Barcode />
+            </div>
+          </div>
         </div>
-        <div className="flex flex-1 flex-col items-center gap-basalt-space-lg px-basalt-space-lg py-basalt-space-lg">
-          <Logo size="lg" />
-          <p className="text-basalt-xl font-semibold text-basalt-foreground">管理台</p>
-          <p className="text-basalt-sm text-basalt-muted-foreground">使用 Google 账号登录</p>
+
+        <div className="flex flex-1 flex-col items-center px-6 pt-6 pb-14">
+          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-basalt-secondary p-2.5 ring-1 ring-basalt-border">
+            <Logo size="lg" className="h-full w-full object-contain" />
+          </div>
+
+          <p className="mt-5 text-lg font-semibold text-basalt-foreground">管理台</p>
+          <p className="mt-1 text-xs text-basalt-muted-foreground">使用 Google 账号登录</p>
+
+          <div className="mt-5 h-px w-full bg-basalt-border" />
+          <div className="flex-1" />
+
           {message ? (
-            <p className="w-full rounded-basalt-md bg-basalt-danger-tint px-basalt-space-md py-basalt-space-sm text-basalt-sm text-basalt-danger">
+            <p
+              role="alert"
+              className="mb-3 w-full rounded-basalt-md bg-basalt-danger-tint px-3 py-2 text-basalt-sm text-basalt-danger"
+            >
               {message}
             </p>
           ) : null}
-          <Button className="w-full" onClick={signIn}>
+
+          <Button variant="outline" className="w-full rounded-xl py-3" onClick={signIn}>
+            <GoogleMark />
             使用 Google 登录
           </Button>
+
+          <p className="mt-3 text-center text-[10px] leading-relaxed text-basalt-muted-foreground/60">
+            仅限白名单邮箱可登录
+          </p>
         </div>
-        <div className="border-t border-basalt-border px-basalt-space-lg py-basalt-space-lg">
-          <p className="text-basalt-xs text-basalt-muted-foreground">仅限白名单邮箱可登录</p>
+
+        <div className="absolute right-0 bottom-0 left-0 flex items-center justify-center border-t border-basalt-border bg-basalt-secondary/50 py-2.5">
+          <div className="flex items-center gap-1.5">
+            <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-basalt-success motion-reduce:animate-none" />
+            <span className="text-[10px] text-basalt-muted-foreground">Google 账号验证</span>
+          </div>
         </div>
       </div>
     </div>
