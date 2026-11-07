@@ -1,6 +1,5 @@
 set -eu
 
-bun run --cwd packages/ip-service test:builder
 bun run --cwd packages/ip-service test
 bun run lint
 bun run --cwd packages/ip-service test:e2e

@@ -1,0 +1,39 @@
+services:
+  web:
+    image: ghcr.io/nocoo/echo:${IMAGE_SHA:-deploy-required}
+    container_name: echo-app
+    restart: unless-stopped
+    init: true
+    env_file:
+      - path: .env.runtime
+        required: true
+        format: raw
+    environment:
+      PORT: "7010"
+      IPDB_DIR: /data
+    ports:
+      - 127.0.0.1:17010:7010
+    volumes:
+      - /data/echo/data:/data:ro
+    mem_limit: 1g
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+    healthcheck:
+      test:
+        - CMD
+        - bun
+        - -e
+        - fetch('http://127.0.0.1:7010/api/live',{redirect:'error',headers:{Host:'echo.nocoo.cloud','X-Forwarded-Proto':'https'}}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - edge
+
+networks:
+  edge:
+    external: true

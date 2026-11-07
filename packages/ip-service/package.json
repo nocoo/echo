@@ -7,10 +7,8 @@
   "scripts": {
     "dev": "bun run src/index.ts",
     "ipdb:fetch": "bun run scripts/ipdb-fetch.ts",
-    "ipdb:compress": "bun run scripts/ipdb-compress.ts",
-    "ipdb:update": "bun run ipdb:fetch -- --verify && bun run release -- patch --yes",
+    "ipdb:update": "bun run ipdb:fetch -- --verify",
     "test": "vitest run",
-    "test:builder": "bun run scripts/vercel-builder-check.ts",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "test:all": "bun run test && bun run test:e2e",
     "test:coverage": "vitest run --coverage",
@@ -29,7 +27,6 @@
     "@vitest/coverage-v8": "5.0.5",
     "mmdb-lib": "^3.0.3",
     "typescript7": "npm:typescript@7.0.2",
-    "vitest": "5.0.5",
-    "yaml": "2.9.1"
+    "vitest": "5.0.5"
   }
 }

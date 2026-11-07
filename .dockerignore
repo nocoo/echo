@@ -1,0 +1,14 @@
+**
+!package.json
+!bun.lock
+!packages/
+!packages/**
+**/node_modules
+**/coverage
+**/data
+**/*.xdb
+**/*.mmdb
+**/*.gz
+**/.DS_Store
+**/.env*
+data/

@@ -1,0 +1,14 @@
+[Unit]
+Description=Refresh echo IP databases
+Documentation=https://github.com/nocoo/echo/blob/main/deploy/README.md
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=nocoo
+Group=docker
+ExecStart=/data/echo/ipdb-refresh.sh
+TimeoutStartSec=30min
+Nice=10
+IOSchedulingClass=idle

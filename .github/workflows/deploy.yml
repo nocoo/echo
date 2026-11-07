@@ -1,0 +1,69 @@
+name: Deploy
+'on':
+  workflow_run:
+    workflows:
+    - CI
+    types:
+    - completed
+    branches:
+    - main
+  workflow_dispatch:
+    inputs:
+      ci-run-id:
+        description: Successful main push CI run ID for the exact current main commit
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+  packages: write
+  id-token: write
+jobs:
+  deploy:
+    if: |
+      github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    uses: nocoo/base-ci/.github/workflows/deploy-docker.yml@af9a2b3f82c367d6eb6def5c3583ac717e0868ad # main 2026-10-26
+    with:
+      tailscale: false
+      environment: echo / production
+      source-run-id: ${{ github.event_name == 'workflow_run' && format('{0}', github.event.workflow_run.id) || inputs.ci-run-id }}
+      images: '[{"image":"ghcr.io/nocoo/echo","service":"web"}]'
+      deploy-directory: /data/echo
+      remote-verify-command: |
+        for i in 1 2 3 4 5 6 7 8 9 10; do
+          if docker exec echo-app bun -e \
+            'fetch("http://127.0.0.1:7010/api/live").then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))' 2>/dev/null; then
+            echo "✅ echo-api responding on :7010"
+            break
+          fi
+          echo "attempt $i: echo-api not ready yet"
+          sleep 3
+          if [ "$i" = "10" ]; then echo "❌ echo-api failed to come up"; docker logs --tail 80 echo-app; exit 1; fi
+        done
+      verify-command: |
+        (
+        set -e
+        expected="v$(jq -r .version packages/ip-service/package.json)"
+        for i in 1 2 3 4 5 6; do
+          status=$(curl -sS -o /tmp/echo-live.json -w "%{http_code}" --max-time 20 https://echo.nocoo.cloud/api/live || true)
+          echo "attempt $i: HTTP $status"
+          if [ "$status" = "200" ] && jq -e --arg version "$expected" '.status == "ok" and .version == $version' /tmp/echo-live.json; then
+            echo "✅ edge serving $expected"
+            exit 0
+          fi
+          sleep 10
+        done
+        echo "❌ edge smoke test failed"
+        exit 1
+        )
+      timeout-minutes: 25
+    secrets:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      VPS_PORT: ${{ secrets.VPS_PORT }}
+      VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+      GHCR_PULL_USER: ${{ secrets.GHCR_PULL_USER }}
+      GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
