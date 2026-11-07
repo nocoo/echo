@@ -8,6 +8,25 @@ export interface NavGroup {
   items: NavItem[];
 }
 
+export type PageVariant = "overview" | "lookup" | "tools" | "keys" | "default";
+
+export interface Breadcrumb {
+  href?: string;
+  label: string;
+}
+
+export interface PageContext {
+  title: string;
+  breadcrumbs: Breadcrumb[];
+  documentTitle: string;
+  variant: PageVariant;
+}
+
+export interface DisplayUser {
+  label: string;
+  initials: string;
+}
+
 export const SITE_NAME = "Echo";
 
 export const NAV_GROUPS: readonly NavGroup[] = [
@@ -27,47 +46,81 @@ export const NAV_GROUPS: readonly NavGroup[] = [
 
 export const NAV_ITEMS: readonly NavItem[] = NAV_GROUPS.flatMap((group) => group.items);
 
-export interface Breadcrumb {
-  href?: string;
-  label: string;
-}
-
-export interface PageContext {
-  title: string;
-  breadcrumbs: Breadcrumb[];
-  documentTitle: string;
-}
-
 const LOGIN_TITLE = "登录";
 const FALLBACK_TITLE = "管理台";
+const UNKNOWN_USER = "已登录";
+
+const VARIANTS: Record<string, PageVariant> = {
+  "/": "overview",
+  "/lookup": "lookup",
+  "/tools": "tools",
+  "/keys": "keys",
+};
+
+export function normalizePath(pathname: string): string {
+  const normalized = pathname.trim().toLowerCase().replace(/\/+$/, "");
+  return normalized === "" ? "/" : normalized;
+}
 
 export function isActivePath(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/";
-  return pathname === href || pathname.startsWith(`${href}/`);
+  return normalizePath(pathname) === normalizePath(href);
+}
+
+export function pageVariant(pathname: string): PageVariant {
+  return VARIANTS[normalizePath(pathname)] ?? "default";
 }
 
 export function resolvePageContext(pathname: string): PageContext {
-  if (pathname === "/login") {
-    return pageContext(LOGIN_TITLE, []);
+  const path = normalizePath(pathname);
+  const variant = pageVariant(path);
+
+  if (path === "/login") {
+    return pageContext(LOGIN_TITLE, variant, []);
   }
 
   const group = NAV_GROUPS.find((entry) =>
-    entry.items.some((item) => isActivePath(pathname, item.href)),
+    entry.items.some((item) => isActivePath(path, item.href)),
   );
-  const item = group?.items.find((entry) => isActivePath(pathname, entry.href));
+  const item = group?.items.find((entry) => isActivePath(path, entry.href));
 
   if (!group || !item) {
-    return pageContext(FALLBACK_TITLE, []);
+    return pageContext(FALLBACK_TITLE, variant, []);
   }
 
-  return pageContext(item.label, item.href === "/" ? [] : [{ label: group.label }]);
+  return pageContext(item.label, variant, item.href === "/" ? [] : [{ label: group.label }]);
 }
 
-export function userInitials(name: string | null, email: string | null): string {
-  const source = name?.trim() || email?.trim() || "";
-  return source.length > 0 ? source.slice(0, 1).toUpperCase() : "?";
+export function resolveDisplayUser(
+  name: string | null,
+  email: string | null,
+  fallback: string = UNKNOWN_USER,
+): DisplayUser {
+  const label = firstNonBlank([name, email]) ?? fallback;
+  return { label, initials: userInitials(label) };
 }
 
-function pageContext(title: string, breadcrumbs: Breadcrumb[]): PageContext {
-  return { title, breadcrumbs, documentTitle: `${title} · ${SITE_NAME}` };
+export function userInitials(source: string): string {
+  const first = firstGrapheme(source);
+  return first ? first.toLocaleUpperCase() : "?";
+}
+
+function pageContext(title: string, variant: PageVariant, breadcrumbs: Breadcrumb[]): PageContext {
+  return { title, breadcrumbs, documentTitle: `${title} · ${SITE_NAME}`, variant };
+}
+
+function firstNonBlank(values: (string | null)[]): string | null {
+  for (const value of values) {
+    const trimmed = value?.trim();
+    if (trimmed) return trimmed;
+  }
+  return null;
+}
+
+function firstGrapheme(value: string): string {
+  for (const { segment } of new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(
+    value.trim(),
+  )) {
+    return segment;
+  }
+  return "";
 }
