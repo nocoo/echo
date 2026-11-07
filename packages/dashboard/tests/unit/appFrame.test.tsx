@@ -1,6 +1,6 @@
-import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { AppFrame } from "../../src/app/AppFrame";
 import { BasaltProviders } from "../../src/app/BasaltProviders";
 import type { MeResponse } from "../../src/lib/api";
@@ -13,6 +13,38 @@ const owner: MeResponse = {
   name: "Owner",
   picture: null,
 };
+
+const mediaListeners = new Set<() => void>();
+let mobileMatches = false;
+
+function stubMatchMedia(): void {
+  vi.spyOn(window, "matchMedia").mockImplementation(
+    (query: string) =>
+      ({
+        get matches() {
+          return mobileMatches;
+        },
+        media: query,
+        onchange: null,
+        addEventListener: (_event: string, callback: () => void) => {
+          mediaListeners.add(callback);
+        },
+        removeEventListener: (_event: string, callback: () => void) => {
+          mediaListeners.delete(callback);
+        },
+        addListener: () => undefined,
+        removeListener: () => undefined,
+        dispatchEvent: () => false,
+      }) as unknown as MediaQueryList,
+  );
+}
+
+function setViewport(mobile: boolean): void {
+  mobileMatches = mobile;
+  act(() => {
+    for (const listener of mediaListeners) listener();
+  });
+}
 
 function renderGuard(initialPath = "/keys") {
   return render(
@@ -30,8 +62,24 @@ function renderGuard(initialPath = "/keys") {
   );
 }
 
+async function openDrawer() {
+  const menu = await screen.findByRole("button", { name: "打开导航菜单" });
+  await act(async () => {
+    fireEvent.click(menu);
+  });
+  const dialog = await screen.findByRole("dialog");
+  return { menu, dialog };
+}
+
+beforeEach(() => {
+  mobileMatches = false;
+  stubMatchMedia();
+});
+
 afterEach(() => {
   cleanup();
+  mediaListeners.clear();
+  mobileMatches = false;
   vi.restoreAllMocks();
   apiClient.setUnauthorizedHandler(null);
 });
@@ -61,6 +109,14 @@ describe("admin login guard", () => {
     await waitFor(() => expect(screen.getByText("keys page")).toBeTruthy());
     expect(screen.queryByText("login page")).toBeNull();
     expect(screen.getByText("owner@example.com")).toBeTruthy();
+  });
+
+  test("falls back to the email when the name is blank", async () => {
+    vi.spyOn(apiClient, "me").mockResolvedValue({ ...owner, name: "   " });
+
+    renderGuard();
+
+    await waitFor(() => expect(screen.getAllByText("owner@example.com")).toHaveLength(2));
   });
 
   test("titles the page and shows the group trail", async () => {
@@ -118,6 +174,73 @@ describe("admin login guard", () => {
     });
 
     await waitFor(() => expect(screen.getByText("login page")).toBeTruthy());
+  });
+});
+
+describe("mobile drawer", () => {
+  test("returns focus to the menu button after Escape", async () => {
+    vi.spyOn(apiClient, "me").mockResolvedValue(owner);
+    mobileMatches = true;
+
+    renderGuard();
+    const { menu, dialog } = await openDrawer();
+
+    await act(async () => {
+      fireEvent.keyDown(dialog, { key: "Escape", code: "Escape" });
+    });
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(document.activeElement).toBe(menu);
+  });
+
+  test("closes when the route changes", async () => {
+    vi.spyOn(apiClient, "me").mockResolvedValue(owner);
+    mobileMatches = true;
+
+    renderGuard("/");
+    const { dialog } = await openDrawer();
+
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole("button", { name: "密钥" }));
+    });
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.getByText("keys page")).toBeTruthy();
+  });
+
+  test("closes when the viewport leaves the mobile breakpoint", async () => {
+    vi.spyOn(apiClient, "me").mockResolvedValue(owner);
+    mobileMatches = true;
+
+    renderGuard();
+    await openDrawer();
+
+    setViewport(false);
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+});
+
+describe("theme toggle", () => {
+  test("describes the next theme and cycles it", async () => {
+    vi.spyOn(apiClient, "me").mockResolvedValue(owner);
+
+    renderGuard();
+    await waitFor(() => expect(screen.getByText("keys page")).toBeTruthy());
+
+    const toggle = screen.getByRole("button", { name: "切换主题" });
+    await act(async () => {
+      fireEvent.focus(toggle);
+    });
+
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip.textContent).toBe("切换为浅色主题");
+
+    await act(async () => {
+      fireEvent.click(toggle);
+    });
+
+    expect(document.documentElement.classList.contains("light")).toBe(true);
   });
 });
 

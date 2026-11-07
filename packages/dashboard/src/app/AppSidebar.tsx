@@ -19,7 +19,7 @@ import { Boxes, KeyRound, LogOut, PanelLeft, Search, Wrench } from "lucide-react
 import { useLocation, useNavigate } from "react-router";
 import { Logo } from "../components/Logo";
 import type { MeResponse } from "../lib/api";
-import { isActivePath, NAV_GROUPS, NAV_ITEMS, userInitials } from "../lib/navigation";
+import { isActivePath, NAV_GROUPS, NAV_ITEMS, resolveDisplayUser } from "../lib/navigation";
 
 const NAV_ICONS: Record<string, typeof Boxes> = {
   "/": Boxes,
@@ -35,35 +35,22 @@ function iconFor(href: string) {
 export interface AppSidebarProps {
   collapsed: boolean;
   onToggle: () => void;
-  onNavigate?: () => void;
   user: MeResponse | null;
   onLogout: () => void;
   loggingOut: boolean;
 }
 
-export function AppSidebar({
-  collapsed,
-  onToggle,
-  onNavigate,
-  user,
-  onLogout,
-  loggingOut,
-}: AppSidebarProps) {
+export function AppSidebar({ collapsed, onToggle, user, onLogout, loggingOut }: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const go = (href: string) => {
-    navigate(href);
-    onNavigate?.();
-  };
-  const name = user?.name ?? user?.email ?? "已登录";
-  const email = user?.email ?? "";
+  const display = resolveDisplayUser(user?.name ?? null, user?.email ?? null);
+  const name = display.label;
+  const email = user?.email?.trim() ?? "";
 
   const avatar = (
     <Avatar className="h-8 w-8">
       {user?.picture ? <AvatarImage src={user.picture} alt="" /> : null}
-      <AvatarFallback className="text-xs">
-        {userInitials(user?.name ?? null, user?.email ?? null)}
-      </AvatarFallback>
+      <AvatarFallback className="text-xs">{display.initials}</AvatarFallback>
     </Avatar>
   );
 
@@ -96,8 +83,10 @@ export function AppSidebar({
           <div className="flex w-full items-center justify-between">
             <div className="flex min-w-0 items-center gap-basalt-space-lg">
               <Logo size="sm" />
-              <span className="truncate text-lg font-semibold text-basalt-foreground">Echo</span>
-              <span className="shrink-0 rounded-md bg-basalt-secondary px-basalt-space-md py-basalt-space-xs text-[10px] leading-none font-medium text-basalt-muted-foreground">
+              <span className="truncate text-lg font-semibold text-basalt-foreground md:text-xl">
+                Echo
+              </span>
+              <span className="shrink-0 rounded-md bg-basalt-secondary px-basalt-space-md py-basalt-space-xs text-[11px] leading-none font-medium text-basalt-muted-foreground">
                 v{__ECHO_VERSION__}
               </span>
             </div>
@@ -136,7 +125,7 @@ export function AppSidebar({
                     <SidebarIconItem
                       active={isActivePath(location.pathname, item.href)}
                       aria-label={item.label}
-                      onClick={() => go(item.href)}
+                      onClick={() => navigate(item.href)}
                     >
                       <Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
                     </SidebarIconItem>
@@ -157,7 +146,7 @@ export function AppSidebar({
                       <SidebarItem
                         key={item.href}
                         active={isActivePath(location.pathname, item.href)}
-                        onClick={() => go(item.href)}
+                        onClick={() => navigate(item.href)}
                       >
                         <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
                         <span className="flex-1 truncate text-left">{item.label}</span>

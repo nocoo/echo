@@ -2,7 +2,7 @@ import { Button, Tooltip, TooltipContent, TooltipTrigger } from "@nocoo/basalt";
 import type { ReactElement } from "react";
 import { GitHubIcon, HexagonIcon } from "./icons";
 
-function HeaderTooltip({ label, children }: { label: string; children: ReactElement }) {
+export function HeaderTooltip({ label, children }: { label: string; children: ReactElement }) {
   return (
     <Tooltip delayDuration={0}>
       <TooltipTrigger asChild>{children}</TooltipTrigger>

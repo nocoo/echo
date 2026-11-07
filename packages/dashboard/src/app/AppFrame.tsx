@@ -4,7 +4,7 @@ import {
   Sheet,
   SheetContent,
   SheetTitle,
-  ThemeToggle,
+  SheetTrigger,
   toast,
 } from "@nocoo/basalt";
 import { AppHeader } from "@nocoo/basalt/components/app-header";
@@ -15,6 +15,8 @@ import { Suspense, useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation, useNavigate } from "react-router";
 import { GitHubLink, HexlyLink } from "../components/header-links";
 import { IslandSkeleton } from "../components/island-skeleton";
+import { Logo } from "../components/Logo";
+import { ThemeToggle } from "../components/theme-toggle";
 import type { MeResponse } from "../lib/api";
 import { apiClient, describeError } from "../lib/api";
 import { resolvePageContext } from "../lib/navigation";
@@ -56,6 +58,15 @@ export function AppFrame() {
     return () => apiClient.setUnauthorizedHandler(null);
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a route change closes the drawer without remounting the shell.
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isMobile) setMobileOpen(false);
+  }, [isMobile]);
+
   const logout = async () => {
     if (loggingOut) return;
     setLoggingOut(true);
@@ -75,7 +86,7 @@ export function AppFrame() {
   };
 
   if (auth === "loading") {
-    return <LoadingScreen label="校验会话" />;
+    return <LoadingScreen label="校验会话" mark={<Logo size="lg" />} />;
   }
 
   if (auth === "anonymous") {
@@ -103,47 +114,42 @@ export function AppFrame() {
           <AppSidebar
             collapsed={false}
             onToggle={() => setMobileOpen(false)}
-            onNavigate={() => setMobileOpen(false)}
             user={user}
             onLogout={() => void logout()}
             loggingOut={loggingOut}
           />
         </SheetContent>
+        <AppMain>
+          <AppHeader
+            density={isMobile ? "compact" : "comfortable"}
+            leading={
+              isMobile ? (
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="打开导航菜单">
+                    <Menu className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
+                  </Button>
+                </SheetTrigger>
+              ) : null
+            }
+            breadcrumbs={page.breadcrumbs.length > 0 ? page.breadcrumbs : undefined}
+            title={page.title}
+            actions={
+              <div className="flex items-center gap-1">
+                <GitHubLink />
+                <HexlyLink />
+                <ThemeToggle />
+              </div>
+            }
+          />
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col px-basalt-space-lg pb-basalt-space-lg md:px-basalt-layout-sm md:pb-basalt-layout-sm">
+            <ContentIsland>
+              <Suspense fallback={<IslandSkeleton variant={page.variant} />}>
+                <Outlet />
+              </Suspense>
+            </ContentIsland>
+          </div>
+        </AppMain>
       </Sheet>
-      <AppMain>
-        <AppHeader
-          density={isMobile ? "compact" : "comfortable"}
-          leading={
-            isMobile ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setMobileOpen(true)}
-                aria-label="打开导航菜单"
-              >
-                <Menu className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
-              </Button>
-            ) : null
-          }
-          breadcrumbs={page.breadcrumbs.length > 0 ? page.breadcrumbs : undefined}
-          title={page.title}
-          actions={
-            <div className="flex items-center gap-1">
-              <GitHubLink />
-              <HexlyLink />
-              <ThemeToggle aria-label="切换主题" />
-            </div>
-          }
-        />
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col md:px-basalt-layout-sm md:pb-basalt-layout-sm">
-          <ContentIsland>
-            <Suspense fallback={<IslandSkeleton />}>
-              <Outlet />
-            </Suspense>
-          </ContentIsland>
-        </div>
-      </AppMain>
     </AppShell>
   );
 }
