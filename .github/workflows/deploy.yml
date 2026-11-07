@@ -29,7 +29,7 @@ jobs:
       tailscale: true
       environment: echo / production
       source-run-id: ${{ github.event_name == 'workflow_run' && format('{0}', github.event.workflow_run.id) || inputs.ci-run-id }}
-      images: '[{"image":"ghcr.io/nocoo/echo","service":"web"}]'
+      images: '[{"image":"ghcr.io/nocoo/echo","service":"web","context":".","file":"packages/ip-service/Dockerfile"}]'
       deploy-directory: /data/echo
       remote-verify-command: |
         for i in 1 2 3 4 5 6 7 8 9 10; do
