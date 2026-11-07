@@ -43,8 +43,8 @@ jobs:
           if [ "$i" = "10" ]; then echo "❌ echo-api failed to come up"; docker logs --tail 80 echo-app; exit 1; fi
         done
         for i in 1 2 3 4 5 6 7 8 9 10; do
-          if docker exec echo-app bun -e \
-            'fetch("http://127.0.0.1:7010/admin").then(async r=>{if(!r.ok)process.exit(1);const t=await r.text();process.exit(t.includes("id=\\"root\\"")?0:1)}).catch(()=>process.exit(1))' 2>/dev/null; then
+          if docker exec echo-app test -f /app/packages/dashboard/dist/index.html \
+            && docker exec echo-app bun -e 'const r=await fetch("http://127.0.0.1:7010/admin"); process.exit(r.status===200?0:1)' 2>/dev/null; then
             echo "✅ dashboard served on /admin"
             break
           fi
