@@ -42,6 +42,16 @@ jobs:
           sleep 3
           if [ "$i" = "10" ]; then echo "❌ echo-api failed to come up"; docker logs --tail 80 echo-app; exit 1; fi
         done
+        for i in 1 2 3 4 5 6 7 8 9 10; do
+          if docker exec echo-app bun -e \
+            'fetch("http://127.0.0.1:7010/admin").then(async r=>{if(!r.ok)process.exit(1);const t=await r.text();process.exit(t.includes("id=\\"root\\"")?0:1)}).catch(()=>process.exit(1))' 2>/dev/null; then
+            echo "✅ dashboard served on /admin"
+            break
+          fi
+          echo "attempt $i: dashboard not ready yet"
+          sleep 3
+          if [ "$i" = "10" ]; then echo "❌ dashboard missing from the image"; docker exec echo-app ls -la /app/packages/dashboard/dist || true; exit 1; fi
+        done
       verify-command: |
         (
         set -e
@@ -57,6 +67,21 @@ jobs:
         done
         echo "❌ edge smoke test failed"
         exit 1
+        )
+        (
+        set -e
+        for i in 1 2 3 4 5; do
+          code=$(curl -sS -o /tmp/echo-admin.html -w "%{http_code}" --max-time 20 https://echo.nocoo.cloud/admin || true)
+          echo "attempt $i: /admin HTTP $code"
+          if [ "$code" = "200" ] && grep -q 'id="root"' /tmp/echo-admin.html; then break; fi
+          sleep 5
+        done
+        test "$code" = "200"
+        asset=$(grep -o '/admin/assets/[^"]*\.js' /tmp/echo-admin.html | head -1)
+        test -n "$asset"
+        test "$(curl -sS -o /dev/null -w "%{http_code}" --max-time 20 "https://echo.nocoo.cloud${asset}")" = "200"
+        test "$(curl -sS -o /dev/null -w "%{http_code}" --max-time 20 https://echo.nocoo.cloud/api/admin/keys)" = "401"
+        echo "✅ dashboard edge smoke passed"
         )
       timeout-minutes: 25
     secrets:
