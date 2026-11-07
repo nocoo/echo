@@ -209,6 +209,25 @@ describe("api client", () => {
   });
 });
 
+describe("default fetch binding", () => {
+  test("survives a browser-style fetch that rejects a non-global this", async () => {
+    const original = globalThis.fetch;
+    globalThis.fetch = function (this: unknown) {
+      if (this !== globalThis) throw new TypeError("Illegal invocation");
+      return Promise.resolve(
+        Response.json({ authenticated: false, email: null, name: null, picture: null }),
+      );
+    } as typeof fetch;
+
+    try {
+      const client = new ApiClient();
+      await expect(client.me()).resolves.toMatchObject({ authenticated: false });
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+});
+
 describe("describeError", () => {
   test("prefers the api error message", () => {
     expect(describeError(new ApiError("boom", 500, "x"))).toBe("boom");

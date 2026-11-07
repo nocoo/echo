@@ -68,7 +68,8 @@ export function AppFrame() {
         setUser(me);
         setAuth(me.authenticated ? "authenticated" : "anonymous");
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error("[auth] session check failed", error);
         if (active) setAuth("anonymous");
       });
     return () => {
