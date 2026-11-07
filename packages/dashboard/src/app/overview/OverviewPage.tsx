@@ -1,51 +1,19 @@
-import { Badge, Button, StatStrip, Tooltip, TooltipContent, TooltipTrigger } from "@nocoo/basalt";
-import { DataTable, type DataTableColumn } from "@nocoo/basalt/components/data-table";
+import { Button, Tooltip, TooltipContent, TooltipTrigger } from "@nocoo/basalt";
+import { StatCard } from "@nocoo/basalt/charts/stat-card";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
-import { apiClient, type DatabaseEntry } from "../../lib/api";
-import { formatAgeDays, formatBytes, formatDate, formatDateTime } from "../../lib/format";
-import type { FreshnessStatus } from "./use-overview";
+import { Clock3, Database, HardDrive, KeyRound } from "lucide-react";
+import { apiClient } from "../../lib/api";
+import { formatAgeDays, formatBytes } from "../../lib/format";
+import { statusTone, toneClasses } from "../../lib/visual";
+import { DatabaseCard } from "./DatabaseCard";
 import { useOverview } from "./use-overview";
-
-const STATUS_VARIANTS: Record<DatabaseEntry["status"], "success" | "warning" | "destructive"> = {
-  ok: "success",
-  stale: "warning",
-  missing: "destructive",
-};
-
-const STATUS_LABELS: Record<DatabaseEntry["status"], string> = {
-  ok: "正常",
-  stale: "陈旧",
-  missing: "缺失",
-};
-
-const FRESHNESS_LABELS: Record<FreshnessStatus, string> = {
-  ok: "正常",
-  stale: "陈旧",
-  unknown: "未知",
-};
 
 export default function OverviewPage() {
   const { loading, error, model, reload } = useOverview(apiClient);
-
-  const columns: DataTableColumn<DatabaseEntry>[] = [
-    { id: "filename", header: "文件名", accessor: (row) => row.filename },
-    { id: "provider", header: "来源", accessor: (row) => row.provider },
-    { id: "size", header: "大小", accessor: (row) => formatBytes(row.size) },
-    { id: "buildDate", header: "构建日期", accessor: (row) => formatDate(row.buildDate) },
-    { id: "modifiedAt", header: "修改时间", accessor: (row) => formatDateTime(row.modifiedAt) },
-    { id: "ageDays", header: "天数", accessor: (row) => formatAgeDays(row.ageDays) },
-    {
-      id: "status",
-      header: "状态",
-      accessor: (row) => (
-        <Badge variant={STATUS_VARIANTS[row.status]} dot>
-          {STATUS_LABELS[row.status]}
-        </Badge>
-      ),
-    },
-  ];
-
   const stats = model?.stats;
+  const tone = toneClasses(
+    statusTone(stats?.status === "unknown" ? "idle" : (stats?.status ?? "idle")),
+  );
 
   return (
     <div className="space-y-basalt-layout-lg">
@@ -75,24 +43,39 @@ export default function OverviewPage() {
         </p>
       ) : null}
 
-      <StatStrip
-        loading={loading}
-        items={[
-          { label: "数据库", value: stats ? `${stats.presentCount}/${stats.databaseCount}` : "—" },
-          { label: "数据年龄", value: stats ? formatAgeDays(stats.ageDays) : "—" },
-          { label: "状态", value: stats ? FRESHNESS_LABELS[stats.status] : "—" },
-          { label: "API key", value: stats ? String(stats.keyCount) : "—" },
-        ]}
-      />
+      <div className="grid gap-basalt-layout md:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="数据年龄"
+          value={stats ? formatAgeDays(stats.ageDays) : "—"}
+          subtitle="超过 7 天视为陈旧"
+          icon={Clock3}
+          iconColor={tone.text}
+        />
+        <StatCard
+          label="数据库"
+          value={stats ? `${stats.presentCount}/${stats.databaseCount}` : "—"}
+          subtitle={stats ? `${stats.missingCount} 个缺失` : undefined}
+          icon={Database}
+        />
+        <StatCard
+          label="总大小"
+          value={stats ? formatBytes(stats.totalSizeBytes) : "—"}
+          subtitle="已安装文件合计"
+          icon={HardDrive}
+        />
+        <StatCard
+          label="有效 key"
+          value={stats ? String(stats.activeKeyCount) : "—"}
+          subtitle={stats ? `共 ${stats.keyCount} 个` : undefined}
+          icon={KeyRound}
+        />
+      </div>
 
-      <DataTable
-        aria-label="IP 数据库"
-        data={model?.databases ?? []}
-        columns={columns}
-        loading={loading}
-        empty="没有数据库记录"
-        getRowId={(row) => row.filename}
-      />
+      <div className="grid gap-basalt-layout md:grid-cols-2 xl:grid-cols-3">
+        {(model?.databases ?? []).map((database) => (
+          <DatabaseCard key={database.filename} database={database} />
+        ))}
+      </div>
     </div>
   );
 }

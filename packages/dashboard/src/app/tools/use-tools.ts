@@ -89,6 +89,24 @@ export function evaluateContainment(cidr: string, ip: string): ContainmentResult
   return { contains: contains(network, target), error: null };
 }
 
+export interface NetworkInput {
+  address: string | null;
+  prefix: number | null;
+}
+
+export function parseNetworkInput(text: string): NetworkInput {
+  const trimmed = text.trim();
+  if (!trimmed) return { address: null, prefix: null };
+
+  const slash = trimmed.indexOf("/");
+  const address = (slash >= 0 ? trimmed.slice(0, slash) : trimmed).trim();
+  if (!isIpv4(address)) return { address: null, prefix: null };
+  if (slash < 0) return { address, prefix: null };
+
+  const conversion = convertCidr(trimmed);
+  return { address, prefix: conversion.prefix };
+}
+
 export function buildIpView(ip: string): IpView {
   const text = ip.trim();
   if (!text) {

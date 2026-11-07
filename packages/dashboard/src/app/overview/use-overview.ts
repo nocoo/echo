@@ -6,6 +6,7 @@ import {
   describeError,
   type OverviewResponse,
 } from "../../lib/api";
+import { totalSizeBytes } from "../../lib/visual";
 
 export type FreshnessStatus = "ok" | "stale" | "unknown";
 
@@ -16,6 +17,8 @@ export interface OverviewStats {
   presentCount: number;
   missingCount: number;
   keyCount: number;
+  activeKeyCount: number;
+  totalSizeBytes: number;
 }
 
 export interface OverviewViewModel {
@@ -45,6 +48,8 @@ export function buildOverviewViewModel(
       presentCount: overview.summary.present,
       missingCount: overview.summary.missing,
       keyCount: keys.length,
+      activeKeyCount: keys.filter((key) => key.status === "active").length,
+      totalSizeBytes: totalSizeBytes(overview.databases),
     },
     databases: overview.databases,
   };

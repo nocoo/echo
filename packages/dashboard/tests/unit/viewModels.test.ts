@@ -7,6 +7,7 @@ import {
   buildPrefixRows,
   convertCidr,
   evaluateContainment,
+  parseNetworkInput,
 } from "../../src/app/tools/use-tools";
 import type { ApiClient, ApiKey, LookupResponse, OverviewResponse } from "../../src/lib/api";
 
@@ -70,6 +71,8 @@ describe("overview view model", () => {
       presentCount: 1,
       missingCount: 0,
       keyCount: 2,
+      activeKeyCount: 2,
+      totalSizeBytes: 1024,
     });
     expect(model.databases).toHaveLength(1);
   });
@@ -199,6 +202,31 @@ describe("prefix rows", () => {
 
   test("ignores an empty address", () => {
     expect(buildPrefixRows("  ")).toEqual({ rows: [], error: null });
+  });
+});
+
+describe("parseNetworkInput", () => {
+  test("reads an address with a prefix", () => {
+    expect(parseNetworkInput("192.168.1.130/24")).toEqual({
+      address: "192.168.1.130",
+      prefix: 24,
+    });
+  });
+
+  test("reads a bare address", () => {
+    expect(parseNetworkInput(" 192.168.1.130 ")).toEqual({
+      address: "192.168.1.130",
+      prefix: null,
+    });
+  });
+
+  test("rejects a broken input", () => {
+    expect(parseNetworkInput("")).toEqual({ address: null, prefix: null });
+    expect(parseNetworkInput("nonsense")).toEqual({ address: null, prefix: null });
+    expect(parseNetworkInput("192.168.1.130/99")).toEqual({
+      address: "192.168.1.130",
+      prefix: null,
+    });
   });
 });
 

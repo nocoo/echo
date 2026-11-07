@@ -15,10 +15,13 @@ import {
 } from "@nocoo/basalt";
 import { DataTable, type DataTableColumn } from "@nocoo/basalt/components/data-table";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
+import { KeyRound } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
+import { StatusDot } from "../../components/visual/StatusDot";
 import { type ApiKey, apiClient } from "../../lib/api";
 import { formatTimestamp } from "../../lib/format";
+import { statusTone } from "../../lib/visual";
 import { useKeys } from "./use-keys";
 
 export default function KeysPage() {
@@ -31,18 +34,37 @@ export default function KeysPage() {
 
   const columns: DataTableColumn<ApiKey>[] = [
     { id: "name", header: "名称", accessor: (row) => row.name },
-    { id: "prefix", header: "前缀", accessor: (row) => row.key_prefix },
+    {
+      id: "prefix",
+      header: "前缀",
+      accessor: (row) => <span className="font-mono text-xs">{row.key_prefix}</span>,
+    },
     {
       id: "status",
       header: "状态",
       accessor: (row) => (
-        <Badge variant={row.status === "active" ? "success" : "secondary"} dot>
-          {row.status === "active" ? "有效" : "已撤销"}
-        </Badge>
+        <span className="flex items-center gap-basalt-space-xs">
+          <StatusDot tone={statusTone(row.status === "active" ? "ok" : "idle")} />
+          <Badge variant={row.status === "active" ? "success" : "secondary"}>
+            {row.status === "active" ? "有效" : "已撤销"}
+          </Badge>
+        </span>
       ),
     },
-    { id: "createdAt", header: "创建时间", accessor: (row) => formatTimestamp(row.created_at) },
-    { id: "lastUsedAt", header: "最近使用", accessor: (row) => formatTimestamp(row.last_used_at) },
+    {
+      id: "createdAt",
+      header: "创建时间",
+      accessor: (row) => (
+        <span className="font-mono text-xs">{formatTimestamp(row.created_at)}</span>
+      ),
+    },
+    {
+      id: "lastUsedAt",
+      header: "最近使用",
+      accessor: (row) => (
+        <span className="font-mono text-xs">{formatTimestamp(row.last_used_at)}</span>
+      ),
+    },
     {
       id: "actions",
       header: "操作",
@@ -111,7 +133,12 @@ export default function KeysPage() {
         data={model?.keys ?? []}
         columns={columns}
         loading={loading}
-        empty="还没有 API key"
+        empty={
+          <span className="flex flex-col items-center gap-basalt-space-xs text-basalt-muted-foreground">
+            <KeyRound className="h-6 w-6" strokeWidth={1.5} aria-hidden="true" />
+            <span>还没有 API key，新建一个即可查询指定地址。</span>
+          </span>
+        }
         getRowId={(row) => row.id}
       />
 
