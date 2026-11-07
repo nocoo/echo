@@ -92,7 +92,7 @@ export function freshnessRatio(
   thresholdDays: number = FRESHNESS_THRESHOLD_DAYS,
 ): number {
   if (ageDays === null || !Number.isFinite(ageDays) || thresholdDays <= 0) return 0;
-  return Math.min(1, Math.max(0, ageDays / thresholdDays));
+  return Math.min(1, Math.max(0, 1 - ageDays / thresholdDays));
 }
 
 export function totalSizeBytes(entries: DatabaseEntry[]): number {

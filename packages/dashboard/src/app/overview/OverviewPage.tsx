@@ -43,7 +43,7 @@ export default function OverviewPage() {
         </p>
       ) : null}
 
-      <div className="grid gap-basalt-layout md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-basalt-layout xl:grid-cols-4">
         <StatCard
           label="数据年龄"
           value={stats ? formatAgeDays(stats.ageDays) : "—"}

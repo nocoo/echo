@@ -148,10 +148,10 @@ describe("providerAccent", () => {
 
 describe("freshnessRatio", () => {
   test("scales against the seven day threshold", () => {
-    expect(freshnessRatio(0)).toBe(0);
+    expect(freshnessRatio(0)).toBe(1);
     expect(freshnessRatio(3.5)).toBe(0.5);
-    expect(freshnessRatio(7)).toBe(1);
-    expect(freshnessRatio(30)).toBe(1);
+    expect(freshnessRatio(7)).toBe(0);
+    expect(freshnessRatio(30)).toBe(0);
   });
 
   test("treats an unknown age as empty", () => {

@@ -3,7 +3,6 @@ import { FreshnessBar } from "../../components/visual/FreshnessBar";
 import { ProviderIcon } from "../../components/visual/ProviderIcon";
 import type { DatabaseEntry } from "../../lib/api";
 import { formatBytes, formatDate, formatDateTime } from "../../lib/format";
-import { statusTone, toneClasses } from "../../lib/visual";
 
 const STATUS_VARIANTS: Record<DatabaseEntry["status"], "success" | "warning" | "destructive"> = {
   ok: "success",
@@ -18,7 +17,6 @@ const STATUS_LABELS: Record<DatabaseEntry["status"], string> = {
 };
 
 export function DatabaseCard({ database }: { database: DatabaseEntry }) {
-  const tone = toneClasses(statusTone(database.status));
   const missing = !database.present;
 
   return (
@@ -55,12 +53,6 @@ export function DatabaseCard({ database }: { database: DatabaseEntry }) {
           <dt className="text-[11px] text-basalt-muted-foreground">修改时间</dt>
           <dd className="truncate font-mono text-xs text-basalt-foreground">
             {formatDateTime(database.modifiedAt)}
-          </dd>
-        </div>
-        <div className="min-w-0">
-          <dt className="text-[11px] text-basalt-muted-foreground">状态</dt>
-          <dd className={`truncate text-xs ${tone.text}`}>
-            {database.present ? "已就绪" : "未安装"}
           </dd>
         </div>
       </dl>

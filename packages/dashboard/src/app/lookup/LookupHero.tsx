@@ -10,7 +10,7 @@ export function LookupHero({ model }: { model: LookupViewModel }) {
     .join(" · ");
 
   return (
-    <LayerCard className="flex flex-col gap-basalt-layout">
+    <LayerCard className="flex flex-col gap-basalt-layout self-start">
       <div className="flex items-center gap-basalt-space-md">
         <Flag countryCode={location?.countryCode ?? null} className="text-3xl" />
         <MonoIp
