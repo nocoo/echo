@@ -57,14 +57,14 @@ export default function LookupPage() {
       {loading && !model ? <LookupResultSkeleton /> : null}
 
       {model ? (
-        <div className="grid gap-basalt-layout lg:grid-cols-2">
+        <>
           <LookupHero model={model} />
-          <div className="grid gap-basalt-layout md:grid-cols-2">
+          <div className="grid items-start gap-basalt-layout md:grid-cols-2 xl:grid-cols-4">
             {model.providers.map((provider) => (
               <ProviderCard key={provider.name} provider={provider} />
             ))}
           </div>
-        </div>
+        </>
       ) : null}
 
       {!model && !loading && !error ? (

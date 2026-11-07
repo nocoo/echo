@@ -1,4 +1,4 @@
-import { Button, Tooltip, TooltipContent, TooltipTrigger } from "@nocoo/basalt";
+import { Button, StatStrip, Tooltip, TooltipContent, TooltipTrigger } from "@nocoo/basalt";
 import { StatCard } from "@nocoo/basalt/charts/stat-card";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
 import { Clock3, Database, HardDrive, KeyRound } from "lucide-react";
@@ -12,8 +12,15 @@ export default function OverviewPage() {
   const { loading, error, model, reload } = useOverview(apiClient);
   const stats = model?.stats;
   const tone = toneClasses(
-    statusTone(stats?.status === "unknown" ? "idle" : (stats?.status ?? "idle")),
+    statusTone(stats?.status === "stale" ? "stale" : stats?.status === "ok" ? "ok" : "idle"),
   );
+
+  const metrics = [
+    { label: "数据年龄", value: stats ? formatAgeDays(stats.ageDays) : "—" },
+    { label: "数据库", value: stats ? `${stats.presentCount}/${stats.databaseCount}` : "—" },
+    { label: "总大小", value: stats ? formatBytes(stats.totalSizeBytes) : "—" },
+    { label: "有效 key", value: stats ? String(stats.activeKeyCount) : "—" },
+  ];
 
   return (
     <div className="space-y-basalt-layout-lg">
@@ -43,38 +50,46 @@ export default function OverviewPage() {
         </p>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-basalt-layout xl:grid-cols-4">
+      <div className="hidden md:grid md:grid-cols-2 md:gap-basalt-layout xl:grid-cols-4">
         <StatCard
           label="数据年龄"
-          value={stats ? formatAgeDays(stats.ageDays) : "—"}
+          value={metrics[0]?.value ?? "—"}
           subtitle="超过 7 天视为陈旧"
           icon={Clock3}
           iconColor={tone.text}
         />
         <StatCard
           label="数据库"
-          value={stats ? `${stats.presentCount}/${stats.databaseCount}` : "—"}
+          value={metrics[1]?.value ?? "—"}
           subtitle={stats ? `${stats.missingCount} 个缺失` : undefined}
           icon={Database}
         />
         <StatCard
           label="总大小"
-          value={stats ? formatBytes(stats.totalSizeBytes) : "—"}
+          value={metrics[2]?.value ?? "—"}
           subtitle="已安装文件合计"
           icon={HardDrive}
         />
         <StatCard
           label="有效 key"
-          value={stats ? String(stats.activeKeyCount) : "—"}
+          value={metrics[3]?.value ?? "—"}
           subtitle={stats ? `共 ${stats.keyCount} 个` : undefined}
           icon={KeyRound}
         />
       </div>
 
-      <div className="grid gap-basalt-layout md:grid-cols-2 xl:grid-cols-3">
-        {(model?.databases ?? []).map((database) => (
-          <DatabaseCard key={database.filename} database={database} />
-        ))}
+      <StatStrip
+        className="md:hidden"
+        loading={loading}
+        items={metrics.map((metric) => ({ label: metric.label, value: metric.value }))}
+      />
+
+      <div className="@container">
+        <div className="grid items-start gap-basalt-layout @min-2xl:grid-cols-2 @min-5xl:grid-cols-3">
+          {(model?.databases ?? []).map((database) => (
+            <DatabaseCard key={database.filename} database={database} />
+          ))}
+        </div>
       </div>
     </div>
   );

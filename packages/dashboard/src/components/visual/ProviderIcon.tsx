@@ -15,7 +15,7 @@ export function ProviderIcon({ provider, size = "md" }: { provider: string; size
 
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center ${box} ${accent.surface} ${accent.text}`}
+      className={`inline-flex shrink-0 items-center justify-center ${box} ${accent.surface} text-basalt-foreground`}
     >
       <Icon
         className={size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4"}

@@ -18,40 +18,43 @@ const STATUS_LABELS: Record<DatabaseEntry["status"], string> = {
 
 export function DatabaseCard({ database }: { database: DatabaseEntry }) {
   const missing = !database.present;
+  const valueClass = missing ? "text-basalt-muted-foreground" : "text-basalt-foreground";
 
   return (
-    <LayerCard
-      className={`flex flex-col gap-basalt-space-md ${missing ? "saturate-0 opacity-70" : ""}`}
-    >
+    <LayerCard className="flex flex-col gap-basalt-space-md">
       <div
         className={`flex items-start gap-basalt-space-sm ${
-          missing ? "border-l-2 border-basalt-destructive pl-basalt-space-sm" : ""
+          missing ? "border-l-2 border-basalt-tag-danger-foreground pl-basalt-space-sm" : ""
         }`}
       >
         <ProviderIcon provider={database.provider} />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-mono text-sm text-basalt-foreground">{database.filename}</p>
-          <p className="truncate text-[11px] text-basalt-muted-foreground">{database.provider}</p>
+          <p className="break-all font-mono text-basalt-sm text-basalt-foreground">
+            {database.filename}
+          </p>
+          <p className="truncate text-basalt-xs text-basalt-muted-foreground">
+            {database.provider}
+          </p>
         </div>
         <Badge variant={STATUS_VARIANTS[database.status]}>{STATUS_LABELS[database.status]}</Badge>
       </div>
 
       <dl className="grid grid-cols-2 gap-x-basalt-space-md gap-y-basalt-space-xs">
         <div className="min-w-0">
-          <dt className="text-[11px] text-basalt-muted-foreground">大小</dt>
-          <dd className="truncate font-mono text-xs text-basalt-foreground">
+          <dt className="text-basalt-xs text-basalt-muted-foreground">大小</dt>
+          <dd className={`truncate font-mono text-basalt-xs ${valueClass}`}>
             {formatBytes(database.size)}
           </dd>
         </div>
         <div className="min-w-0">
-          <dt className="text-[11px] text-basalt-muted-foreground">构建日期</dt>
-          <dd className="truncate font-mono text-xs text-basalt-foreground">
+          <dt className="text-basalt-xs text-basalt-muted-foreground">构建日期</dt>
+          <dd className={`truncate font-mono text-basalt-xs ${valueClass}`}>
             {formatDate(database.buildDate)}
           </dd>
         </div>
-        <div className="min-w-0">
-          <dt className="text-[11px] text-basalt-muted-foreground">修改时间</dt>
-          <dd className="truncate font-mono text-xs text-basalt-foreground">
+        <div className="col-span-2 min-w-0">
+          <dt className="text-basalt-xs text-basalt-muted-foreground">修改时间</dt>
+          <dd className={`font-mono text-basalt-xs ${valueClass}`}>
             {formatDateTime(database.modifiedAt)}
           </dd>
         </div>

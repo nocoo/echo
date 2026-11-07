@@ -66,10 +66,11 @@ describe("overview page", () => {
     renderPage(<OverviewPage />);
 
     await waitFor(() => expect(screen.getByText("ip2region_v4.xdb")).toBeTruthy());
-    expect(screen.getByText("数据年龄")).toBeTruthy();
-    expect(screen.getByText("总大小")).toBeTruthy();
-    expect(screen.getByText("有效 key")).toBeTruthy();
+    expect(screen.getAllByText("数据年龄").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("总大小").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("有效 key").length).toBeGreaterThan(0);
     expect(screen.getByText("missing.mmdb")).toBeTruthy();
+    expect(screen.getByText("缺失")).toBeTruthy();
   });
 });
 
@@ -133,6 +134,26 @@ describe("tools page", () => {
     await waitFor(() => expect(screen.getByText("192.168.1.0")).toBeTruthy());
     expect(screen.getByText("广播地址")).toBeTruthy();
     expect(screen.getByText("可用主机")).toBeTruthy();
+  });
+});
+
+describe("tools prefix table", () => {
+  test("marks the active prefix row without relying on colour", async () => {
+    renderPage(<ToolsPage />);
+
+    fireEvent.change(screen.getByLabelText("地址或 CIDR"), {
+      target: { value: "192.168.1.130/24" },
+    });
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "前缀表" }), { button: 0 });
+
+    await waitFor(() =>
+      expect(screen.getByText("每个前缀下的网络地址、广播地址与可用主机数")).toBeTruthy(),
+    );
+
+    const marker = screen.getByText("当前前缀");
+    const row = marker.closest("tr");
+    expect(row?.getAttribute("aria-selected")).toBe("true");
+    expect(row?.getAttribute("aria-current")).toBe("true");
   });
 });
 

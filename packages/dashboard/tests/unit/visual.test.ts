@@ -3,11 +3,14 @@ import type { DatabaseEntry, IpLocation, ProviderResult } from "../../src/lib/ap
 import {
   flagForCountry,
   freshnessRatio,
+  isKnownLatency,
   latencyBucket,
   NEUTRAL_FLAG,
+  outcomeLabel,
+  outcomeTone,
   providerAccent,
   providerFields,
-  providerHit,
+  providerOutcome,
   statusTone,
   toneClasses,
   totalSizeBytes,
@@ -127,21 +130,21 @@ describe("latencyBucket", () => {
     expect(latencyBucket(50)).toBe(8);
   });
 
-  test("treats an unknown latency as the worst case", () => {
-    expect(latencyBucket(Number.NaN)).toBe(1);
+  test("reports no scale for an unknown latency", () => {
+    expect(latencyBucket(Number.NaN)).toBe(0);
+    expect(latencyBucket(Number.POSITIVE_INFINITY)).toBe(0);
   });
 });
 
 describe("providerAccent", () => {
-  test("maps every provider to its chart colour", () => {
-    expect(providerAccent("ip2region").text).toBe("text-basalt-chart-1");
-    expect(providerAccent("iplocate").text).toBe("text-basalt-chart-2");
-    expect(providerAccent("ip-location-db").text).toBe("text-basalt-chart-3");
-    expect(providerAccent("circl").text).toBe("text-basalt-chart-4");
+  test("maps every provider to its chart tint", () => {
+    expect(providerAccent("ip2region").surface).toBe("bg-basalt-chart-1/15");
+    expect(providerAccent("iplocate").surface).toBe("bg-basalt-chart-2/15");
+    expect(providerAccent("ip-location-db").surface).toBe("bg-basalt-chart-3/15");
+    expect(providerAccent("circl").surface).toBe("bg-basalt-chart-4/15");
   });
 
-  test("falls back to a muted accent", () => {
-    expect(providerAccent("unknown").text).toBe("text-basalt-muted-foreground");
+  test("falls back to a muted tint", () => {
     expect(providerAccent("unknown").surface).toBe("bg-basalt-muted");
   });
 });
@@ -183,13 +186,30 @@ describe("providerFields", () => {
   });
 });
 
-describe("providerHit", () => {
+describe("providerOutcome", () => {
   test("treats a located provider as a hit", () => {
-    expect(providerHit(provider())).toBe(true);
+    expect(providerOutcome(provider())).toBe("hit");
+    expect(outcomeTone("hit")).toBe("success");
+    expect(outcomeLabel("hit")).toBe("已命中");
   });
 
-  test("treats a failed provider as a miss", () => {
-    expect(providerHit(provider({ error: true }))).toBe(false);
-    expect(providerHit(provider({ location: null }))).toBe(false);
+  test("treats a provider without a location as a miss", () => {
+    expect(providerOutcome(provider({ location: null }))).toBe("miss");
+    expect(outcomeTone("miss")).toBe("muted");
+    expect(outcomeLabel("miss")).toBe("无地理信息");
+  });
+
+  test("treats a failed provider as an error", () => {
+    expect(providerOutcome(provider({ error: true }))).toBe("error");
+    expect(outcomeTone("error")).toBe("destructive");
+    expect(outcomeLabel("error")).toBe("查询失败");
+  });
+});
+
+describe("isKnownLatency", () => {
+  test("rejects a non finite latency", () => {
+    expect(isKnownLatency(12)).toBe(true);
+    expect(isKnownLatency(Number.NaN)).toBe(false);
+    expect(isKnownLatency(Number.POSITIVE_INFINITY)).toBe(false);
   });
 });

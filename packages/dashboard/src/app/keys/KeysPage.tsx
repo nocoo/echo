@@ -37,7 +37,7 @@ export default function KeysPage() {
     {
       id: "prefix",
       header: "前缀",
-      accessor: (row) => <span className="font-mono text-xs">{row.key_prefix}</span>,
+      accessor: (row) => <span className="font-mono text-basalt-xs">{row.key_prefix}</span>,
     },
     {
       id: "status",
@@ -55,14 +55,14 @@ export default function KeysPage() {
       id: "createdAt",
       header: "创建时间",
       accessor: (row) => (
-        <span className="font-mono text-xs">{formatTimestamp(row.created_at)}</span>
+        <span className="font-mono text-basalt-xs">{formatTimestamp(row.created_at)}</span>
       ),
     },
     {
       id: "lastUsedAt",
       header: "最近使用",
       accessor: (row) => (
-        <span className="font-mono text-xs">{formatTimestamp(row.last_used_at)}</span>
+        <span className="font-mono text-basalt-xs">{formatTimestamp(row.last_used_at)}</span>
       ),
     },
     {

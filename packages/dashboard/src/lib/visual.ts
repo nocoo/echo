@@ -4,13 +4,14 @@ export type StatusTone = "success" | "warning" | "destructive" | "muted";
 
 export type DataStatus = "ok" | "stale" | "missing" | "error" | "idle";
 
+export type ProviderOutcome = "hit" | "miss" | "error";
+
 export interface ToneClasses {
   dot: string;
   text: string;
 }
 
 export interface ProviderAccent {
-  text: string;
   surface: string;
 }
 
@@ -28,22 +29,28 @@ export const LATENCY_DOT_COUNT = 10;
 const REGIONAL_INDICATOR_BASE = 0x1f1e6;
 
 const PROVIDER_ACCENTS: Record<string, ProviderAccent> = {
-  ip2region: { text: "text-basalt-chart-1", surface: "bg-basalt-chart-1/10" },
-  iplocate: { text: "text-basalt-chart-2", surface: "bg-basalt-chart-2/10" },
-  "ip-location-db": { text: "text-basalt-chart-3", surface: "bg-basalt-chart-3/10" },
-  circl: { text: "text-basalt-chart-4", surface: "bg-basalt-chart-4/10" },
+  ip2region: { surface: "bg-basalt-chart-1/15" },
+  iplocate: { surface: "bg-basalt-chart-2/15" },
+  "ip-location-db": { surface: "bg-basalt-chart-3/15" },
+  circl: { surface: "bg-basalt-chart-4/15" },
 };
 
-const MUTED_ACCENT: ProviderAccent = {
-  text: "text-basalt-muted-foreground",
-  surface: "bg-basalt-muted",
-};
+const MUTED_ACCENT: ProviderAccent = { surface: "bg-basalt-muted" };
 
 const TONE_CLASSES: Record<StatusTone, ToneClasses> = {
   success: { dot: "bg-basalt-success", text: "text-basalt-success" },
   warning: { dot: "bg-basalt-tag-warning-foreground", text: "text-basalt-tag-warning-foreground" },
-  destructive: { dot: "bg-basalt-destructive", text: "text-basalt-destructive" },
+  destructive: {
+    dot: "bg-basalt-tag-danger-foreground",
+    text: "text-basalt-tag-danger-foreground",
+  },
   muted: { dot: "bg-basalt-muted-foreground", text: "text-basalt-muted-foreground" },
+};
+
+const OUTCOME_LABELS: Record<ProviderOutcome, string> = {
+  hit: "已命中",
+  miss: "无地理信息",
+  error: "查询失败",
 };
 
 export function flagForCountry(code: string | null | undefined): string {
@@ -76,8 +83,12 @@ export function toneClasses(tone: StatusTone): ToneClasses {
   return TONE_CLASSES[tone];
 }
 
+export function isKnownLatency(latencyMs: number): boolean {
+  return Number.isFinite(latencyMs);
+}
+
 export function latencyBucket(latencyMs: number): number {
-  if (!Number.isFinite(latencyMs)) return 1;
+  if (!isKnownLatency(latencyMs)) return 0;
 
   const scaled = 10 - Math.round(((latencyMs - 5) / 195) * 9);
   return Math.min(LATENCY_DOT_COUNT, Math.max(1, scaled));
@@ -120,6 +131,18 @@ export function providerFields(location: IpLocation | null): ProviderField[] {
   return fields;
 }
 
-export function providerHit(provider: ProviderResult): boolean {
-  return !provider.error && provider.location !== null;
+export function providerOutcome(provider: ProviderResult): ProviderOutcome {
+  if (provider.error) return "error";
+  if (provider.location === null) return "miss";
+  return "hit";
+}
+
+export function outcomeTone(outcome: ProviderOutcome): StatusTone {
+  if (outcome === "hit") return "success";
+  if (outcome === "error") return "destructive";
+  return "muted";
+}
+
+export function outcomeLabel(outcome: ProviderOutcome): string {
+  return OUTCOME_LABELS[outcome];
 }

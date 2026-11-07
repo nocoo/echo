@@ -56,7 +56,7 @@ export function AppSidebar({ collapsed, onToggle, user, onLogout, loggingOut }: 
   const avatar = (
     <Avatar className="h-8 w-8">
       {user?.picture ? <AvatarImage src={user.picture} alt="" /> : null}
-      <AvatarFallback className="text-xs">{display.initials}</AvatarFallback>
+      <AvatarFallback className="text-basalt-xs">{display.initials}</AvatarFallback>
     </Avatar>
   );
 
@@ -92,7 +92,7 @@ export function AppSidebar({ collapsed, onToggle, user, onLogout, loggingOut }: 
               <span className="truncate text-lg font-semibold text-basalt-foreground md:text-xl">
                 {SITE_NAME}
               </span>
-              <span className="shrink-0 rounded-md bg-basalt-secondary px-basalt-space-md py-basalt-space-xs text-[11px] leading-none font-medium text-basalt-muted-foreground">
+              <span className="shrink-0 rounded-md bg-basalt-secondary px-basalt-space-md py-basalt-space-xs text-basalt-xs leading-none font-medium text-basalt-muted-foreground">
                 v{__ECHO_VERSION__}
               </span>
             </div>

@@ -4,7 +4,7 @@ export function StatusDot({ tone, className }: { tone: StatusTone; className?: s
   return (
     <span
       aria-hidden="true"
-      className={`inline-block size-2 shrink-0 rounded-full ${toneClasses(tone).dot}${
+      className={`inline-block size-2 shrink-0 rounded-basalt-full ${toneClasses(tone).dot}${
         className ? ` ${className}` : ""
       }`}
     />

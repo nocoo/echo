@@ -1,5 +1,6 @@
 import {
   Button,
+  DescriptionList,
   Field,
   Input,
   LayerCard,
@@ -15,11 +16,11 @@ import { PrefixTable } from "./PrefixTable";
 import { buildIpView, buildPrefixRows, evaluateContainment, parseNetworkInput } from "./use-tools";
 
 const NETWORK_TINTS = [
-  "text-basalt-chart-1",
-  "text-basalt-chart-2",
-  "text-basalt-chart-3",
-  "text-basalt-chart-4",
-  "text-basalt-chart-5",
+  "border-basalt-chart-1",
+  "border-basalt-chart-2",
+  "border-basalt-chart-3",
+  "border-basalt-chart-4",
+  "border-basalt-chart-5",
 ];
 
 export default function ToolsPage() {
@@ -81,28 +82,29 @@ export default function ToolsPage() {
         </TabsList>
 
         <TabsContent value="network" className="mt-basalt-layout">
-          <div className="grid gap-basalt-layout md:grid-cols-2 xl:grid-cols-3">
+          <LayerCard>
             {networkCards.length > 0 ? (
-              networkCards.map((card, index) => (
-                <LayerCard key={card.label} className="flex flex-col gap-basalt-space-xs">
-                  <span className="text-[11px] text-basalt-muted-foreground">{card.label}</span>
-                  <span
-                    className={`font-mono text-sm tabular-nums ${
+              <DescriptionList columns={2}>
+                {networkCards.map((card, index) => (
+                  <DescriptionList.Item
+                    key={card.label}
+                    term={card.label}
+                    className={`border-l-2 pl-basalt-space-sm ${
                       NETWORK_TINTS[index % NETWORK_TINTS.length]
                     }`}
                   >
-                    {card.value}
-                  </span>
-                </LayerCard>
-              ))
+                    <span className="font-mono text-basalt-sm tabular-nums text-basalt-foreground">
+                      {card.value}
+                    </span>
+                  </DescriptionList.Item>
+                ))}
+              </DescriptionList>
             ) : (
-              <LayerCard className="sm:col-span-2 xl:col-span-3">
-                <p className="text-sm text-basalt-muted-foreground">
-                  输入带前缀的 CIDR 后显示网段、广播与可用主机。
-                </p>
-              </LayerCard>
+              <p className="text-basalt-sm text-basalt-muted-foreground">
+                输入带前缀的 CIDR 后显示网段、广播与可用主机。
+              </p>
             )}
-          </div>
+          </LayerCard>
         </TabsContent>
 
         <TabsContent value="prefix" className="mt-basalt-layout">
@@ -151,23 +153,23 @@ export default function ToolsPage() {
             ) : null}
             <dl className="space-y-basalt-layout">
               <div>
-                <dt className="text-[11px] text-basalt-muted-foreground">二进制</dt>
-                <dd className="break-all font-mono text-xs">{ipView.binary || "—"}</dd>
+                <dt className="text-basalt-xs text-basalt-muted-foreground">二进制</dt>
+                <dd className="break-all font-mono text-basalt-xs">{ipView.binary || "—"}</dd>
               </div>
               <div>
-                <dt className="text-[11px] text-basalt-muted-foreground">十六进制</dt>
-                <dd className="break-all font-mono text-xs">{ipView.hex || "—"}</dd>
+                <dt className="text-basalt-xs text-basalt-muted-foreground">十六进制</dt>
+                <dd className="break-all font-mono text-basalt-xs">{ipView.hex || "—"}</dd>
               </div>
               {ipView.expanded ? (
                 <div>
-                  <dt className="text-[11px] text-basalt-muted-foreground">IPv6 展开</dt>
-                  <dd className="break-all font-mono text-xs">{ipView.expanded}</dd>
+                  <dt className="text-basalt-xs text-basalt-muted-foreground">IPv6 展开</dt>
+                  <dd className="break-all font-mono text-basalt-xs">{ipView.expanded}</dd>
                 </div>
               ) : null}
               {ipView.compressed ? (
                 <div>
-                  <dt className="text-[11px] text-basalt-muted-foreground">IPv6 压缩</dt>
-                  <dd className="break-all font-mono text-xs">{ipView.compressed}</dd>
+                  <dt className="text-basalt-xs text-basalt-muted-foreground">IPv6 压缩</dt>
+                  <dd className="break-all font-mono text-basalt-xs">{ipView.compressed}</dd>
                 </div>
               ) : null}
             </dl>
