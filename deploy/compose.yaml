@@ -11,10 +11,13 @@ services:
     environment:
       PORT: "7010"
       IPDB_DIR: /data
+      STATE_DIR: /state
+      DASHBOARD_DIR: /app/packages/dashboard/dist
     ports:
       - 127.0.0.1:17010:7010
     volumes:
       - /data/echo/data:/data:ro
+      - /data/echo/state:/state
     mem_limit: 1g
     logging:
       driver: json-file
