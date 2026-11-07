@@ -20,15 +20,16 @@ IP 服务的管理界面与随附后端能力。目标是让维护者在一个�
 | IP 工具计算 | 已交付 | `packages/dashboard/src/lib/ip-math.ts` |
 | 门禁接线（pre-commit、CI） | 已交付 | `.husky/`、`.github/workflows/ci.yml` |
 | E2E 隔离（随机端口、临时目录、实例标识） | 已交付 | `packages/ip-service/tests/e2e/` |
+| 镜像内置前端与 `/state` 挂载 | 已交付 | `packages/ip-service/Dockerfile`、`deploy/compose.yaml` |
 | 刷新触发与并发 409 | 未开始（P2） | — |
-| 部署加固、镜像内置前端、文档回滚演练 | 未开始（P3） | — |
+| spool 目录、systemd path unit、回滚演练 | 未开始（P2/P3） | — |
 
 已知的缺口（如实记录）：
 
-- 覆盖率门只统计 `packages/dashboard/src/lib/**`；视图模型有单测但不在门内，纯展示组件没有测试。
+- 覆盖率门统计 `packages/dashboard/src/lib/**` 与 `src/app/**/use-*.ts`；纯展示组件（外壳与五个页面）没有测试。
 - L2 的 HTTP 用例覆盖公开路由、管理路由的 401 边界与静态资源；OAuth 回调、key 创建与撤销的完整流程只在单元测试里跑过。
 - `POST /api/admin/refresh` 尚未实现，页面上的刷新按钮保持禁用并提示 P2。
-- 镜像、compose、systemd 尚未接入前端产物与 `state`/`spool` 挂载（属 P3，且本次未改动 `deploy/`）。
+- 镜像已内置前端并挂载 `state`；`spool` 目录与 systemd path unit 仍属 P2/P3。
 - Google OAuth 客户端登记与主机上的运行时变量需要仓库所有者完成。
 
 ## 决策记录
