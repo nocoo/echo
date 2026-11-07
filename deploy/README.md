@@ -52,7 +52,13 @@ docker network create edge          # 若尚未存在
 | `SESSION_SECRET` | 会话 JWT 签名密钥，建议 `openssl rand -base64 48` |
 | `ALLOWED_EMAILS` | 允许登录管理台的邮箱，逗号分隔；为空则无人可登录 |
 
-变量缺失不会阻止容器启动，但管理台会拒绝登录或返回 401。`/data/echo/state` 由容器进程写入；镜像未设置 `USER`，因此当前以 root 运行，目录属主不影响写入。
+变量缺失不会阻止容器启动，但管理台会拒绝登录或返回 401。
+
+容器以 `user: "${ECHO_UID:-1000}:${ECHO_GID:-1000}"` 运行，因此 `/data/echo/state` 必须属于同一个 uid/gid，否则 SQLite 无法创建。先用 `id -u nocoo` 确认，再设置 `ECHO_UID` / `ECHO_GID`：
+
+```bash
+sudo chown -R "${ECHO_UID:-1000}:${ECHO_GID:-1000}" /data/echo/state
+```
 
 首次填充数据：任选其一。
 

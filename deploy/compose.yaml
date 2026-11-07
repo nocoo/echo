@@ -4,6 +4,7 @@ services:
     container_name: echo-app
     restart: unless-stopped
     init: true
+    user: "${ECHO_UID:-1000}:${ECHO_GID:-1000}"
     env_file:
       - path: .env.runtime
         required: true
