@@ -1,6 +1,7 @@
 import { Button } from "@nocoo/basalt";
 import { useSearchParams } from "react-router";
 import { Logo } from "../../components/Logo";
+import { SITE_NAME } from "../../lib/navigation";
 
 const ERROR_MESSAGES: Record<string, string> = {
   invalid_request: "登录请求不完整，请重试。",
@@ -26,7 +27,7 @@ export default function LoginPage() {
       >
         <div className="flex items-center justify-between gap-basalt-space-lg bg-basalt-primary px-basalt-space-lg py-basalt-space-lg">
           <span className="text-basalt-base font-semibold text-basalt-primary-foreground">
-            Echo
+            {SITE_NAME}
           </span>
           <span className="text-basalt-xs font-medium uppercase tracking-widest text-basalt-primary-foreground/80">
             Admin

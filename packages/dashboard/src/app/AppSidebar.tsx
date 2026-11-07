@@ -19,7 +19,13 @@ import { Boxes, KeyRound, LogOut, PanelLeft, Search, Wrench } from "lucide-react
 import { useLocation, useNavigate } from "react-router";
 import { Logo } from "../components/Logo";
 import type { MeResponse } from "../lib/api";
-import { isActivePath, NAV_GROUPS, NAV_ITEMS, resolveDisplayUser } from "../lib/navigation";
+import {
+  isActivePath,
+  NAV_GROUPS,
+  NAV_ITEMS,
+  resolveDisplayUser,
+  SITE_NAME,
+} from "../lib/navigation";
 
 const NAV_ICONS: Record<string, typeof Boxes> = {
   "/": Boxes,
@@ -84,7 +90,7 @@ export function AppSidebar({ collapsed, onToggle, user, onLogout, loggingOut }: 
             <div className="flex min-w-0 items-center gap-basalt-space-lg">
               <Logo size="sm" />
               <span className="truncate text-lg font-semibold text-basalt-foreground md:text-xl">
-                Echo
+                {SITE_NAME}
               </span>
               <span className="shrink-0 rounded-md bg-basalt-secondary px-basalt-space-md py-basalt-space-xs text-[11px] leading-none font-medium text-basalt-muted-foreground">
                 v{__ECHO_VERSION__}

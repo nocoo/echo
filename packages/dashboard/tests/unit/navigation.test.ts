@@ -50,7 +50,7 @@ describe("resolvePageContext", () => {
     expect(resolvePageContext("/")).toEqual({
       title: "概览",
       breadcrumbs: [],
-      documentTitle: "概览 · Echo",
+      documentTitle: "概览 · echo",
       variant: "overview",
     });
   });
@@ -59,7 +59,7 @@ describe("resolvePageContext", () => {
     expect(resolvePageContext("/lookup")).toEqual({
       title: "查询",
       breadcrumbs: [{ label: "数据" }],
-      documentTitle: "查询 · Echo",
+      documentTitle: "查询 · echo",
       variant: "lookup",
     });
     expect(resolvePageContext("/tools").breadcrumbs).toEqual([{ label: "数据" }]);
@@ -70,7 +70,7 @@ describe("resolvePageContext", () => {
     expect(resolvePageContext("/keys/")).toEqual({
       title: "密钥",
       breadcrumbs: [{ label: "系统" }],
-      documentTitle: "密钥 · Echo",
+      documentTitle: "密钥 · echo",
       variant: "keys",
     });
   });
@@ -79,7 +79,7 @@ describe("resolvePageContext", () => {
     expect(resolvePageContext("/keys/unknown")).toEqual({
       title: "管理台",
       breadcrumbs: [],
-      documentTitle: "管理台 · Echo",
+      documentTitle: "管理台 · echo",
       variant: "default",
     });
   });
@@ -88,7 +88,7 @@ describe("resolvePageContext", () => {
     expect(resolvePageContext("/login")).toEqual({
       title: "登录",
       breadcrumbs: [],
-      documentTitle: "登录 · Echo",
+      documentTitle: "登录 · echo",
       variant: "default",
     });
   });
@@ -97,7 +97,7 @@ describe("resolvePageContext", () => {
     expect(resolvePageContext("/nope")).toEqual({
       title: "管理台",
       breadcrumbs: [],
-      documentTitle: "管理台 · Echo",
+      documentTitle: "管理台 · echo",
       variant: "default",
     });
   });

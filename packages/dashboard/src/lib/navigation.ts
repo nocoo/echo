@@ -27,7 +27,7 @@ export interface DisplayUser {
   initials: string;
 }
 
-export const SITE_NAME = "Echo";
+export const SITE_NAME = "echo";
 
 export const NAV_GROUPS: readonly NavGroup[] = [
   {

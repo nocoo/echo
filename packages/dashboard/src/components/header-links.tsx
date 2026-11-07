@@ -38,7 +38,7 @@ export function GitHubLink() {
 
 export function HexlyLink() {
   return (
-    <HeaderTooltip label="Echo on hexly.ai">
+    <HeaderTooltip label="echo on hexly.ai">
       <Button
         variant="ghost"
         size="icon"
@@ -49,10 +49,10 @@ export function HexlyLink() {
           href="https://hexly.ai/projects/echo"
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Echo on hexly.ai（在新标签页打开）"
+          aria-label="echo on hexly.ai（在新标签页打开）"
         >
           <HexagonIcon className="size-[18px]" />
-          <span className="sr-only">Echo on hexly.ai（在新标签页打开）</span>
+          <span className="sr-only">echo on hexly.ai（在新标签页打开）</span>
         </a>
       </Button>
     </HeaderTooltip>
