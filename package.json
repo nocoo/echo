@@ -6,6 +6,8 @@
   ],
   "scripts": {
     "prepare": "husky",
+    "dev": "bun run --filter \"*\" dev",
+    "build": "bun run --filter \"@echo/dashboard\" build",
     "lint": "biome check --error-on-warnings .",
     "lint:fix": "biome check --write --error-on-warnings ."
   },

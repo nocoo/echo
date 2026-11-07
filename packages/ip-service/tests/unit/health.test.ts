@@ -1,8 +1,16 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { Store } from "../../src/lib/store.js";
 import { version } from "../../src/lib/version.js";
 import { createApp } from "../../src/server.js";
 
-const testApiKey = "test-secret-key";
+function createStoreWithKey(): { store: Store; secret: string } {
+  const store = new Store(":memory:");
+  const created = store.createApiKey("test key", "tester");
+  return { store, secret: created.secret };
+}
 
 const mockLocation = {
   country: "CN",
@@ -32,7 +40,7 @@ describe("GET /api/live", () => {
   });
 
   test("returns surety-standard health response", async () => {
-    const app = createApp(lookupOk, undefined, fresh);
+    const app = createApp(lookupOk, { dataAge: fresh });
     const res = await app.request("/api/live");
 
     expect(res.status).toBe(200);
@@ -51,7 +59,7 @@ describe("GET /api/live", () => {
   });
 
   test("reports outdated instead of ok once the data is older than a week", async () => {
-    const app = createApp(lookupOk, undefined, async () => ({ ageDays: 12, stale: true }));
+    const app = createApp(lookupOk, { dataAge: async () => ({ ageDays: 12, stale: true }) });
     const res = await app.request("/api/live");
 
     expect(res.status).toBe(503);
@@ -63,7 +71,7 @@ describe("GET /api/live", () => {
   });
 
   test("reports error when the data age cannot be determined", async () => {
-    const app = createApp(lookupOk, undefined, async () => null);
+    const app = createApp(lookupOk, { dataAge: async () => null });
     const res = await app.request("/api/live");
 
     expect(res.status).toBe(503);
@@ -81,7 +89,7 @@ describe("GET /api/live", () => {
         throw new Error("private-database-path");
       },
     ]) {
-      const res = await createApp(lookup, undefined, fresh).request("/api/live");
+      const res = await createApp(lookup, { dataAge: fresh }).request("/api/live");
       expect(res.status).toBe(503);
       expect(res.headers.get("cache-control")).toBe("no-store");
       const body = await res.json();
@@ -166,21 +174,25 @@ describe("GET /api/ip", () => {
 
   test("uses query ip when authenticated with valid api key", async () => {
     let receivedIp: string | null = null;
-    const app = createApp(async (ip) => {
-      receivedIp = ip;
-      return {
-        ip: ip ?? "",
-        version: 4 as const,
-        location: mockLocation,
-        source: "ip2region",
-        attribution: ["test"],
-        latencyMs: 1,
-      };
-    }, testApiKey);
+    const { store, secret } = createStoreWithKey();
+    const app = createApp(
+      async (ip) => {
+        receivedIp = ip;
+        return {
+          ip: ip ?? "",
+          version: 4 as const,
+          location: mockLocation,
+          source: "ip2region",
+          attribution: ["test"],
+          latencyMs: 1,
+        };
+      },
+      { store },
+    );
 
     const res = await app.request("/api/ip?ip=8.8.8.8", {
       headers: {
-        "x-api-key": testApiKey,
+        "x-api-key": secret,
         "x-forwarded-for": "1.2.3.4",
       },
     });
@@ -194,17 +206,21 @@ describe("GET /api/ip", () => {
 
   test("ignores query ip when api key is missing", async () => {
     let receivedIp: string | null = null;
-    const app = createApp(async (ip) => {
-      receivedIp = ip;
-      return {
-        ip: ip ?? "",
-        version: 4 as const,
-        location: mockLocation,
-        source: "ip2region",
-        attribution: ["test"],
-        latencyMs: 1,
-      };
-    }, testApiKey);
+    const { store } = createStoreWithKey();
+    const app = createApp(
+      async (ip) => {
+        receivedIp = ip;
+        return {
+          ip: ip ?? "",
+          version: 4 as const,
+          location: mockLocation,
+          source: "ip2region",
+          attribution: ["test"],
+          latencyMs: 1,
+        };
+      },
+      { store },
+    );
 
     const res = await app.request("/api/ip?ip=8.8.8.8", {
       headers: { "x-forwarded-for": "1.2.3.4" },
@@ -219,17 +235,21 @@ describe("GET /api/ip", () => {
 
   test("ignores query ip when api key is wrong", async () => {
     let receivedIp: string | null = null;
-    const app = createApp(async (ip) => {
-      receivedIp = ip;
-      return {
-        ip: ip ?? "",
-        version: 4 as const,
-        location: mockLocation,
-        source: "ip2region",
-        attribution: ["test"],
-        latencyMs: 1,
-      };
-    }, testApiKey);
+    const { store } = createStoreWithKey();
+    const app = createApp(
+      async (ip) => {
+        receivedIp = ip;
+        return {
+          ip: ip ?? "",
+          version: 4 as const,
+          location: mockLocation,
+          source: "ip2region",
+          attribution: ["test"],
+          latencyMs: 1,
+        };
+      },
+      { store },
+    );
 
     const res = await app.request("/api/ip?ip=8.8.8.8", {
       headers: {
@@ -247,21 +267,25 @@ describe("GET /api/ip", () => {
 
   test("falls back to source ip when authenticated but no query ip", async () => {
     let receivedIp: string | null = null;
-    const app = createApp(async (ip) => {
-      receivedIp = ip;
-      return {
-        ip: ip ?? "",
-        version: 4 as const,
-        location: mockLocation,
-        source: "ip2region",
-        attribution: ["test"],
-        latencyMs: 1,
-      };
-    }, testApiKey);
+    const { store, secret } = createStoreWithKey();
+    const app = createApp(
+      async (ip) => {
+        receivedIp = ip;
+        return {
+          ip: ip ?? "",
+          version: 4 as const,
+          location: mockLocation,
+          source: "ip2region",
+          attribution: ["test"],
+          latencyMs: 1,
+        };
+      },
+      { store },
+    );
 
     const res = await app.request("/api/ip", {
       headers: {
-        "x-api-key": testApiKey,
+        "x-api-key": secret,
         "x-forwarded-for": "1.2.3.4",
       },
     });
@@ -275,17 +299,20 @@ describe("GET /api/ip", () => {
 
   test("ignores query ip when no api key is configured on server", async () => {
     let receivedIp: string | null = null;
-    const app = createApp(async (ip) => {
-      receivedIp = ip;
-      return {
-        ip: ip ?? "",
-        version: 4 as const,
-        location: mockLocation,
-        source: "ip2region",
-        attribution: ["test"],
-        latencyMs: 1,
-      };
-    }, undefined);
+    const app = createApp(
+      async (ip) => {
+        receivedIp = ip;
+        return {
+          ip: ip ?? "",
+          version: 4 as const,
+          location: mockLocation,
+          source: "ip2region",
+          attribution: ["test"],
+          latencyMs: 1,
+        };
+      },
+      { store: new Store(":memory:") },
+    );
 
     const res = await app.request("/api/ip?ip=8.8.8.8", {
       headers: {
@@ -352,5 +379,70 @@ describe("GET /api/ip", () => {
 
     const body = (await res.json()) as Record<string, unknown>;
     expect(body.providers).toBeUndefined();
+  });
+
+  test("verifies api keys against the state directory store", async () => {
+    const stateDir = mkdtempSync(path.join(tmpdir(), "echo-state-"));
+    const previous = process.env.STATE_DIR;
+    process.env.STATE_DIR = stateDir;
+
+    try {
+      const store = new Store(path.join(stateDir, "echo.db"));
+      const created = store.createApiKey("state key", "owner@example.com");
+      store.close();
+
+      const app = createApp(async (ip) => ({
+        ip: ip ?? "",
+        version: 4 as const,
+        location: mockLocation,
+        source: "ip2region",
+        attribution: ["test"],
+        latencyMs: 1,
+      }));
+
+      const res = await app.request("/api/ip?ip=8.8.8.8", {
+        headers: {
+          "x-api-key": created.secret,
+          "x-forwarded-for": "1.2.3.4",
+        },
+      });
+
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.ip).toBe("8.8.8.8");
+    } finally {
+      if (previous === undefined) delete process.env.STATE_DIR;
+      else process.env.STATE_DIR = previous;
+      rmSync(stateDir, { recursive: true, force: true });
+    }
+  });
+
+  test("falls back to the requester ip when the state store cannot be opened", async () => {
+    const previous = process.env.STATE_DIR;
+    process.env.STATE_DIR = "/dev/null/echo-state";
+
+    try {
+      const app = createApp(async (ip) => ({
+        ip: ip ?? "",
+        version: 4 as const,
+        location: mockLocation,
+        source: "ip2region",
+        attribution: ["test"],
+        latencyMs: 1,
+      }));
+
+      const res = await app.request("/api/ip?ip=8.8.8.8", {
+        headers: {
+          "x-api-key": "echo_some-key",
+          "x-forwarded-for": "1.2.3.4",
+        },
+      });
+
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.ip).toBe("1.2.3.4");
+    } finally {
+      if (previous === undefined) delete process.env.STATE_DIR;
+      else process.env.STATE_DIR = previous;
+    }
   });
 });

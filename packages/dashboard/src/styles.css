@@ -1,0 +1,6 @@
+@import "@nocoo/basalt/styles/tailwind";
+@import "tailwindcss";
+
+@source "../../node_modules/@nocoo/basalt/dist/**/*.{js,jsx,ts,tsx}";
+
+@custom-variant dark (&:where(.dark, .dark *));

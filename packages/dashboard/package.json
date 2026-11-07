@@ -1,0 +1,31 @@
+{
+  "name": "@echo/dashboard",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 7011",
+    "build": "vite build",
+    "preview": "vite preview --port 7011",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "biome check --error-on-warnings .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nocoo/basalt": "3.2.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.3.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.2.1",
+    "@vitest/coverage-v8": "5.0.5",
+    "tailwindcss": "4.3.5",
+    "typescript7": "npm:typescript@7.0.2",
+    "vite": "8.1.6",
+    "vitest": "5.0.5"
+  }
+}

@@ -1,5 +1,9 @@
 import { Hono } from "hono";
+import { type AdminEnv, registerAdminRoutes } from "./admin/admin-routes.js";
+import { type AuthConfig, readAuthConfig } from "./admin/auth-config.js";
+import { registerAuthRoutes } from "./admin/auth-routes.js";
 import { type DataAge, readDataAge } from "./lib/dataVersion.js";
+import { defaultStorePath, Store } from "./lib/store.js";
 import { version } from "./lib/version.js";
 import { type LookupResult, lookupIp } from "./services/ipLookup.js";
 import { extractClientIp } from "./utils/ip.js";
@@ -7,14 +11,43 @@ import { extractClientIp } from "./utils/ip.js";
 type LookupFn = (ip: string | null, detail?: boolean) => Promise<LookupResult | null>;
 type DataAgeFn = () => Promise<DataAge | null>;
 
+export interface AppOptions {
+  dataAge?: DataAgeFn;
+  store?: Store;
+  auth?: AuthConfig;
+  fetchImpl?: typeof fetch;
+  dataDir?: string;
+}
+
 const bootedAt = Date.now();
 
-export function createApp(
-  lookup: LookupFn = lookupIp,
-  apiKey: string | undefined = process.env.ECHO_API_KEY,
-  dataAge: DataAgeFn = readDataAge,
-) {
-  const app = new Hono();
+function isValidApiKey(secret: string, resolveStore: () => Store): boolean {
+  try {
+    return resolveStore().findApiKeyBySecret(secret) !== null;
+  } catch {
+    return false;
+  }
+}
+
+export function createApp(lookup: LookupFn = lookupIp, options: AppOptions = {}) {
+  const app = new Hono<AdminEnv>();
+  const dataAge = options.dataAge ?? readDataAge;
+  const auth = options.auth ?? readAuthConfig();
+
+  let fallbackStore: Store | undefined;
+  const resolveStore = (): Store => {
+    if (options.store) return options.store;
+    fallbackStore ??= new Store(defaultStorePath());
+    return fallbackStore;
+  };
+
+  registerAuthRoutes(app, { config: auth, fetchImpl: options.fetchImpl });
+  registerAdminRoutes(app, {
+    config: auth,
+    store: resolveStore,
+    lookup: (ip, detail) => lookup(ip, detail),
+    dataDir: options.dataDir,
+  });
 
   app.get("/api/live", async (c) => {
     c.header("Cache-Control", "no-store");
@@ -57,7 +90,7 @@ export function createApp(
     const queryIp = c.req.query("ip") ?? null;
     const detail = c.req.query("detail") === "true";
     const headerKey = c.req.header("x-api-key") ?? null;
-    const authenticated = Boolean(apiKey && headerKey === apiKey);
+    const authenticated = headerKey !== null && isValidApiKey(headerKey, resolveStore);
 
     const targetIp = authenticated && queryIp ? queryIp : extractClientIp(c.req.raw.headers);
 

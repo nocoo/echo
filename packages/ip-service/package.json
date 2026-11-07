@@ -19,6 +19,7 @@
   "dependencies": {
     "hono": "4.13.13",
     "ip2region.js": "^3.1.8",
+    "jose": "6.2.15",
     "lru-cache": "11.5.3",
     "maxmind": "^5.0.7"
   },
