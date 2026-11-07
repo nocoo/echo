@@ -45,7 +45,7 @@ bun run --cwd packages/dashboard test:coverage
 bun run --cwd packages/ip-service test:e2e
 ```
 
-IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; obtain them with `bun run --cwd packages/ip-service ipdb:fetch --verify`. Downloads access external providers. `PORT` defaults to 7010; `STATE_DIR` holds the admin SQLite database and defaults to `./state`; `DASHBOARD_DIR` holds the console build and defaults to `packages/dashboard/dist`. The dashboard dev server runs on 7011 and proxies `/api` to 127.0.0.1:7010. The root `bun run dev` starts every workspace dev script and `bun run build` builds the dashboard.
+IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; obtain them with `bun run --cwd packages/ip-service ipdb:fetch --verify`. Downloads access external providers. `PORT` defaults to 7010; `STATE_DIR` holds the admin SQLite database and defaults to `./state`; `DASHBOARD_DIR` holds the console build and defaults to `packages/dashboard/dist`. The root `bun run dev` rebuilds the dashboard in watch mode and serves both the API and the console from 7010, matching production; there is no second dev port.
 
 ## Testing and quality contract
 
@@ -69,7 +69,7 @@ Current pre-commit checks the working tree (IP types, IP coverage, dashboard typ
 | Purpose | Existing resource | Current isolation |
 | --- | --- | --- |
 | IP dev / HTTP suite | 7010 for dev; the HTTP suite takes a random port | Shared for dev: run only after freeing the port; the suite is isolated per run |
-| Dashboard dev | 7011; Vite proxies `/api` to 7010 | Separate port; needs the IP service on 7010 |
+| Dashboard dev | Served by the IP service on 7010 from `packages/dashboard/dist`, rebuilt by `vite build --watch` | Single port, same origin as production; local https comes from `echo.dev.hexly.ai` in the machine Caddy |
 | Collector dev | Local Wrangler KV | Separate per-run fixture guard/marker not established |
 | DNS production | jp2 UDP 53 | Never use production as an automated fixture target |
 

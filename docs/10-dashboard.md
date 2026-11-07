@@ -271,9 +271,9 @@ P1 包含 key 管理是刻意的：删除环境变量与提供替代能力必须
 
 ### P1 前置步骤（缺一不可）
 
-1. 根 `package.json` 增加 `dev`（`bun run --filter '*' dev`）与 `build`（dashboard build），dashboard 的 `dev` 是 `vite --port 7011`，`vite.config.ts` 里 `server.proxy` 把 `/api` 转发到 `http://127.0.0.1:7010`，保证开发时同源。
+1. 根 `package.json` 增加 `dev`（dashboard 的 `vite build --watch` + ip-service）与 `build`。单端口：IP 服务在 7010 同时提供 API 与构建产物，与生产一致，Caddy 把 `echo.dev.hexly.ai` 指向 7010。
 2. ip-service 在 `DASHBOARD_DIR` 存在时挂载静态资源；本地未构建时该路径不存在，`/admin` 返回 404 而不是崩溃。
-3. Google OAuth 客户端需要登记两个回调：`https://echo.nocoo.cloud/api/auth/callback` 和 `http://localhost:7010/api/auth/callback`。生成或修改客户端由仓库所有者完成。
+3. Google OAuth 客户端需要登记两个回调：`https://echo.nocoo.cloud/api/auth/callback` 和 `https://echo.dev.hexly.ai/api/auth/callback`。
 4. `.env.runtime` 增加 `PUBLIC_ORIGIN`、`GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`、`SESSION_SECRET`、`ALLOWED_EMAILS`；本地放在 `packages/ip-service/.env.local`（已被 gitignore）。
 5. 上线 smoke 覆盖：`/admin` 返回 HTML、`/admin/assets/*` 返回 JS/CSS、深链 `/admin/tools` 返回 HTML、未登录 `/api/admin/*` 返回 401、`/` 与 `/api/ip` 契约不变。
 

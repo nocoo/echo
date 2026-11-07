@@ -4,9 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --port 7011",
+    "dev": "vite build --watch",
     "build": "vite build",
-    "preview": "vite preview --port 7011",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "lint": "biome check --error-on-warnings .",

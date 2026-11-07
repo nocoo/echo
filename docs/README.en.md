@@ -92,16 +92,15 @@ The database download accesses several external providers. Files are stored in t
 
 The console lives on the same origin under `/admin`. The IP service serves the static build from `DASHBOARD_DIR` when the directory exists; `/admin` and extension-less `/admin/*` fall back to `index.html` while `/api/*` always stays JSON.
 
-For local development, start the IP service on `:7010` first and then the console on `:7011`, which proxies `/api` to 7010:
+Local development is one command from the repository root: the dashboard rebuilds into `packages/dashboard/dist` with `vite build --watch`, and the IP service serves both the API and that build on `:7010`, mirroring production with no second port.
 
 ```bash
-bun run --cwd packages/ip-service dev
-bun run --cwd packages/dashboard dev
+bun run dev
 ```
 
-`bun run build` builds the console into `packages/dashboard/dist`, which the IP service then serves directly. The console signs in with Google; an empty `ALLOWED_EMAILS` rejects every login.
+The machine Caddy maps `echo.dev.hexly.ai` to `127.0.0.1:7010`, so open `https://echo.dev.hexly.ai/admin`; the OAuth callback is `https://echo.dev.hexly.ai/api/auth/callback`. The console signs in with Google; an empty `ALLOWED_EMAILS` rejects every login.
 
-`PUBLIC_ORIGIN` must equal the origin you actually open in the browser: `http://localhost:7010` when you hit the service directly and `http://127.0.0.1:7011` when you use the Vite proxy. A mismatch makes every mutation fail with 403.
+`PUBLIC_ORIGIN` must equal the origin you actually open in the browser: `https://echo.dev.hexly.ai` through Caddy, `http://localhost:7010` when hitting the service directly. A mismatch breaks both the OAuth callback URL and the Origin check on mutations.
 
 A direct local request has no proxy-injected IP header. Use this request from another terminal:
 

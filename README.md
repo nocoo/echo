@@ -92,16 +92,15 @@ bun run dev
 
 管理台是同域的 `/admin`：IP 服务在 `DASHBOARD_DIR` 存在时提供静态资源，`/admin` 与不含扩展名的 `/admin/*` 回落到 `index.html`，`/api/*` 始终是 JSON。
 
-本地开发时先启动 IP 服务（`:7010`），再从仓库根目录启动前端（`:7011`，`/api` 代理到 7010）：
+本地开发从仓库根目录一条命令起：dashboard 以 `vite build --watch` 重建到 `packages/dashboard/dist`，IP 服务在 `:7010` 同时提供 API 与该构建产物，与生产同构，没有第二个端口。
 
 ```bash
-bun run --cwd packages/ip-service dev
-bun run --cwd packages/dashboard dev
+bun run dev
 ```
 
-`bun run build` 会构建前端到 `packages/dashboard/dist`，之后 IP 服务直接托管该目录。管理台需要 Google 登录：`ALLOWED_EMAILS` 为空时所有登录都会被拒绝。
+本机 Caddy 已把 `echo.dev.hexly.ai` 指向 `127.0.0.1:7010`，因此浏览器打开 `https://echo.dev.hexly.ai/admin`，OAuth 回调是 `https://echo.dev.hexly.ai/api/auth/callback`。管理台需要 Google 登录：`ALLOWED_EMAILS` 为空时所有登录都会被拒绝。
 
-`PUBLIC_ORIGIN` 必须等于浏览器里实际打开的 origin：直连 7010 时是 `http://localhost:7010`，走 7011 代理时是 `http://127.0.0.1:7011`。否则变更请求会因 Origin 不匹配返回 403。
+`PUBLIC_ORIGIN` 必须等于浏览器里实际打开的 origin。走 Caddy 时是 `https://echo.dev.hexly.ai`，直连 7010 时是 `http://localhost:7010`。否则 OAuth 回调地址与变更请求的 Origin 校验都会失败。
 
 本地直连没有代理注入的 IP 头，可在另一个终端这样请求：
 
