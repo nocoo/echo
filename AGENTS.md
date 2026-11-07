@@ -67,6 +67,7 @@ Current pre-commit checks the working tree (IP types, IP coverage, dashboard typ
 | Purpose | Existing resource | Current isolation |
 | --- | --- | --- |
 | IP dev / HTTP suite | 7010; package `data/` | Shared: run only after freeing the port; dedicated harness planned |
+| Dashboard dev | 7011; Vite proxies `/api` to 7010 | Separate port; needs the IP service on 7010 |
 | Collector dev | Local Wrangler KV | Separate per-run fixture guard/marker not established |
 | DNS production | jp2 UDP 53 | Never use production as an automated fixture target |
 
