@@ -13,17 +13,22 @@ export class Ip2RegionProvider implements IpProvider {
   }
 }
 
+function cleanField(value: string | undefined): string {
+  const trimmed = value?.trim() ?? "";
+  return trimmed === "0" ? "" : trimmed;
+}
+
 export function parseRegion(region: string): IpLocation {
   const [country, province, city, isp, iso2] = region.split("|");
 
   return {
-    country: country ?? "",
-    countryCode: iso2 ?? "",
-    province: province ?? "",
-    city: city ?? "",
+    country: cleanField(country),
+    countryCode: cleanField(iso2),
+    province: cleanField(province),
+    city: cleanField(city),
     latitude: null,
     longitude: null,
-    isp: isp ?? "",
+    isp: cleanField(isp),
     asn: null,
     asOrg: "",
   };

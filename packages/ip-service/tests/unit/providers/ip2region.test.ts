@@ -114,4 +114,28 @@ describe("parseRegion", () => {
       asOrg: "",
     });
   });
+
+  test("normalizes the 0 placeholder to an empty field", () => {
+    expect(parseRegion("United States|California|0|Google LLC|US")).toMatchObject({
+      country: "United States",
+      city: "",
+      isp: "Google LLC",
+      countryCode: "US",
+    });
+
+    expect(parseRegion("Australia|Queensland|Brisbane|0|AU")).toMatchObject({
+      city: "Brisbane",
+      isp: "",
+    });
+  });
+
+  test("normalizes a region made only of placeholders", () => {
+    expect(parseRegion("0|0|0|0|0")).toMatchObject({
+      country: "",
+      countryCode: "",
+      province: "",
+      city: "",
+      isp: "",
+    });
+  });
 });
