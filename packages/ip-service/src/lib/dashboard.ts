@@ -31,10 +31,10 @@ export function resolveDashboardDir(dir?: string): string {
 }
 
 export function isSpaRoute(pathname: string): boolean {
-  if (pathname === "/admin") return true;
+  if (pathname === "/admin" || pathname === "/admin/") return true;
   if (!pathname.startsWith("/admin/")) return false;
   const rest = pathname.slice("/admin/".length);
-  return rest.length > 0 && !rest.includes(".");
+  return !rest.includes(".");
 }
 
 export async function readDashboardIndex(dir: string): Promise<DashboardAsset | null> {

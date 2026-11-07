@@ -37,6 +37,14 @@ describe("dashboard static serving", () => {
     expect(await res.text()).toContain("<title>Echo admin</title>");
   });
 
+  test("serves the console shell for the trailing slash", async () => {
+    const res = await createStaticApp().request("/admin/");
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("text/html; charset=utf-8");
+    expect(await res.text()).toContain("<title>Echo admin</title>");
+  });
+
   test("falls back to the shell for extension-less routes", async () => {
     const res = await createStaticApp().request("/admin/tools");
 

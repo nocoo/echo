@@ -87,27 +87,30 @@ export async function exchangeCode(
     headers: { authorization: `Bearer ${tokenBody.access_token}` },
   });
   const profile = (await profileRes.json().catch(() => ({}))) as {
-    sub?: string;
-    email?: string;
-    email_verified?: boolean;
-    name?: string;
-    picture?: string;
+    sub?: unknown;
+    email?: unknown;
+    email_verified?: unknown;
+    name?: unknown;
+    picture?: unknown;
   };
 
-  if (!profileRes.ok || !profile.email || !profile.sub) {
+  if (!profileRes.ok) {
     throw new Error(`google userinfo http ${profileRes.status}`);
   }
 
-  const emailVerified = profile.email_verified !== false;
-  if (!emailVerified) {
+  if (typeof profile.sub !== "string" || typeof profile.email !== "string") {
+    throw new Error("google userinfo is missing sub or email");
+  }
+
+  if (profile.email_verified !== true) {
     throw new Error("google email is not verified");
   }
 
   return {
     sub: profile.sub,
     email: profile.email,
-    emailVerified,
-    name: profile.name ?? null,
-    picture: profile.picture ?? null,
+    emailVerified: true,
+    name: typeof profile.name === "string" ? profile.name : null,
+    picture: typeof profile.picture === "string" ? profile.picture : null,
   };
 }

@@ -82,14 +82,27 @@ export async function readDataInventory(
 
 export function summarizeInventory(entries: DataInventoryEntry[]): DataInventorySummary {
   const present = entries.filter((entry) => entry.present);
-  const ages = present.map((entry) => entry.ageDays ?? 0);
-  const ageDays = ages.length === 0 ? null : Math.max(...ages);
+  const newest = present.reduce<number | null>((acc, entry) => {
+    const time = entry.modifiedAt ? Date.parse(entry.modifiedAt) : Number.NaN;
+    if (Number.isNaN(time)) return acc;
+    return acc === null || time > acc ? time : acc;
+  }, null);
 
+  if (newest === null) {
+    return {
+      present: present.length,
+      missing: entries.length - present.length,
+      ageDays: null,
+      stale: false,
+    };
+  }
+
+  const ageMs = Date.now() - newest;
   return {
     present: present.length,
     missing: entries.length - present.length,
-    ageDays,
-    stale: ageDays !== null && ageDays > DATA_MAX_AGE_DAYS,
+    ageDays: Math.max(0, Math.floor(ageMs / DAY_MS)),
+    stale: ageMs > DATA_MAX_AGE_DAYS * DAY_MS,
   };
 }
 

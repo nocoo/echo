@@ -62,3 +62,52 @@ describe("admin routes on the app", () => {
     expect(await res.json()).toMatchObject({ authenticated: true, email: "owner@example.com" });
   });
 });
+
+describe("admin error boundary", () => {
+  test("answers a thrown lookup with a json error", async () => {
+    const app = createApp(
+      async () => {
+        throw new Error("private database path");
+      },
+      { store: new Store(":memory:"), auth },
+    );
+
+    const res = await app.request("/api/admin/lookup", {
+      method: "POST",
+      headers: {
+        cookie: await sessionCookie(),
+        "content-type": "application/json",
+        origin: auth.publicOrigin,
+      },
+      body: JSON.stringify({ ip: "8.8.8.8" }),
+    });
+
+    expect(res.status).toBe(500);
+    expect(res.headers.get("content-type")).toContain("application/json");
+    const body = await res.json();
+    expect(body).toEqual({ error: { code: "internal_error", message: "internal error" } });
+    expect(JSON.stringify(body)).not.toContain("private database path");
+  });
+
+  test("answers a thrown store error with a json error", async () => {
+    const app = createApp(lookup, {
+      auth,
+      store: new Proxy(new Store(":memory:"), {
+        get(target, property, receiver) {
+          if (property === "listApiKeys") throw new Error("state directory is read only");
+          return Reflect.get(target, property, receiver);
+        },
+      }),
+    });
+
+    const res = await app.request("/api/admin/keys", {
+      headers: { cookie: await sessionCookie() },
+    });
+
+    expect(res.status).toBe(500);
+    expect(res.headers.get("content-type")).toContain("application/json");
+    expect(await res.json()).toEqual({
+      error: { code: "internal_error", message: "internal error" },
+    });
+  });
+});

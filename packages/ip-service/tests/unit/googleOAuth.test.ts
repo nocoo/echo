@@ -114,7 +114,9 @@ describe("exchange code", () => {
     const fetchImpl = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse({ access_token: "access-token" }))
-      .mockResolvedValueOnce(jsonResponse({ sub: "1234", email: "owner@example.com" }));
+      .mockResolvedValueOnce(
+        jsonResponse({ sub: "1234", email: "owner@example.com", email_verified: true }),
+      );
 
     const profile = await exchangeCode(input, fetchImpl as unknown as typeof fetch);
 
@@ -162,11 +164,42 @@ describe("exchange code", () => {
     const fetchImpl = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse({ access_token: "access-token" }))
-      .mockResolvedValueOnce(jsonResponse({ sub: "1234" }));
+      .mockResolvedValueOnce(jsonResponse({ sub: "1234", email_verified: true }));
 
     await expect(exchangeCode(input, fetchImpl as unknown as typeof fetch)).rejects.toThrow(
-      "google userinfo http 200",
+      "google userinfo is missing sub or email",
     );
+  });
+
+  test("fails when sub or email is not a string", async () => {
+    for (const profile of [
+      { sub: 1234, email: "owner@example.com", email_verified: true },
+      { sub: "1234", email: 42, email_verified: true },
+    ]) {
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValueOnce(jsonResponse({ access_token: "access-token" }))
+        .mockResolvedValueOnce(jsonResponse(profile));
+
+      await expect(exchangeCode(input, fetchImpl as unknown as typeof fetch)).rejects.toThrow(
+        "google userinfo is missing sub or email",
+      );
+    }
+  });
+
+  test("requires a strictly verified email", async () => {
+    for (const value of [undefined, false, "true", 1]) {
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValueOnce(jsonResponse({ access_token: "access-token" }))
+        .mockResolvedValueOnce(
+          jsonResponse({ sub: "1234", email: "owner@example.com", email_verified: value }),
+        );
+
+      await expect(exchangeCode(input, fetchImpl as unknown as typeof fetch)).rejects.toThrow(
+        "google email is not verified",
+      );
+    }
   });
 
   test("fails when the profile is not json", async () => {
@@ -176,7 +209,7 @@ describe("exchange code", () => {
       .mockResolvedValueOnce(new Response("not json", { status: 200 }));
 
     await expect(exchangeCode(input, fetchImpl as unknown as typeof fetch)).rejects.toThrow(
-      "google userinfo http 200",
+      "google userinfo is missing sub or email",
     );
   });
 

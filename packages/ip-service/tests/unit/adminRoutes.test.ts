@@ -86,6 +86,23 @@ describe("admin authentication", () => {
 
     expect(res.status).toBe(401);
   });
+
+  test("rejects a session whose address left the allow list", async () => {
+    const app = createApp();
+    const token = await signSession(
+      { sub: "1234", email: "removed@example.com", name: null, picture: null },
+      config.sessionSecret,
+    );
+
+    const res = await app.request("/api/admin/keys", {
+      headers: { cookie: `echo_session=${token}` },
+    });
+
+    expect(res.status).toBe(401);
+    expect(res.headers.getSetCookie().some((cookie) => cookie.startsWith("echo_session="))).toBe(
+      true,
+    );
+  });
 });
 
 describe("GET /api/admin/overview", () => {

@@ -35,7 +35,16 @@ export async function readSessionUser<E extends Env>(
 ): Promise<SessionUser | null> {
   const token = getCookie(c, SESSION_COOKIE);
   if (!token) return null;
-  return verifySession(token, config.sessionSecret);
+
+  const user = await verifySession(token, config.sessionSecret);
+  if (!user) return null;
+
+  if (!isEmailAllowed(user.email, config.allowedEmails)) {
+    deleteCookie(c, SESSION_COOKIE, { path: "/" });
+    return null;
+  }
+
+  return user;
 }
 
 export function mePayload(user: SessionUser | null): MeResponse {

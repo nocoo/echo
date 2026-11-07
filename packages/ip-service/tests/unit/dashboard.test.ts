@@ -50,13 +50,13 @@ describe("dashboard directory", () => {
 describe("spa routes", () => {
   test("matches the console root and extension-less paths", () => {
     expect(isSpaRoute("/admin")).toBe(true);
+    expect(isSpaRoute("/admin/")).toBe(true);
     expect(isSpaRoute("/admin/tools")).toBe(true);
     expect(isSpaRoute("/admin/keys/123")).toBe(true);
   });
 
   test("rejects paths with a file extension and unrelated paths", () => {
     expect(isSpaRoute("/admin/assets/index-abc.js")).toBe(false);
-    expect(isSpaRoute("/admin/")).toBe(false);
     expect(isSpaRoute("/api/ip")).toBe(false);
   });
 });

@@ -173,6 +173,13 @@ export function createApp(lookup: LookupFn = lookupIp, options: AppOptions = {})
     return c.text("404 Not Found", 404);
   });
 
+  app.onError((_error, c) => {
+    if (c.req.path.startsWith("/api/")) {
+      return c.json({ error: { code: "internal_error", message: "internal error" } }, 500);
+    }
+    return c.text("500 Internal Server Error", 500);
+  });
+
   return app;
 }
 

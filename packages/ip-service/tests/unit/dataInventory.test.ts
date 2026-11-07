@@ -35,6 +35,13 @@ afterEach(() => {
   rmSync(dataDir, { recursive: true, force: true });
 });
 
+function writeAgedFile(name: string, ageMs: number, now: number): void {
+  const file = path.join(dataDir, name);
+  writeFileSync(file, "x");
+  const at = new Date(now - ageMs);
+  utimesSync(file, at, at);
+}
+
 describe("data inventory", () => {
   test("reports every manifest entry as missing when the directory is empty", async () => {
     const entries = await readDataInventory(dataDir);
@@ -135,7 +142,7 @@ describe("inventory summary", () => {
     expect(summary.stale).toBe(false);
   });
 
-  test("reports staleness from the oldest file", async () => {
+  test("reports staleness from the newest file", async () => {
     const file = path.join(dataDir, "ip2region_v4.xdb");
     writeFileSync(file, "xdb");
     const old = (Date.now() - 30 * DAY_MS) / 1000;
@@ -146,5 +153,55 @@ describe("inventory summary", () => {
 
     expect(summary.ageDays).toBe(30);
     expect(summary.stale).toBe(true);
+  });
+
+  test("aggregates with the newest file when ages are mixed", async () => {
+    const now = Date.parse("2026-06-01T00:00:00.000Z");
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(now);
+    try {
+      writeAgedFile("ip2region_v4.xdb", DAY_MS, now);
+      writeAgedFile("iplocate-asn.mmdb", 30 * DAY_MS, now);
+
+      const summary = summarizeInventory(await readDataInventory(dataDir));
+
+      expect(summary.ageDays).toBe(1);
+      expect(summary.stale).toBe(false);
+      expect(summary.present).toBe(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("keeps a file that is exactly seven days old fresh", async () => {
+    const now = Date.parse("2026-06-01T00:00:00.000Z");
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(now);
+    try {
+      writeAgedFile("ip2region_v4.xdb", 7 * DAY_MS, now);
+
+      const summary = summarizeInventory(await readDataInventory(dataDir));
+
+      expect(summary.ageDays).toBe(7);
+      expect(summary.stale).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("marks a file that is one second past seven days stale", async () => {
+    const now = Date.parse("2026-06-01T00:00:00.000Z");
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(now);
+    try {
+      writeAgedFile("ip2region_v4.xdb", 7 * DAY_MS + 1_000, now);
+
+      const summary = summarizeInventory(await readDataInventory(dataDir));
+
+      expect(summary.ageDays).toBe(7);
+      expect(summary.stale).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
