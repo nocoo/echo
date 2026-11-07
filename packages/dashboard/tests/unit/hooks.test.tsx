@@ -275,6 +275,16 @@ describe("useOverview", () => {
 });
 
 describe("useLookup", () => {
+  test("looks up the current address on mount", async () => {
+    const lookup = vi.fn(async () => lookupResponse());
+    const client = stubClient({ lookup });
+
+    const { result } = renderHook(() => useLookup(client));
+
+    await waitFor(() => expect(result.current.model?.ip).toBe("8.8.8.8"));
+    expect(lookup).toHaveBeenCalledWith("");
+  });
+
   test("submits a lookup", async () => {
     const client = stubClient({ lookup: vi.fn(async () => lookupResponse()) });
 

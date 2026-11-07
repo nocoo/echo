@@ -76,5 +76,9 @@ export function useLookup(
     reset();
   }, [reset]);
 
+  useEffect(() => {
+    void submit("");
+  }, [submit]);
+
   return { ...state, submit, reset };
 }

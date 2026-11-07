@@ -75,10 +75,21 @@ describe("overview page", () => {
 });
 
 describe("lookup page", () => {
-  test("offers examples before a query", async () => {
+  test("looks up the current address on mount and keeps the examples", async () => {
+    const lookup = vi.spyOn(apiClient, "lookup").mockResolvedValue({
+      ip: "203.0.113.7",
+      version: 4,
+      location: null,
+      source: "ip2region",
+      attribution: [],
+      latencyMs: 3,
+      providers: [],
+    });
+
     renderPage(<LookupPage />);
 
-    expect(screen.getByText("还没有查询结果")).toBeTruthy();
+    await waitFor(() => expect(screen.getByText("203.0.113.7")).toBeTruthy());
+    expect(lookup).toHaveBeenCalledWith("");
     expect(screen.getByRole("button", { name: "8.8.8.8" })).toBeTruthy();
   });
 

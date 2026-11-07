@@ -33,19 +33,26 @@ export default function LookupPage() {
             <Input
               id="lookup-ip"
               value={ip}
-              placeholder="8.8.8.8"
+              placeholder="留空则查询当前 IP"
               onChange={(event) => setIp(event.target.value)}
             />
           </Field>
           <Button
             type="submit"
             loading={loading}
-            disabled={ip.trim().length === 0}
             icon={<Search className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />}
           >
             查询
           </Button>
         </form>
+        <div className="mt-basalt-space-sm flex flex-wrap items-center gap-basalt-space-sm">
+          <span className="text-basalt-xs text-basalt-muted-foreground">示例</span>
+          {EXAMPLES.map((example) => (
+            <Button key={example} variant="outline" size="sm" onClick={() => setIp(example)}>
+              {example}
+            </Button>
+          ))}
+        </div>
       </LayerCard>
 
       {error ? (
@@ -65,25 +72,6 @@ export default function LookupPage() {
             ))}
           </div>
         </>
-      ) : null}
-
-      {!model && !loading && !error ? (
-        <LayerCard>
-          <LayerCard.Empty
-            title="还没有查询结果"
-            description="输入一个公网地址，查看四个数据源的地理位置与耗时。"
-            icon={<Search className="h-8 w-8" strokeWidth={1.5} aria-hidden="true" />}
-            action={
-              <div className="flex flex-wrap items-center justify-center gap-basalt-space-sm">
-                {EXAMPLES.map((example) => (
-                  <Button key={example} variant="outline" onClick={() => setIp(example)}>
-                    {example}
-                  </Button>
-                ))}
-              </div>
-            }
-          />
-        </LayerCard>
       ) : null}
     </div>
   );

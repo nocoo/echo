@@ -2,6 +2,7 @@ import type { Hono } from "hono";
 import { readDataInventory, summarizeInventory } from "../lib/dataInventory.js";
 import type { Store } from "../lib/store.js";
 import type { LookupResult } from "../services/ipLookup.js";
+import { extractClientIp } from "../utils/ip.js";
 import type { AuthConfig } from "./auth-config.js";
 import { readSessionUser } from "./auth-routes.js";
 import { isPublicOrigin } from "./origin-policy.js";
@@ -41,7 +42,8 @@ export function registerAdminRoutes(app: Hono<AdminEnv>, deps: AdminDeps): void 
     }
 
     const body = await c.req.json().catch(() => null);
-    const ip = typeof body?.ip === "string" ? body.ip.trim() : "";
+    const requested = typeof body?.ip === "string" ? body.ip.trim() : "";
+    const ip = requested || extractClientIp(c.req.raw.headers);
     if (!ip) {
       return c.json({ error: { code: "invalid_request", message: "ip is required" } }, 400);
     }

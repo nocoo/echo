@@ -168,6 +168,29 @@ describe("POST /api/admin/lookup", () => {
     expect(await res.json()).toMatchObject({ error: { code: "invalid_request" } });
   });
 
+  test("falls back to the requester address when no ip is given", async () => {
+    const seen: string[] = [];
+    const app = createApp({
+      lookup: async (ip) => {
+        seen.push(ip);
+        return lookupResult;
+      },
+    });
+    const res = await app.request("/api/admin/lookup", {
+      method: "POST",
+      headers: {
+        cookie: sessionCookie,
+        "content-type": "application/json",
+        origin: "https://echo.example.com",
+        "x-forwarded-for": "203.0.113.9",
+      },
+      body: JSON.stringify({}),
+    });
+
+    expect(res.status).toBe(200);
+    expect(seen).toEqual(["203.0.113.9"]);
+  });
+
   test("rejects an invalid ip", async () => {
     const app = createApp({ lookup: async () => null });
     const res = await app.request("/api/admin/lookup", {
