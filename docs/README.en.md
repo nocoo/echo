@@ -38,14 +38,14 @@ curl 'https://echo.nocoo.cloud/api/ip'
 # Include individual provider results
 curl 'https://echo.nocoo.cloud/api/ip?detail=true'
 
-# Select an IP; ECHO_API_KEY is supplied by the deployment owner
+# Select an IP; the key is issued by the admin console (/admin/keys)
 curl 'https://echo.nocoo.cloud/api/ip?ip=1.1.1.1' \
-  -H "X-Api-Key: $ECHO_API_KEY"
+  -H "X-Api-Key: $API_KEY"
 ```
 
 Responses include `ip`, `version` (the IP version), `location`, `source`, `attribution` and `latencyMs`. Detailed mode adds `providers`. Location fields cover country, region, city, coordinates, ISP, ASN and organization. `location` can be `null` when no data matches.
 
-`?ip=` takes effect only when `X-Api-Key` matches the server's configured key. A missing or incorrect key makes the service look up the requesting client's IP instead of returning an authentication error. The client IP comes from `X-Forwarded-For` or `X-Real-IP`; a trusted proxy should set those headers in a deployment.
+`?ip=` takes effect only when `X-Api-Key` matches an active key issued by the admin console. A missing or incorrect key makes the service look up the requesting client's IP instead of returning an authentication error. The client IP comes from `X-Forwarded-For` or `X-Real-IP`; a trusted proxy should set those headers in a deployment.
 
 ### DNS resolver observation
 
@@ -80,8 +80,12 @@ The database download accesses several external providers. Files are stored in t
 | Environment variable | Purpose |
 | --- | --- |
 | `IPDB_DIR` | IP data directory, defaulting to `data` in the working directory; use the same value for download and runtime |
-| `ECHO_API_KEY` | Key that permits selecting an address through `?ip=` |
+| `STATE_DIR` | Admin console state directory (SQLite `echo.db`), defaulting to `state` in the working directory |
 | `PORT` | Bun server port, default `7010` |
+| `PUBLIC_ORIGIN` | Public origin of the admin console; the only source for the OAuth redirect and the CSRF check |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth client credentials |
+| `SESSION_SECRET` | Signing secret for the admin session JWT |
+| `ALLOWED_EMAILS` | Comma-separated list of emails allowed to sign in; an empty list rejects every login |
 
 A direct local request has no proxy-injected IP header. Use this request from another terminal:
 
@@ -92,7 +96,8 @@ curl 'http://localhost:7010/api/ip' -H 'X-Forwarded-For: 1.1.1.1'
 Collector has its own package. Run `bun run --cwd packages/collector dev` from the repository root. It uses the `ECHO` KV binding. The DNS probe requires `WORKER_URL` and accepts optional `PORT` and `RESPONSE_IP` values. A separate deployment also needs authoritative DNS delegation. The checked-in domains, Compose file and KV configuration describe the maintainer's environment; replace them with your own resources.
 
 ```text
-packages/ip-service/    Hono API, IP database readers, download scripts and tests
+packages/ip-service/    Hono API, IP database readers, download scripts, admin backend and tests
+packages/dashboard/     Vite + React admin console (/admin)
 packages/collector/     Cloudflare Worker and KV result collection
 packages/dns-probe/     Go DNS service and Docker Compose
 swiftbar/               macOS menu bar script
@@ -109,6 +114,7 @@ Run from the repository root:
 | --- | --- |
 | IP service unit tests | `bun run --cwd packages/ip-service test` |
 | IP service HTTP integration tests | `bun run --cwd packages/ip-service test:e2e` |
+| Admin console unit tests | `bun run --cwd packages/dashboard test` |
 
 HTTP tests require every database file in the IP service's `data/` directory and start a local server on port `7010`. Download the data as described above and stop any development server using that port first. Use `bun run --cwd packages/ip-service test:coverage` to generate a coverage report.
 
@@ -126,6 +132,7 @@ Collector and the DNS probe have no automated test suites, and there are no brow
 | Area | Implementation |
 | --- | --- |
 | IP API | TypeScript, Bun and Hono; jp4 Docker behind GHCR |
+| Admin console | Vite 8, React 19, Tailwind v4 and Basalt; SQLite holds keys and refresh records |
 | IP data and caching | ip2region.js, MaxMind MMDB reader and lru-cache |
 | DNS probe | Go, miekg/dns and Docker |
 | Result collection | Cloudflare Workers and KV |

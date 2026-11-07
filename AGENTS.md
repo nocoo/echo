@@ -13,7 +13,9 @@ Direction: [README.md](README.md), [DNS design](docs/07-dns-leak-detection.md).
 ## Project invariants
 
 - Preserve database attribution and source-merging semantics; local IP datasets are downloaded assets, never committed.
-- `?ip=` requires matching `X-Api-Key` / `ECHO_API_KEY`; an invalid key falls back to requester IP. Trust forwarded IP headers only behind the intended proxy.
+- `?ip=` requires an `X-Api-Key` that the admin console issued and has not revoked; an invalid key falls back to requester IP. Trust forwarded IP headers only behind the intended proxy.
+- Admin keys and refresh runs live in SQLite (`node:sqlite`) at `$STATE_DIR/echo.db`; there is no `ECHO_API_KEY` environment variable and no import path from one.
+- Admin routes require a Google OAuth session (`PUBLIC_ORIGIN` is the single source of truth for the OAuth redirect and the CSRF origin check); every mutation requires `Origin` to equal `PUBLIC_ORIGIN` exactly, and `ALLOWED_EMAILS` empty rejects every login.
 - Public, uncached `/api/live` performs a local database lookup and returns version plus 200/503 without database paths or raw diagnostics. A database refresh older than seven days reports `outdated` and a non-200 status; describe staleness only in days, never as a timestamp.
 - The IP service runs as a GHCR image on jp4 behind the shared proxy-caddy. IP databases are mounted from the host, refreshed by `deploy/systemd/echo-ipdb-refresh.timer`, and never baked into the image. The proxy must overwrite `X-Forwarded-For` with `CF-Connecting-IP`.
 - Collector also exposes an uncached public `/api/live`, using its own package version; this is Worker liveness only and does not probe or write KV.
@@ -31,14 +33,17 @@ Run from root unless a working directory is shown. CI pins Bun 1.4.2; use the Go
 bun install --frozen-lockfile
 bun run --cwd packages/ip-service dev
 bun run --cwd packages/collector dev
+bun run --cwd packages/dashboard dev
 bun run --cwd packages/ip-service typecheck
 bun run --cwd packages/collector typecheck
+bun run --cwd packages/dashboard typecheck
 bun run lint
 bun run --cwd packages/ip-service test:coverage
+bun run --cwd packages/dashboard test:coverage
 bun run --cwd packages/ip-service test:e2e
 ```
 
-IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; obtain them with `bun run --cwd packages/ip-service ipdb:fetch --verify`. Downloads access external providers. `PORT` defaults to 7010; `ECHO_API_KEY` controls explicit-address lookup. There is no root build script; the image ships code only and expects a mounted data directory.
+IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; obtain them with `bun run --cwd packages/ip-service ipdb:fetch --verify`. Downloads access external providers. `PORT` defaults to 7010; `STATE_DIR` holds the admin SQLite database and defaults to `./state`. The dashboard dev server runs on 7011 and proxies `/api` to 127.0.0.1:7010. The root `bun run dev` starts every workspace dev script and `bun run build` builds the dashboard.
 
 ## Testing and quality contract
 
@@ -46,7 +51,7 @@ IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; o
 
 | Piece | Requirement and current reality | Status | Evidence |
 | --- | --- | --- | --- |
-| L1 TypeScript | IP-service four metrics ≥95% plus strict types/lint across both packages and helper; Collector and SwiftBar coverage still missing | planned | IP gate enforced in pre-commit/CI and `packages/ip-service/vitest.config.ts`; IP checks and root Biome run as enforced static subchecks, but Collector typecheck is not in CI and gates use the working tree |
+| L1 TypeScript | IP-service and dashboard four metrics ≥95% plus strict types/lint across both packages and helper; Collector and SwiftBar coverage still missing | planned | IP gate enforced in pre-commit/CI and `packages/ip-service/vitest.config.ts`; dashboard gate in `packages/dashboard/vitest.config.ts` covers `src/lib/**`; IP checks and root Biome run as enforced static subchecks, but Collector typecheck is not in CI and gates use the working tree |
 | L1 Go | Meaningful DNS coverage plus Go static checks and formatting at the same contract; no suite or gate yet | planned | `packages/dns-probe/`; no Go gate in hooks/CI |
 | L2 | Real HTTP across every service endpoint/method; IP tests exist, Collector coverage incomplete | planned | IP `tests/e2e/global-setup.ts`, pre-push/CI |
 | L3 | Real client IP/DNS workflows on controlled local services | planned | No full DNS/client system gate |
@@ -55,7 +60,7 @@ IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; o
 | Packaging | Image builds and `/api/live` reports `ok` with fresh data | enforced | `deploy.yml` remote and edge verification |
 | Docs | Keep numbered docs and commands aligned | manual | Diff/link review |
 
-Current pre-commit checks the working tree (IP types, lint, coverage) and staged secrets; pre-push runs unit, lint, HTTP and OSV. Target: check-only unified L1 on the index snapshot under 30s; pre-push stdin refs with L2/G2 in parallel under 3min. Commit and branch-push hook bypass is forbidden.
+Current pre-commit checks the working tree (IP types, IP coverage, dashboard types, dashboard coverage, root lint) and staged secrets; pre-push runs unit, lint, HTTP and OSV. Target: check-only unified L1 on the index snapshot under 30s; pre-push stdin refs with L2/G2 in parallel under 3min. Commit and branch-push hook bypass is forbidden.
 
 ## Resources and isolation
 

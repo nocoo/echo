@@ -38,14 +38,14 @@ curl 'https://echo.nocoo.cloud/api/ip'
 # 同时查看各数据源的结果
 curl 'https://echo.nocoo.cloud/api/ip?detail=true'
 
-# 指定 IP；ECHO_API_KEY 为部署者提供的 key
+# 指定 IP；key 由管理台（/admin/keys）签发
 curl 'https://echo.nocoo.cloud/api/ip?ip=1.1.1.1' \
-  -H "X-Api-Key: $ECHO_API_KEY"
+  -H "X-Api-Key: $API_KEY"
 ```
 
 响应包含 `ip`、`version`（IP 版本）、`location`、`source`、`attribution` 和 `latencyMs`。详细模式额外返回 `providers`。`location` 中包括国家、省市、经纬度、ISP、ASN 与组织名；没有匹配数据时可以为 `null`。
 
-`?ip=` 只有在 `X-Api-Key` 与服务端配置匹配时生效。缺少或错误的 key 会让服务改查请求方 IP，不返回鉴权错误。请求方 IP 从 `X-Forwarded-For` 或 `X-Real-IP` 读取，部署时应由可信代理设置这些头。
+`?ip=` 只有在 `X-Api-Key` 与管理台签发且未撤销的 key 匹配时生效。缺少或错误的 key 会让服务改查请求方 IP，不返回鉴权错误。请求方 IP 从 `X-Forwarded-For` 或 `X-Real-IP` 读取，部署时应由可信代理设置这些头。
 
 ### DNS 解析器观察
 
@@ -80,8 +80,12 @@ bun run dev
 | 环境变量 | 用途 |
 | --- | --- |
 | `IPDB_DIR` | IP 数据目录，默认为当前工作目录下的 `data`；下载与运行时需一致 |
-| `ECHO_API_KEY` | 允许通过 `?ip=` 查询指定地址的 key |
+| `STATE_DIR` | 管理台状态目录（SQLite `echo.db`），默认为当前工作目录下的 `state` |
 | `PORT` | Bun 服务端口，默认 `7010` |
+| `PUBLIC_ORIGIN` | 管理台的对外 origin，OAuth 回调与 CSRF 校验的唯一来源 |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth 客户端凭据 |
+| `SESSION_SECRET` | 管理台会话 JWT 的签名密钥 |
+| `ALLOWED_EMAILS` | 允许登录管理台的邮箱列表，逗号分隔；为空则拒绝所有登录 |
 
 本地直连没有代理注入的 IP 头，可在另一个终端这样请求：
 
@@ -92,7 +96,8 @@ curl 'http://localhost:7010/api/ip' -H 'X-Forwarded-For: 1.1.1.1'
 Collector 的开发入口位于独立包，从仓库根目录运行 `bun run --cwd packages/collector dev`。它使用 `ECHO` KV binding。DNS probe 需要 `WORKER_URL`，可选 `PORT` 和 `RESPONSE_IP`；自行部署还需要配置权威 DNS 委派。仓库里的域名、Compose 和 KV 配置对应维护者的环境，迁移时应替换为自己的资源。
 
 ```text
-packages/ip-service/    Hono API、IP 数据库读取、下载脚本与测试
+packages/ip-service/    Hono API、IP 数据库读取、下载脚本、管理台后端与测试
+packages/dashboard/     Vite + React 管理台前端（/admin）
 packages/collector/     Cloudflare Worker 与 KV 结果收集
 packages/dns-probe/     Go DNS 服务与 Docker Compose
 swiftbar/               macOS 菜单栏脚本
@@ -109,6 +114,7 @@ IP 服务的部署形态是 jp4 上的 Docker 容器：Cloudflare → 共享 Cad
 | --- | --- |
 | IP 服务单元测试 | `bun run --cwd packages/ip-service test` |
 | IP 服务 HTTP 集成测试 | `bun run --cwd packages/ip-service test:e2e` |
+| 管理台单元测试 | `bun run --cwd packages/dashboard test` |
 
 HTTP 测试需要 IP 服务 `data/` 下的全部数据库文件，并会启动端口 `7010` 的本地服务。先按开发步骤下载数据，停止占用该端口的开发服务。`bun run --cwd packages/ip-service test:coverage` 可生成覆盖率报告。
 
@@ -126,6 +132,7 @@ Collector 和 DNS probe 目前没有自动化测试套件，也没有浏览器�
 | 部分 | 实现 |
 | --- | --- |
 | IP API | TypeScript、Bun、Hono；jp4 Docker + GHCR |
+| 管理台 | Vite 8、React 19、Tailwind v4、Basalt；SQLite 存 key 与刷新记录 |
 | IP 数据与缓存 | ip2region.js、MaxMind MMDB reader、lru-cache |
 | DNS probe | Go、miekg/dns、Docker |
 | 结果收集 | Cloudflare Workers、KV |
