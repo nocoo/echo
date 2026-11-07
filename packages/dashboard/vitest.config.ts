@@ -1,7 +1,11 @@
 import { defineConfig } from "vitest/config";
+import ipServicePackage from "../ip-service/package.json";
 
 export default defineConfig({
   cacheDir: "node_modules/.cache/vitest",
+  define: {
+    __ECHO_VERSION__: JSON.stringify(ipServicePackage.version),
+  },
   test: {
     globals: false,
     environment: "jsdom",

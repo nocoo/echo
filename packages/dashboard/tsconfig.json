@@ -9,6 +9,7 @@
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
+    "resolveJsonModule": true,
     "types": ["vite/client"],
 
     "strict": true,
