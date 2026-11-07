@@ -1,7 +1,15 @@
+import path from "node:path";
+import type { Context } from "hono";
 import { Hono } from "hono";
 import { type AdminEnv, registerAdminRoutes } from "./admin/admin-routes.js";
 import { type AuthConfig, readAuthConfig } from "./admin/auth-config.js";
 import { registerAuthRoutes } from "./admin/auth-routes.js";
+import {
+  isSpaRoute,
+  readDashboardAsset,
+  readDashboardIndex,
+  resolveDashboardDir,
+} from "./lib/dashboard.js";
 import { type DataAge, readDataAge } from "./lib/dataVersion.js";
 import { defaultStorePath, Store } from "./lib/store.js";
 import { version } from "./lib/version.js";
@@ -17,6 +25,7 @@ export interface AppOptions {
   auth?: AuthConfig;
   fetchImpl?: typeof fetch;
   dataDir?: string;
+  dashboardDir?: string;
 }
 
 const bootedAt = Date.now();
@@ -84,6 +93,27 @@ export function createApp(lookup: LookupFn = lookupIp, options: AppOptions = {})
     });
   });
 
+  const dashboardDir = resolveDashboardDir(options.dashboardDir);
+
+  app.get("/admin/assets/*", async (c) => {
+    const relative = c.req.path.slice("/admin/assets/".length);
+    const asset = await readDashboardAsset(path.join(dashboardDir, "assets"), relative);
+    if (!asset) return c.notFound();
+    return c.body(asset.body, 200, {
+      "content-type": asset.contentType,
+      "cache-control": "public, max-age=31536000, immutable",
+    });
+  });
+
+  app.get("/admin", async (c) => {
+    return serveDashboardIndex(c, dashboardDir);
+  });
+
+  app.get("/admin/*", async (c) => {
+    if (!isSpaRoute(c.req.path)) return c.notFound();
+    return serveDashboardIndex(c, dashboardDir);
+  });
+
   app.get("/api/ip", async (c) => {
     const started = performance.now();
 
@@ -136,7 +166,23 @@ export function createApp(lookup: LookupFn = lookupIp, options: AppOptions = {})
     }
   });
 
+  app.notFound((c) => {
+    if (c.req.path.startsWith("/api/")) {
+      return c.json({ error: { code: "not_found", message: "not found" } }, 404);
+    }
+    return c.text("404 Not Found", 404);
+  });
+
   return app;
+}
+
+async function serveDashboardIndex(c: Context, dashboardDir: string) {
+  const index = await readDashboardIndex(dashboardDir);
+  if (!index) return c.notFound();
+  return c.body(index.body, 200, {
+    "content-type": index.contentType,
+    "cache-control": "no-cache",
+  });
 }
 
 const app = createApp();

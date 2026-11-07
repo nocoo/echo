@@ -1,14 +1,17 @@
-import { spawn } from "node:child_process";
+import { type ChildProcessByStdio, spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { mkdtempSync } from "node:fs";
-import { access, rm } from "node:fs/promises";
+import { access, mkdir, readdir, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import type { Readable } from "node:stream";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
-const baseUrl = "http://127.0.0.1:7010";
-const liveUrl = `${baseUrl}/api/live`;
+type ServerProcess = ChildProcessByStdio<null, Readable, Readable>;
 
-const dataDir = path.join(process.cwd(), "data");
+const packageRoot = process.cwd();
+const dataDir = path.join(packageRoot, "data");
+const dashboardDir = path.resolve(packageRoot, "../dashboard/dist");
 
 const requiredFiles = [
   "ip2region_v4.xdb",
@@ -20,55 +23,98 @@ const requiredFiles = [
   "circl-country-asn.mmdb",
 ];
 
-function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function waitForLive(timeoutMs = 5_000) {
-  const started = Date.now();
-
-  while (Date.now() - started < timeoutMs) {
-    try {
-      const res = await fetch(liveUrl);
-      if (res.ok) {
-        return;
-      }
-    } catch {
-      // ignore until server is up
-    }
-
-    await wait(200);
-  }
-
-  throw new Error("server did not start in time");
-}
-
-async function ensureAllDatabases() {
+async function ensureAllDatabases(): Promise<void> {
   for (const file of requiredFiles) {
     await access(path.join(dataDir, file));
   }
 }
 
+async function linkDatabases(target: string): Promise<void> {
+  for (const file of await readdir(dataDir)) {
+    await symlink(path.join(dataDir, file), path.join(target, file));
+  }
+}
+
+async function waitForInstance(
+  server: ServerProcess,
+  expectedInstance: string,
+  timeoutMs = 20_000,
+): Promise<number> {
+  return new Promise<number>((resolve, reject) => {
+    let buffer = "";
+    let stderr = "";
+
+    const timer = setTimeout(() => {
+      reject(new Error(`server did not report an instance in time: ${stderr}`));
+    }, timeoutMs);
+
+    const onData = (chunk: Buffer) => {
+      buffer += chunk.toString();
+      const match = /echo api instance=(\S+) port=(\d+)/.exec(buffer);
+      if (!match) return;
+      clearTimeout(timer);
+      server.stdout.off("data", onData);
+      if (match[1] !== expectedInstance) {
+        reject(new Error(`unexpected instance ${match[1]}`));
+        return;
+      }
+      resolve(Number(match[2]));
+    };
+
+    server.stdout.on("data", onData);
+    server.stderr.on("data", (chunk: Buffer) => {
+      stderr += chunk.toString();
+    });
+    server.on("exit", (code) => {
+      clearTimeout(timer);
+      reject(new Error(`server exited with code ${code}: ${stderr}`));
+    });
+  });
+}
+
+let server: ServerProcess;
+let tempRoot: string;
+let baseUrl: string;
+
+beforeAll(async () => {
+  await ensureAllDatabases();
+
+  tempRoot = mkdtempSync(path.join(tmpdir(), "echo-e2e-"));
+  const stateDir = path.join(tempRoot, "state");
+  const spoolDir = path.join(tempRoot, "spool");
+  const ipdbDir = path.join(tempRoot, "ipdb");
+  await mkdir(stateDir, { recursive: true });
+  await mkdir(spoolDir, { recursive: true });
+  await mkdir(ipdbDir, { recursive: true });
+  await linkDatabases(ipdbDir);
+
+  const instanceId = randomUUID();
+  server = spawn("bun", ["run", "src/index.ts"], {
+    env: {
+      ...process.env,
+      PORT: "0",
+      STATE_DIR: stateDir,
+      SPOOL_DIR: spoolDir,
+      IPDB_DIR: ipdbDir,
+      INSTANCE_ID: instanceId,
+    },
+    stdio: ["ignore", "pipe", "pipe"],
+  }) as ServerProcess;
+
+  const port = await waitForInstance(server, instanceId);
+  baseUrl = `http://127.0.0.1:${port}`;
+});
+
+afterAll(async () => {
+  server?.kill();
+  if (tempRoot) {
+    await rm(tempRoot, { recursive: true, force: true });
+  }
+});
+
 describe("api e2e", () => {
-  const port = 7010;
-  const stateDir = mkdtempSync(path.join(tmpdir(), "echo-e2e-state-"));
-  const server = spawn("bun", ["run", "src/index.ts"], {
-    env: { ...process.env, PORT: String(port), STATE_DIR: stateDir },
-    stdio: "ignore",
-  });
-
-  beforeAll(async () => {
-    await ensureAllDatabases();
-    await waitForLive();
-  });
-
-  afterAll(async () => {
-    server.kill();
-    await rm(stateDir, { recursive: true, force: true });
-  });
-
   test("live endpoint returns ok and version", async () => {
-    const res = await fetch(liveUrl);
+    const res = await fetch(`${baseUrl}/api/live`);
 
     expect(res.status).toBe(200);
 
@@ -142,6 +188,14 @@ describe("api e2e", () => {
     expect(body.location?.countryCode).toBe("US");
   });
 
+  test("root endpoint returns the json self description", async () => {
+    const res = await fetch(`${baseUrl}/`);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("application/json");
+    expect(await res.json()).toMatchObject({ name: "echo", status: "ok" });
+  });
+
   test("me endpoint reports an anonymous visitor", async () => {
     const res = await fetch(`${baseUrl}/api/me`);
 
@@ -162,9 +216,10 @@ describe("api e2e", () => {
       ["POST", "/api/admin/keys/abc/revoke"],
     ];
 
-    for (const [method, path] of requests) {
-      const res = await fetch(`${baseUrl}${path}`, { method });
-      expect(res.status, path).toBe(401);
+    for (const [method, route] of requests) {
+      const res = await fetch(`${baseUrl}${route}`, { method });
+      expect(res.status, route).toBe(401);
+      expect(res.headers.get("content-type")).toContain("application/json");
       expect(await res.json()).toEqual({ error: "unauthorized" });
     }
   });
@@ -181,5 +236,41 @@ describe("api e2e", () => {
 
     const body = (await res.json()) as Record<string, unknown>;
     expect(body.ip).toBe("1.2.3.4");
+  });
+});
+
+describe("admin console assets", () => {
+  test("serves the console shell", async () => {
+    const res = await fetch(`${baseUrl}/admin`);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("text/html");
+    expect(await res.text()).toContain('<div id="root">');
+  });
+
+  test("serves a deep link with the console shell", async () => {
+    const res = await fetch(`${baseUrl}/admin/tools`);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("text/html");
+  });
+
+  test("serves a built asset", async () => {
+    const assets = await readdir(path.join(dashboardDir, "assets"));
+    const asset = assets.find((name) => name.endsWith(".js") || name.endsWith(".css"));
+    expect(asset).toBeDefined();
+
+    const res = await fetch(`${baseUrl}/admin/assets/${asset}`);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toMatch(/javascript|css/);
+  });
+
+  test("answers unknown api paths with json", async () => {
+    const res = await fetch(`${baseUrl}/api/does-not-exist`);
+
+    expect(res.status).toBe(404);
+    expect(res.headers.get("content-type")).toContain("application/json");
+    expect(await res.json()).toMatchObject({ error: { code: "not_found" } });
   });
 });
