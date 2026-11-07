@@ -81,11 +81,25 @@ bun run dev
 | --- | --- |
 | `IPDB_DIR` | IP 数据目录，默认为当前工作目录下的 `data`；下载与运行时需一致 |
 | `STATE_DIR` | 管理台状态目录（SQLite `echo.db`），默认为当前工作目录下的 `state` |
+| `DASHBOARD_DIR` | 管理台前端构建产物目录，默认为 `packages/dashboard/dist` |
 | `PORT` | Bun 服务端口，默认 `7010` |
 | `PUBLIC_ORIGIN` | 管理台的对外 origin，OAuth 回调与 CSRF 校验的唯一来源 |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth 客户端凭据 |
 | `SESSION_SECRET` | 管理台会话 JWT 的签名密钥 |
 | `ALLOWED_EMAILS` | 允许登录管理台的邮箱列表，逗号分隔；为空则拒绝所有登录 |
+
+### 管理台
+
+管理台是同域的 `/admin`：IP 服务在 `DASHBOARD_DIR` 存在时提供静态资源，`/admin` 与不含扩展名的 `/admin/*` 回落到 `index.html`，`/api/*` 始终是 JSON。
+
+本地开发时先启动 IP 服务（`:7010`），再从仓库根目录启动前端（`:7011`，`/api` 代理到 7010）：
+
+```bash
+bun run --cwd packages/ip-service dev
+bun run --cwd packages/dashboard dev
+```
+
+`bun run build` 会构建前端到 `packages/dashboard/dist`，之后 IP 服务直接托管该目录。管理台需要 Google 登录：`ALLOWED_EMAILS` 为空时所有登录都会被拒绝。
 
 本地直连没有代理注入的 IP 头，可在另一个终端这样请求：
 
@@ -116,7 +130,7 @@ IP 服务的部署形态是 jp4 上的 Docker 容器：Cloudflare → 共享 Cad
 | IP 服务 HTTP 集成测试 | `bun run --cwd packages/ip-service test:e2e` |
 | 管理台单元测试 | `bun run --cwd packages/dashboard test` |
 
-HTTP 测试需要 IP 服务 `data/` 下的全部数据库文件，并会启动端口 `7010` 的本地服务。先按开发步骤下载数据，停止占用该端口的开发服务。`bun run --cwd packages/ip-service test:coverage` 可生成覆盖率报告。
+HTTP 测试需要 IP 服务 `data/` 下的全部数据库文件；套件会自行构建管理台、分配随机端口并使用临时的 `STATE_DIR`、`SPOOL_DIR` 与指向包内数据的 `IPDB_DIR` 符号链接目录，因此不会占用 `7010`，也不会在仓库里留下状态文件。`bun run --cwd packages/ip-service test:coverage` 可生成覆盖率报告。
 
 Collector 和 DNS probe 目前没有自动化测试套件，也没有浏览器测试。TypeScript 检查分别使用 `bun run --cwd packages/ip-service typecheck` 和 `bun run --cwd packages/collector typecheck`。
 

@@ -4,6 +4,33 @@ IP 服务的管理界面与随附后端能力。目标是让维护者在一个�
 
 本文档已吸收一轮设计评审的 12 条意见（路由前缀、SQLite 运行时、挂载边界、同源 CSRF、spool 协议、刷新脚本失败语义、门禁接线、测试隔离、交付步骤、密钥切换时点、逐库新鲜度、Basalt 接线）。
 
+## 状态
+
+截至 2026-11-07，P1 的后端与前端骨架已交付，P2 尚未开始。
+
+| 能力 | 状态 | 位置 |
+| --- | --- | --- |
+| SQLite 存储（`api_keys`、`refresh_runs`） | 已交付 | `packages/ip-service/src/lib/store.ts` |
+| PKCE 登录、会话 JWT、Origin 校验、白名单 | 已交付 | `packages/ip-service/src/admin/` |
+| 管理路由（概览、查询、key、只读刷新状态） | 已交付 | `packages/ip-service/src/admin/admin-routes.ts` |
+| 逐库清单与逐文件新鲜度 | 已交付 | `packages/ip-service/src/lib/dataInventory.ts` |
+| `?ip=` 改用 SQLite key，`ECHO_API_KEY` 删除 | 已交付 | `packages/ip-service/src/server.ts` |
+| 静态托管 `/admin`（`DASHBOARD_DIR`） | 已交付 | `packages/ip-service/src/lib/dashboard.ts` |
+| 五个页面（登录、概览、查询、工具、key） | 已交付 | `packages/dashboard/src/app/` |
+| IP 工具计算 | 已交付 | `packages/dashboard/src/lib/ip-math.ts` |
+| 门禁接线（pre-commit、CI） | 已交付 | `.husky/`、`.github/workflows/ci.yml` |
+| E2E 隔离（随机端口、临时目录、实例标识） | 已交付 | `packages/ip-service/tests/e2e/` |
+| 刷新触发与并发 409 | 未开始（P2） | — |
+| 部署加固、镜像内置前端、文档回滚演练 | 未开始（P3） | — |
+
+已知的缺口（如实记录）：
+
+- 覆盖率门只统计 `packages/dashboard/src/lib/**`；视图模型有单测但不在门内，纯展示组件没有测试。
+- L2 的 HTTP 用例覆盖公开路由、管理路由的 401 边界与静态资源；OAuth 回调、key 创建与撤销的完整流程只在单元测试里跑过。
+- `POST /api/admin/refresh` 尚未实现，页面上的刷新按钮保持禁用并提示 P2。
+- 镜像、compose、systemd 尚未接入前端产物与 `state`/`spool` 挂载（属 P3，且本次未改动 `deploy/`）。
+- Google OAuth 客户端登记与主机上的运行时变量需要仓库所有者完成。
+
 ## 决策记录
 
 | 项 | 决定 | 理由 |

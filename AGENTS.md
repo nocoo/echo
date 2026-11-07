@@ -16,6 +16,8 @@ Direction: [README.md](README.md), [DNS design](docs/07-dns-leak-detection.md).
 - `?ip=` requires an `X-Api-Key` that the admin console issued and has not revoked; an invalid key falls back to requester IP. Trust forwarded IP headers only behind the intended proxy.
 - Admin keys and refresh runs live in SQLite (`node:sqlite`) at `$STATE_DIR/echo.db`; there is no `ECHO_API_KEY` environment variable and no import path from one.
 - Admin routes require a Google OAuth session (`PUBLIC_ORIGIN` is the single source of truth for the OAuth redirect and the CSRF origin check); every mutation requires `Origin` to equal `PUBLIC_ORIGIN` exactly, and `ALLOWED_EMAILS` empty rejects every login.
+- The IP service serves the console build from `DASHBOARD_DIR` (default `packages/dashboard/dist`): `/admin/assets/*` is static, `/admin` and extension-less `/admin/*` fall back to `index.html`, and a missing build answers 404. `/` stays the JSON self description and unknown `/api/*` paths answer a JSON 404, never the shell.
+- The console is a separate Vite app with `basename /admin`; its pages stay thin and the fetching and derivation live in `src/lib` and `src/app/<page>/use-*.ts` so they are testable without a DOM.
 - Public, uncached `/api/live` performs a local database lookup and returns version plus 200/503 without database paths or raw diagnostics. A database refresh older than seven days reports `outdated` and a non-200 status; describe staleness only in days, never as a timestamp.
 - The IP service runs as a GHCR image on jp4 behind the shared proxy-caddy. IP databases are mounted from the host, refreshed by `deploy/systemd/echo-ipdb-refresh.timer`, and never baked into the image. The proxy must overwrite `X-Forwarded-For` with `CF-Connecting-IP`.
 - Collector also exposes an uncached public `/api/live`, using its own package version; this is Worker liveness only and does not probe or write KV.
@@ -43,7 +45,7 @@ bun run --cwd packages/dashboard test:coverage
 bun run --cwd packages/ip-service test:e2e
 ```
 
-IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; obtain them with `bun run --cwd packages/ip-service ipdb:fetch --verify`. Downloads access external providers. `PORT` defaults to 7010; `STATE_DIR` holds the admin SQLite database and defaults to `./state`. The dashboard dev server runs on 7011 and proxies `/api` to 127.0.0.1:7010. The root `bun run dev` starts every workspace dev script and `bun run build` builds the dashboard.
+IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; obtain them with `bun run --cwd packages/ip-service ipdb:fetch --verify`. Downloads access external providers. `PORT` defaults to 7010; `STATE_DIR` holds the admin SQLite database and defaults to `./state`; `DASHBOARD_DIR` holds the console build and defaults to `packages/dashboard/dist`. The dashboard dev server runs on 7011 and proxies `/api` to 127.0.0.1:7010. The root `bun run dev` starts every workspace dev script and `bun run build` builds the dashboard.
 
 ## Testing and quality contract
 
@@ -51,12 +53,12 @@ IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; o
 
 | Piece | Requirement and current reality | Status | Evidence |
 | --- | --- | --- | --- |
-| L1 TypeScript | IP-service and dashboard four metrics ≥95% plus strict types/lint across both packages and helper; Collector and SwiftBar coverage still missing | planned | IP gate enforced in pre-commit/CI and `packages/ip-service/vitest.config.ts`; dashboard gate in `packages/dashboard/vitest.config.ts` covers `src/lib/**`; IP checks and root Biome run as enforced static subchecks, but Collector typecheck is not in CI and gates use the working tree |
+| L1 TypeScript | IP-service and dashboard four metrics ≥95% plus strict types/lint across both packages and helper; Collector and SwiftBar coverage still missing | planned | IP gate enforced in pre-commit/CI and `packages/ip-service/vitest.config.ts`; dashboard gate in `packages/dashboard/vitest.config.ts` covers `src/lib/**`; the console view models are unit tested but sit outside the coverage gate and the presentational components are not tested at all; IP checks and root Biome run as enforced static subchecks, but Collector typecheck is not in CI and gates use the working tree |
 | L1 Go | Meaningful DNS coverage plus Go static checks and formatting at the same contract; no suite or gate yet | planned | `packages/dns-probe/`; no Go gate in hooks/CI |
-| L2 | Real HTTP across every service endpoint/method; IP tests exist, Collector coverage incomplete | planned | IP `tests/e2e/global-setup.ts`, pre-push/CI |
+| L2 | Real HTTP across every service endpoint/method; IP tests exist, Collector coverage incomplete | planned | IP `tests/e2e/global-setup.ts`, pre-push/CI; the console HTTP cases cover the public routes, the admin 401 boundary and the static assets, but the OAuth and key lifecycle still run only in unit tests |
 | L3 | Real client IP/DNS workflows on controlled local services | planned | No full DNS/client system gate |
 | G2 | OSV + gitleaks; missing scanner fails; cover Bun and Go dependencies | planned | Hooks scan Bun lock/staged secrets; Go dependency gate missing |
-| D1 | Per-run state/ports and guards, separate from dev | planned | IP HTTP tests currently reuse 7010 and package data |
+| D1 | Per-run state/ports and guards, separate from dev | planned | The IP HTTP suite now takes a random port, temporary STATE_DIR, SPOOL_DIR and an IPDB_DIR of symlinks, and identifies its own server by the instance line; the shared 7010 port and the package data directory are still used by the dev server |
 | Packaging | Image builds and `/api/live` reports `ok` with fresh data | enforced | `deploy.yml` remote and edge verification |
 | Docs | Keep numbered docs and commands aligned | manual | Diff/link review |
 
@@ -66,7 +68,7 @@ Current pre-commit checks the working tree (IP types, IP coverage, dashboard typ
 
 | Purpose | Existing resource | Current isolation |
 | --- | --- | --- |
-| IP dev / HTTP suite | 7010; package `data/` | Shared: run only after freeing the port; dedicated harness planned |
+| IP dev / HTTP suite | 7010 for dev; the HTTP suite takes a random port | Shared for dev: run only after freeing the port; the suite is isolated per run |
 | Dashboard dev | 7011; Vite proxies `/api` to 7010 | Separate port; needs the IP service on 7010 |
 | Collector dev | Local Wrangler KV | Separate per-run fixture guard/marker not established |
 | DNS production | jp2 UDP 53 | Never use production as an automated fixture target |

@@ -81,11 +81,25 @@ The database download accesses several external providers. Files are stored in t
 | --- | --- |
 | `IPDB_DIR` | IP data directory, defaulting to `data` in the working directory; use the same value for download and runtime |
 | `STATE_DIR` | Admin console state directory (SQLite `echo.db`), defaulting to `state` in the working directory |
+| `DASHBOARD_DIR` | Admin console build output, defaulting to `packages/dashboard/dist` |
 | `PORT` | Bun server port, default `7010` |
 | `PUBLIC_ORIGIN` | Public origin of the admin console; the only source for the OAuth redirect and the CSRF check |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth client credentials |
 | `SESSION_SECRET` | Signing secret for the admin session JWT |
 | `ALLOWED_EMAILS` | Comma-separated list of emails allowed to sign in; an empty list rejects every login |
+
+### Admin console
+
+The console lives on the same origin under `/admin`. The IP service serves the static build from `DASHBOARD_DIR` when the directory exists; `/admin` and extension-less `/admin/*` fall back to `index.html` while `/api/*` always stays JSON.
+
+For local development, start the IP service on `:7010` first and then the console on `:7011`, which proxies `/api` to 7010:
+
+```bash
+bun run --cwd packages/ip-service dev
+bun run --cwd packages/dashboard dev
+```
+
+`bun run build` builds the console into `packages/dashboard/dist`, which the IP service then serves directly. The console signs in with Google; an empty `ALLOWED_EMAILS` rejects every login.
 
 A direct local request has no proxy-injected IP header. Use this request from another terminal:
 
@@ -116,7 +130,7 @@ Run from the repository root:
 | IP service HTTP integration tests | `bun run --cwd packages/ip-service test:e2e` |
 | Admin console unit tests | `bun run --cwd packages/dashboard test` |
 
-HTTP tests require every database file in the IP service's `data/` directory and start a local server on port `7010`. Download the data as described above and stop any development server using that port first. Use `bun run --cwd packages/ip-service test:coverage` to generate a coverage report.
+HTTP tests require every database file in the IP service's `data/` directory. The suite builds the console, takes a random port and uses temporary `STATE_DIR`, `SPOOL_DIR` and `IPDB_DIR` directories whose entries are symlinks to the package data, so it neither occupies `7010` nor leaves state files in the repository. Use `bun run --cwd packages/ip-service test:coverage` to generate a coverage report.
 
 Collector and the DNS probe have no automated test suites, and there are no browser tests. TypeScript checks are available through `bun run --cwd packages/ip-service typecheck` and `bun run --cwd packages/collector typecheck`.
 
