@@ -32,15 +32,21 @@ export interface ContainmentResult {
   error: string | null;
 }
 
+const DECIMAL_PREFIX = /^\d{1,2}$/;
+
 export function convertCidr(input: string): CidrConversion {
   const text = input.trim();
   if (!text) return { prefix: null, mask: null, error: null };
 
-  if (text.includes("/")) {
-    const raw = text.slice(text.indexOf("/") + 1);
-    const prefix = Number(raw);
-    if (!Number.isInteger(prefix) || prefix < 0 || prefix > 32) {
-      return { prefix: null, mask: null, error: "前缀必须是 0-32 的整数" };
+  const slash = text.indexOf("/");
+  if (slash >= 0) {
+    const network = text.slice(0, slash);
+    if (!isIpv4(network)) {
+      return { prefix: null, mask: null, error: "CIDR 的地址部分必须是有效 IPv4" };
+    }
+    const prefix = parsePrefix(text.slice(slash + 1));
+    if (prefix === null) {
+      return { prefix: null, mask: null, error: "前缀必须是 0-32 的十进制整数" };
     }
     return { prefix, mask: prefixToMask(prefix), error: null };
   }
@@ -53,11 +59,17 @@ export function convertCidr(input: string): CidrConversion {
     return { prefix, mask: text, error: null };
   }
 
-  const prefix = Number(text);
-  if (!Number.isInteger(prefix) || prefix < 0 || prefix > 32) {
+  const prefix = parsePrefix(text);
+  if (prefix === null) {
     return { prefix: null, mask: null, error: "请输入前缀、掩码或 CIDR" };
   }
   return { prefix, mask: prefixToMask(prefix), error: null };
+}
+
+function parsePrefix(raw: string): number | null {
+  if (!DECIMAL_PREFIX.test(raw)) return null;
+  const prefix = Number(raw);
+  return prefix <= 32 ? prefix : null;
 }
 
 export function buildPrefixRows(ip: string): { rows: PrefixRow[]; error: string | null } {

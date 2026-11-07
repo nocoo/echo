@@ -13,15 +13,17 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  toast,
 } from "@nocoo/basalt";
 import { AppHeader } from "@nocoo/basalt/components/app-header";
 import { AppMain, AppShell, AppSkipLink } from "@nocoo/basalt/components/app-shell";
 import { BasaltMark } from "@nocoo/basalt/components/basalt-mark";
+import { LoadingScreen } from "@nocoo/basalt/components/loading-screen";
 import { Boxes, KeyRound, PanelLeft, Search, Wrench } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router";
+import { Navigate, Outlet, useLocation, useNavigate } from "react-router";
 import type { MeResponse } from "../lib/api";
-import { apiClient } from "../lib/api";
+import { apiClient, describeError } from "../lib/api";
 
 interface NavEntry {
   href: string;
@@ -43,9 +45,13 @@ const PAGE_TITLES: Record<string, string> = {
   "/keys": "密钥",
 };
 
+type AuthState = "loading" | "anonymous" | "authenticated";
+
 export function AppFrame() {
   const [collapsed, setCollapsed] = useState(false);
+  const [auth, setAuth] = useState<AuthState>("loading");
   const [user, setUser] = useState<MeResponse | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -54,18 +60,52 @@ export function AppFrame() {
     href === "/" ? location.pathname === "/" : location.pathname.startsWith(href);
 
   useEffect(() => {
+    let active = true;
     void apiClient
       .me()
-      .then(setUser)
-      .catch(() => setUser(null));
+      .then((me) => {
+        if (!active) return;
+        setUser(me);
+        setAuth(me.authenticated ? "authenticated" : "anonymous");
+      })
+      .catch(() => {
+        if (active) setAuth("anonymous");
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const logout = () => {
-    void apiClient.logout().finally(() => {
+  useEffect(() => {
+    apiClient.setUnauthorizedHandler(() => setAuth("anonymous"));
+    return () => apiClient.setUnauthorizedHandler(null);
+  }, []);
+
+  const logout = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await apiClient.logout();
       setUser(null);
-      navigate("/login");
-    });
+      setAuth("anonymous");
+      navigate("/login", { replace: true });
+    } catch (error) {
+      toast.error("退出失败", {
+        description: describeError(error),
+        action: { label: "重试", onClick: () => void logout() },
+      });
+    } finally {
+      setLoggingOut(false);
+    }
   };
+
+  if (auth === "loading") {
+    return <LoadingScreen label="校验会话" />;
+  }
+
+  if (auth === "anonymous") {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <AppShell>
@@ -145,10 +185,10 @@ export function AppFrame() {
         </SidebarNav>
         <SidebarFooter>
           <SidebarUser
-            name={user?.name ?? user?.email ?? "未登录"}
+            name={user?.name ?? user?.email ?? "已登录"}
             email={user?.email ?? "—"}
             action={
-              <Button variant="ghost" size="sm" onClick={logout}>
+              <Button variant="ghost" size="sm" onClick={() => void logout()} loading={loggingOut}>
                 退出
               </Button>
             }

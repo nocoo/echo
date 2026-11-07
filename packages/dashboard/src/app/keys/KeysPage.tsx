@@ -22,13 +22,12 @@ import { formatTimestamp } from "../../lib/format";
 import { useKeys } from "./use-keys";
 
 export default function KeysPage() {
-  const { loading, error, model, create, revoke } = useKeys(apiClient);
+  const { loading, error, model, creating, revoking, create, revoke } = useKeys(apiClient);
   const { confirm, dialogProps } = useConfirm();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("");
   const [secret, setSecret] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
   const columns: DataTableColumn<ApiKey>[] = [
     { id: "name", header: "名称", accessor: (row) => row.name },
@@ -51,7 +50,7 @@ export default function KeysPage() {
         <Button
           variant="outline"
           size="sm"
-          disabled={row.status === "revoked"}
+          disabled={row.status === "revoked" || revoking}
           onClick={async () => {
             const confirmed = await confirm({
               title: "撤销该 API key？",
@@ -72,9 +71,7 @@ export default function KeysPage() {
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSubmitting(true);
     const created = await create(name.trim());
-    setSubmitting(false);
     if (!created) return;
     setSecret(created.secret);
     setName("");
@@ -89,6 +86,7 @@ export default function KeysPage() {
   };
 
   const closeDialog = () => {
+    if (creating) return;
     setDialogOpen(false);
     setSecret(null);
     setName("");
@@ -153,10 +151,14 @@ export default function KeysPage() {
                 />
               </Field>
               <DialogFooter>
-                <Button variant="ghost" onClick={closeDialog}>
+                <Button variant="ghost" onClick={closeDialog} disabled={creating}>
                   取消
                 </Button>
-                <Button type="submit" loading={submitting} disabled={name.trim().length === 0}>
+                <Button
+                  type="submit"
+                  loading={creating}
+                  disabled={name.trim().length === 0 || creating}
+                >
                   创建
                 </Button>
               </DialogFooter>
@@ -165,7 +167,9 @@ export default function KeysPage() {
 
           {secret ? (
             <DialogFooter>
-              <Button onClick={closeDialog}>完成</Button>
+              <Button onClick={closeDialog} disabled={creating}>
+                完成
+              </Button>
             </DialogFooter>
           ) : null}
         </DialogContent>

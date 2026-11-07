@@ -62,6 +62,9 @@ describe("parseIpv6", () => {
     expect(parseIpv6("gggg::1")).toBeNull();
     expect(parseIpv6("12345::1")).toBeNull();
     expect(parseIpv6("1:2:3:4:5:6:7:")).toBeNull();
+    expect(parseIpv6("1:2:3:4:5:6:7:8:")).toBeNull();
+    expect(parseIpv6(":")).toBeNull();
+    expect(parseIpv6("::::")).toBeNull();
     expect(parseIpv6("1:2:3:4:5:6:7:zzz")).toBeNull();
     expect(parseIpv6("1:2:3:4:5:6:7:8::")).toBeNull();
     expect(parseIpv6("::zzzz")).toBeNull();
@@ -206,6 +209,11 @@ describe("ipv6 text forms", () => {
     expect(expandIpv6("::ffff:1.2.3.4")).toBe("0000:0000:0000:0000:0000:ffff:0102:0304");
   });
 
+  test("accepts a trailing compression marker", () => {
+    expect(expandIpv6("1::")).toBe("0001:0000:0000:0000:0000:0000:0000:0000");
+    expect(compressIpv6("2001:db8::")).toBe("2001:db8::");
+  });
+
   test("compresses zero runs", () => {
     expect(compressIpv6("2001:0db8:0000:0000:0000:0000:0000:0001")).toBe("2001:db8::1");
     expect(compressIpv6("2001:db8:0:0:1:0:0:1")).toBe("2001:db8::1:0:0:1");
@@ -216,6 +224,7 @@ describe("ipv6 text forms", () => {
   test("rejects invalid addresses", () => {
     expect(() => expandIpv6("nope")).toThrow(/invalid ipv6/);
     expect(() => compressIpv6("nope")).toThrow(/invalid ipv6/);
+    expect(() => compressIpv6("1:2:3:4:5:6:7:8:")).toThrow(/invalid ipv6/);
   });
 });
 
@@ -263,6 +272,9 @@ describe("containment", () => {
     expect(contains("garbage", "1.2.3.4")).toBe(false);
     expect(contains("10.0.0.0/8", "garbage")).toBe(false);
     expect(contains("10.0.0.0/8", "::1")).toBe(false);
+    expect(contains("10.0.0.0/", "10.1.2.3")).toBe(false);
+    expect(contains("10.0.0.0/0x8", "10.1.2.3")).toBe(false);
+    expect(contains("2001:db8::/", "2001:db8::1")).toBe(false);
     expect(contains("2001:db8::/32", "garbage")).toBe(false);
   });
 });

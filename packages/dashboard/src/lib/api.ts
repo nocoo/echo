@@ -110,10 +110,15 @@ export interface ApiClientOptions {
 export class ApiClient {
   private readonly baseUrl: string;
   private readonly fetchImpl: typeof fetch;
+  private unauthorizedHandler: (() => void) | null = null;
 
   constructor(options: ApiClientOptions = {}) {
     this.baseUrl = options.baseUrl ?? "";
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch;
+  }
+
+  setUnauthorizedHandler(handler: (() => void) | null): void {
+    this.unauthorizedHandler = handler;
   }
 
   me(): Promise<MeResponse> {
@@ -169,6 +174,10 @@ export class ApiClient {
 
     const text = await res.text();
     const payload = text.length > 0 ? parseJson(text) : null;
+
+    if (res.status === 401) {
+      this.unauthorizedHandler?.();
+    }
 
     if (!res.ok) {
       const error = readError(payload);

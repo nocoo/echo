@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { ApiClient, ApiError, createApiClient, describeError } from "../../src/lib/api";
 
 interface Call {
@@ -133,6 +133,33 @@ describe("api client", () => {
     );
   });
 
+  test("handles an error payload that is not an object", async () => {
+    const { fetchImpl } = stubFetch([json("plain failure", 502)]);
+    const client = new ApiClient({ fetchImpl });
+
+    await expect(client.me()).rejects.toThrowError(
+      expect.objectContaining({ message: "request failed with status 502", code: null }),
+    );
+  });
+
+  test("handles an error field that is not an object", async () => {
+    const { fetchImpl } = stubFetch([json({ error: "boom" }, 500)]);
+    const client = new ApiClient({ fetchImpl });
+
+    await expect(client.me()).rejects.toThrowError(
+      expect.objectContaining({ message: "request failed with status 500", code: null }),
+    );
+  });
+
+  test("handles non-string error fields", async () => {
+    const { fetchImpl } = stubFetch([json({ error: { code: 42, message: null } }, 418)]);
+    const client = new ApiClient({ fetchImpl });
+
+    await expect(client.me()).rejects.toThrowError(
+      expect.objectContaining({ message: "request failed with status 418", code: null }),
+    );
+  });
+
   test("falls back to a generic message", async () => {
     const { fetchImpl } = stubFetch([new Response("boom", { status: 500 })]);
     const client = new ApiClient({ fetchImpl });
@@ -158,6 +185,27 @@ describe("api client", () => {
 
   test("creates a client with defaults", () => {
     expect(createApiClient()).toBeInstanceOf(ApiClient);
+  });
+
+  test("notifies the unauthorized handler on 401", async () => {
+    const { fetchImpl } = stubFetch([json({ error: "unauthorized" }, 401)]);
+    const client = new ApiClient({ fetchImpl });
+    const handler = vi.fn();
+    client.setUnauthorizedHandler(handler);
+
+    await expect(client.listKeys()).rejects.toThrowError(ApiError);
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  test("stops notifying once the handler is cleared", async () => {
+    const { fetchImpl } = stubFetch([json({ error: "unauthorized" }, 401)]);
+    const client = new ApiClient({ fetchImpl });
+    const handler = vi.fn();
+    client.setUnauthorizedHandler(handler);
+    client.setUnauthorizedHandler(null);
+
+    await expect(client.listKeys()).rejects.toThrowError(ApiError);
+    expect(handler).not.toHaveBeenCalled();
   });
 });
 

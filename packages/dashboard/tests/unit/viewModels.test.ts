@@ -171,6 +171,18 @@ describe("cidr conversion", () => {
     expect(convertCidr("nonsense").error).not.toBeNull();
     expect(convertCidr("10.0.0.0/99").error).not.toBeNull();
   });
+
+  test("rejects an invalid cidr address or prefix", () => {
+    expect(convertCidr("bogus/24")).toEqual({
+      prefix: null,
+      mask: null,
+      error: "CIDR 的地址部分必须是有效 IPv4",
+    });
+    expect(convertCidr("10.0.0.0/").error).not.toBeNull();
+    expect(convertCidr("10.0.0.0/0x10").error).not.toBeNull();
+    expect(convertCidr("10.0.0.0/1e2").error).not.toBeNull();
+    expect(convertCidr("10.0.0.0/999").error).not.toBeNull();
+  });
 });
 
 describe("prefix rows", () => {

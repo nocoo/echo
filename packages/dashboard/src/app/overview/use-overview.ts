@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   type ApiClient,
   type ApiKey,
@@ -57,15 +57,28 @@ export async function loadOverview(client: ApiClient): Promise<OverviewViewModel
 
 export function useOverview(client: ApiClient): OverviewState & { reload: () => Promise<void> } {
   const [state, setState] = useState<OverviewState>({ loading: true, error: null, model: null });
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  const update = useCallback((patch: Partial<OverviewState>) => {
+    if (!mounted.current) return;
+    setState((previous) => ({ ...previous, ...patch }));
+  }, []);
 
   const reload = useCallback(async () => {
-    setState((previous) => ({ ...previous, loading: true, error: null }));
+    update({ loading: true, error: null });
     try {
-      setState({ loading: false, error: null, model: await loadOverview(client) });
+      update({ loading: false, model: await loadOverview(client) });
     } catch (error) {
-      setState({ loading: false, error: describeError(error), model: null });
+      update({ loading: false, error: describeError(error) });
     }
-  }, [client]);
+  }, [client, update]);
 
   useEffect(() => {
     void reload();

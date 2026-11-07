@@ -57,15 +57,18 @@ export function parseIpv6(ip: string): number[] | null {
     if (!octets) return null;
     const [a, b, c, d] = octets;
     embedded = [(a << 8) | b, (c << 8) | d];
-    body = text.slice(0, lastColon + 1);
+    const markerColon = lastColon > 0 && text[lastColon - 1] === ":";
+    body = text.slice(0, markerColon ? lastColon + 1 : lastColon);
   }
 
   const marker = body.indexOf("::");
   if (marker < 0) {
-    const groups = parseGroupList(stripTrailingColon(body));
+    if (body.endsWith(":")) return null;
+    const groups = parseGroupList(body);
     if (!groups) return null;
-    if (!embedded) return groups.length === 8 ? groups : null;
-    return groups.length + embedded.length === 8 ? [...groups, ...embedded] : null;
+    const total = groups.length + (embedded?.length ?? 0);
+    if (total !== 8) return null;
+    return embedded ? [...groups, ...embedded] : groups;
   }
 
   if (body.indexOf("::", marker + 2) >= 0) return null;
@@ -73,7 +76,7 @@ export function parseIpv6(ip: string): number[] | null {
   const left = parseGroupList(body.slice(0, marker));
   if (!left) return null;
 
-  const right = parseGroupList(stripTrailingColon(body.slice(marker + 2)));
+  const right = parseGroupList(body.slice(marker + 2));
   if (!right) return null;
 
   const total = left.length + right.length + (embedded?.length ?? 0);
@@ -242,8 +245,8 @@ export function contains(cidr: string, ip: string): boolean {
 
   const v4 = parseIpv4(networkText);
   if (v4) {
-    const prefix = prefixText === null ? 32 : Number(prefixText);
-    if (!Number.isInteger(prefix) || prefix < 0 || prefix > 32) return false;
+    const prefix = prefixText === null ? 32 : parsePrefixLength(prefixText, 32);
+    if (prefix === null) return false;
     const target = parseIpv4(ip);
     if (!target) return false;
     const mask = ipv4Mask(prefix);
@@ -252,8 +255,8 @@ export function contains(cidr: string, ip: string): boolean {
 
   const v6 = parseIpv6(networkText);
   if (v6) {
-    const prefix = prefixText === null ? 128 : Number(prefixText);
-    if (!Number.isInteger(prefix) || prefix < 0 || prefix > 128) return false;
+    const prefix = prefixText === null ? 128 : parsePrefixLength(prefixText, 128);
+    if (prefix === null) return false;
     const target = parseIpv6(ip);
     if (!target) return false;
     const mask = ipv6Mask(prefix);
@@ -261,6 +264,12 @@ export function contains(cidr: string, ip: string): boolean {
   }
 
   return false;
+}
+
+function parsePrefixLength(raw: string, max: number): number | null {
+  if (!/^\d{1,3}$/.test(raw)) return null;
+  const value = Number(raw);
+  return value <= max ? value : null;
 }
 
 function parseGroupList(text: string): number[] | null {
@@ -271,10 +280,6 @@ function parseGroupList(text: string): number[] | null {
     groups.push(Number.parseInt(chunk, 16));
   }
   return groups;
-}
-
-function stripTrailingColon(text: string): string {
-  return text.endsWith(":") ? text.slice(0, -1) : text;
 }
 
 function assertIpv4Prefix(prefix: number): void {

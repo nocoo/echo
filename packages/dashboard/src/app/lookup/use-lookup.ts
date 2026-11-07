@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   type ApiClient,
   describeError,
@@ -42,22 +42,35 @@ export function useLookup(
   client: ApiClient,
 ): LookupState & { submit: (ip: string) => Promise<void>; reset: () => void } {
   const [state, setState] = useState<LookupState>({ loading: false, error: null, model: null });
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  const update = useCallback((next: LookupState) => {
+    if (!mounted.current) return;
+    setState(next);
+  }, []);
 
   const submit = useCallback(
     async (ip: string) => {
-      setState({ loading: true, error: null, model: null });
+      update({ loading: true, error: null, model: null });
       try {
-        setState({ loading: false, error: null, model: await runLookup(client, ip) });
+        update({ loading: false, error: null, model: await runLookup(client, ip) });
       } catch (error) {
-        setState({ loading: false, error: describeError(error), model: null });
+        update({ loading: false, error: describeError(error), model: null });
       }
     },
-    [client],
+    [client, update],
   );
 
   const reset = useCallback(() => {
-    setState({ loading: false, error: null, model: null });
-  }, []);
+    update({ loading: false, error: null, model: null });
+  }, [update]);
 
   useEffect(() => {
     reset();
