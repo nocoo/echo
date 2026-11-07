@@ -1,6 +1,6 @@
 # Echo 部署（jp4 Docker）
 
-IP 服务的生产部署：GHCR 镜像 + 主机 Compose + 共享 Caddy + 主机侧数据刷新。Vercel 已撤除。
+IP 服务的生产部署：GHCR 镜像 + 主机 Compose + 共享 Caddy + 主机侧数据刷新。
 
 ## 拓扑
 

@@ -190,8 +190,6 @@ ns2  A     <VPS2_IP>
 - `scripts/` → `packages/ip-service/scripts/`
 - `Dockerfile` → `packages/ip-service/Dockerfile`
 
-Vercel 项目设置中将 Root Directory 改为 `packages/ip-service`。
-
 ## 使用方法
 
 ### 命令行快速检测

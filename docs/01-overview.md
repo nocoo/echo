@@ -1,6 +1,6 @@
 # 概览
 
-本项目是一个仅提供 API 的 IP 查询服务，目标部署到 Vercel 与 Railway。
+本项目是一个仅提供 API 的 IP 查询服务，生产部署在 jp4 的 Docker 容器里。
 
 ## 目标
 
