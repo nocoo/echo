@@ -1,5 +1,13 @@
 # Changelog
 
+## [v2.1.29] - 2026-11-08
+
+### Added
+- Explain a loopback or private result
+
+### Changed
+- Add a local compose that reuses the production image
+
 ## [v2.1.28] - 2026-11-07
 
 ### Added
