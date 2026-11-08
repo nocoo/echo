@@ -44,3 +44,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # Go binaries
 packages/dns-probe/dns-probe
 packages/dns-probe/echo-dns-probe
+
+# local container state
+deploy/state

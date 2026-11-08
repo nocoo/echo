@@ -1,0 +1,25 @@
+# Local container run: same image as production, loopback port for the machine Caddy.
+# Start: bun run docker:local     Stop: bun run docker:local:down
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: packages/ip-service/Dockerfile
+    image: echo:local
+    container_name: echo-local
+    restart: unless-stopped
+    init: true
+    env_file:
+      - path: ../packages/ip-service/.env.local
+        required: true
+        format: raw
+    environment:
+      PORT: "7010"
+      IPDB_DIR: /data
+      STATE_DIR: /state
+    ports:
+      - 127.0.0.1:7010:7010
+    volumes:
+      - ../packages/ip-service/data:/data:ro
+      - ./state:/state
+    mem_limit: 1g

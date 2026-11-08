@@ -9,7 +9,9 @@
     "dev": "bun run --filter @echo/ip-service --filter @echo/dashboard dev",
     "build": "bun run --filter \"@echo/dashboard\" build",
     "lint": "biome check --error-on-warnings .",
-    "lint:fix": "biome check --write --error-on-warnings ."
+    "lint:fix": "biome check --write --error-on-warnings .",
+    "docker:local": "docker compose -f deploy/compose.local.yaml up --build -d",
+    "docker:local:down": "docker compose -f deploy/compose.local.yaml down"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.4",

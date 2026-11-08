@@ -28,6 +28,21 @@ Cloudflare (echo.nocoo.cloud)
 └── .base-ci-releases/    # base-ci 写入的发布记录
 ```
 
+## 本地容器
+
+本机没有 Docker 时用 `bun run dev`（前端 watch + 7010）。要用与生产一致的镜像验收：
+
+```bash
+bun run docker:local        # 构建并启动 echo-local，监听 127.0.0.1:7010
+bun run docker:local:down
+```
+
+`compose.local.yaml` 复用 `packages/ip-service/Dockerfile`，只读挂载本地 `data/`，SQLite 落在 `deploy/state/`（已忽略），运行时变量来自 `packages/ip-service/.env.local`。机器 Caddy 的 `echo.dev.hexly.ai` 仍指向 `127.0.0.1:7010`，不需要改。
+
+需要容器运行时（Docker Desktop，或 `brew install colima docker` 后 `colima start`）。
+
+本地无论用哪种方式，浏览器和服务器都在同一台机器上，`/admin/lookup` 的"当前 IP"只会取到回环地址；公网出口请用 `echo.nocoo.cloud`。
+
 ## 首次准备
 
 ```bash
