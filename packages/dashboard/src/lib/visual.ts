@@ -170,3 +170,20 @@ export function heroBadges(location: IpLocation | null): MetaBadgeSpec[] {
 
   return badges;
 }
+
+const PRIVATE_IPV4 = [
+  /^10\./,
+  /^127\./,
+  /^169\.254\./,
+  /^172\.(1[6-9]|2\d|3[01])\./,
+  /^192\.168\./,
+];
+
+export function isLoopbackOrPrivate(ip: string): boolean {
+  const value = ip.trim().toLowerCase();
+  if (value.length === 0) return false;
+  if (value === "::1" || value === "::") return true;
+  if (/^(fc|fd)/.test(value)) return true;
+  if (/^fe[89ab]/.test(value)) return true;
+  return PRIVATE_IPV4.some((pattern) => pattern.test(value));
+}

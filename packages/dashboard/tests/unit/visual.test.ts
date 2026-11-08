@@ -5,6 +5,7 @@ import {
   freshnessRatio,
   heroBadges,
   isKnownLatency,
+  isLoopbackOrPrivate,
   latencyBucket,
   NEUTRAL_FLAG,
   outcomeLabel,
@@ -245,5 +246,29 @@ describe("providerFields country fallback", () => {
       }),
     );
     expect(fields).toEqual([{ label: "国家", value: "US" }]);
+  });
+});
+
+describe("isLoopbackOrPrivate", () => {
+  test("recognises loopback and private ranges", () => {
+    for (const ip of [
+      "127.0.0.1",
+      "10.1.2.3",
+      "172.16.0.1",
+      "172.31.255.255",
+      "192.168.1.1",
+      "169.254.1.1",
+      "::1",
+      "fc00::1",
+      "fe80::1",
+    ]) {
+      expect(isLoopbackOrPrivate(ip), ip).toBe(true);
+    }
+  });
+
+  test("keeps public addresses and rejects empty input", () => {
+    for (const ip of ["8.8.8.8", "172.32.0.1", "103.116.72.119", "2001:4860:4860::8888", ""]) {
+      expect(isLoopbackOrPrivate(ip), ip).toBe(false);
+    }
   });
 });

@@ -2,7 +2,7 @@ import { LayerCard } from "@nocoo/basalt";
 import { Flag } from "../../components/visual/Flag";
 import { MetaBadge } from "../../components/visual/MetaBadge";
 import { MonoIp } from "../../components/visual/MonoIp";
-import { heroBadges } from "../../lib/visual";
+import { heroBadges, isLoopbackOrPrivate } from "../../lib/visual";
 import type { LookupViewModel } from "./use-lookup";
 
 export function LookupHero({ model }: { model: LookupViewModel }) {
@@ -23,6 +23,12 @@ export function LookupHero({ model }: { model: LookupViewModel }) {
       </div>
 
       <p className="text-basalt-sm text-basalt-foreground">{place || "未匹配到地理信息"}</p>
+
+      {isLoopbackOrPrivate(model.ip) ? (
+        <p className="text-basalt-xs text-basalt-muted-foreground">
+          本地或内网地址：请求方与服务器同机时取到的是回环地址，公网出口请在 echo.nocoo.cloud 查看。
+        </p>
+      ) : null}
 
       {badges.length > 0 ? (
         <div className="flex flex-wrap gap-basalt-space-sm">
