@@ -14,7 +14,7 @@
     "docker:local:down": "docker compose -f deploy/compose.local.yaml down"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.4",
+    "@biomejs/biome": "2.6.6",
     "husky": "^9.1.7"
   },
   "overrides": {
