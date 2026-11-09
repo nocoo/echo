@@ -25,9 +25,9 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@vitest/coverage-v8": "5.0.5",
+    "@vitest/coverage-v8": "5.1.0",
     "mmdb-lib": "^3.0.4",
     "typescript7": "npm:typescript@7.0.2",
-    "vitest": "5.0.5"
+    "vitest": "5.1.0"
   }
 }
