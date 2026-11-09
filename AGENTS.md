@@ -53,7 +53,7 @@ IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; o
 
 | Piece | Requirement and current reality | Status | Evidence |
 | --- | --- | --- | --- |
-| L1 TypeScript | IP-service and dashboard four metrics ≥95% plus strict types/lint across both packages and helper; Collector and SwiftBar coverage still missing | planned | IP gate enforced in pre-commit/CI and `packages/ip-service/vitest.config.ts`; dashboard gate in `packages/dashboard/vitest.config.ts` covers `src/lib/**` and `src/app/**/use-*.ts` with hook transitions exercised through jsdom render; the presentational components are not tested at all; IP checks and root Biome run as enforced static subchecks, but Collector typecheck is not in CI and gates use the working tree |
+| L1 TypeScript | IP-service and dashboard four metrics ≥95% plus strict types/lint across both packages and helper; Collector and SwiftBar coverage still missing | planned | IP gate enforced in pre-commit/CI and `packages/ip-service/vitest.config.ts`; dashboard gate in `packages/dashboard/vitest.config.ts` covers `src/lib/**` and `src/app/**/use-*.ts` with hook transitions exercised through jsdom render; the presentational components are not tested at all; IP checks and root Biome run as enforced static subchecks, but Collector typecheck is not in CI; pre-commit L1 runs on a checkout-index snapshot (not the working tree) |
 | L1 Go | Meaningful DNS coverage plus Go static checks and formatting at the same contract; no suite or gate yet | planned | `packages/dns-probe/`; no Go gate in hooks/CI |
 | L2 | Real HTTP across every service endpoint/method; IP tests exist, Collector coverage incomplete | planned | IP `tests/e2e/global-setup.ts`, pre-push/CI; the console HTTP cases cover the public routes, the admin 401 boundary and the static assets, but the OAuth and key lifecycle still run only in unit tests |
 | L3 | Real client IP/DNS workflows on controlled local services | planned | No full DNS/client system gate |
@@ -62,7 +62,7 @@ IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; o
 | Packaging | Image builds and `/api/live` reports `ok` with fresh data | enforced | `deploy.yml` remote and edge verification |
 | Docs | Keep numbered docs and commands aligned | manual | Diff/link review |
 
-Current pre-commit checks the working tree (IP types, IP coverage, dashboard types, dashboard coverage, root lint) and staged secrets; pre-push runs unit, lint, HTTP and OSV. Target: check-only unified L1 on the index snapshot under 30s; pre-push stdin refs with L2/G2 in parallel under 3min. Commit and branch-push hook bypass is forbidden.
+Current pre-commit gates a checkout-index snapshot: IP types, IP coverage, dashboard types, dashboard coverage, root lint, plus staged secrets (gitleaks). Pre-push runs unit, lint, HTTP and OSV on the working tree. Target: check-only unified L1 on the index snapshot under 30s; pre-push stdin refs with L2/G2 in parallel under 3min. Commit and branch-push hook bypass is forbidden.
 
 ## Resources and isolation
 
