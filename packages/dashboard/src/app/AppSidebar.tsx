@@ -3,6 +3,7 @@ import {
   AvatarFallback,
   AvatarImage,
   Button,
+  Link,
   Sidebar,
   SidebarFooter,
   SidebarHeader,
@@ -26,6 +27,8 @@ import {
   resolveDisplayUser,
   SITE_NAME,
 } from "../lib/navigation";
+
+const SIDEBAR_MARK_SLOT_CLASS = "flex w-full items-center";
 
 const NAV_ICONS: Record<string, typeof Boxes> = {
   "/": Boxes,
@@ -54,59 +57,56 @@ export function AppSidebar({ collapsed, onToggle, user, onLogout, loggingOut }: 
   const email = user?.email?.trim() ?? "";
 
   const avatar = (
-    <Avatar className="h-8 w-8">
+    <Avatar className="h-9 w-9 shrink-0">
       {user?.picture ? <AvatarImage src={user.picture} alt="" /> : null}
-      <AvatarFallback className="text-basalt-xs">{display.initials}</AvatarFallback>
+      <AvatarFallback className="text-basalt-sm">{display.initials}</AvatarFallback>
     </Avatar>
   );
 
   const logoutButton = (
-    <Tooltip delayDuration={0}>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-basalt-muted-foreground hover:text-basalt-foreground"
-          onClick={onLogout}
-          loading={loggingOut}
-          aria-label="退出登录"
-        >
-          <LogOut className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="top" sideOffset={6}>
-        退出登录
-      </TooltipContent>
-    </Tooltip>
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={onLogout}
+      loading={loggingOut}
+      aria-label="退出登录"
+    >
+      <LogOut aria-hidden="true" />
+    </Button>
   );
 
   return (
     <Sidebar collapsed={collapsed}>
       <SidebarHeader>
-        {collapsed ? (
-          <Logo size="sm" />
-        ) : (
-          <div className="flex w-full items-center justify-between">
-            <div className="flex min-w-0 items-center gap-basalt-space-lg">
-              <Logo size="sm" />
-              <span className="truncate text-lg font-semibold text-basalt-foreground md:text-xl">
-                {SITE_NAME}
-              </span>
-              <span className="shrink-0 rounded-md bg-basalt-secondary px-basalt-space-md py-basalt-space-xs text-basalt-xs leading-none font-medium text-basalt-muted-foreground">
-                v{__ECHO_VERSION__}
-              </span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 shrink-0"
-              onClick={onToggle}
-              aria-label="收起侧边栏"
-            >
+        <div
+          className={[
+            SIDEBAR_MARK_SLOT_CLASS,
+            collapsed ? "justify-center" : "justify-between pl-basalt-layout-sm",
+          ].join(" ")}
+        >
+          <Link
+            href="/"
+            aria-label={SITE_NAME}
+            className="flex min-w-0 items-center gap-basalt-space-lg text-basalt-foreground no-underline hover:no-underline"
+          >
+            <Logo size="sm" className="h-7 w-7 object-contain" />
+            {collapsed ? null : (
+              <>
+                <span className="truncate text-basalt-xl font-semibold text-basalt-foreground">
+                  {SITE_NAME}
+                </span>
+                <span className="shrink-0 rounded-basalt-md bg-basalt-secondary px-basalt-space-md py-basalt-space-xs text-basalt-sm leading-basalt-tight font-medium text-basalt-muted-foreground">
+                  v{__ECHO_VERSION__}
+                </span>
+              </>
+            )}
+          </Link>
+          {collapsed ? null : (
+            <Button variant="ghost" size="icon" onClick={onToggle} aria-label="收起侧边栏">
               <PanelLeft aria-hidden="true" />
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </SidebarHeader>
 
       {collapsed ? (
@@ -167,9 +167,7 @@ export function AppSidebar({ collapsed, onToggle, user, onLogout, loggingOut }: 
       <SidebarFooter>
         {collapsed ? (
           <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <span className="inline-flex">{avatar}</span>
-            </TooltipTrigger>
+            <TooltipTrigger asChild>{avatar}</TooltipTrigger>
             <TooltipContent side="right" sideOffset={8}>
               {name}
             </TooltipContent>

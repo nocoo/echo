@@ -24,7 +24,6 @@ export function ThemeToggle() {
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 shrink-0 text-basalt-muted-foreground hover:text-basalt-foreground"
         onClick={() => setTheme(NEXT_THEME[theme])}
         aria-label="切换主题"
       >
