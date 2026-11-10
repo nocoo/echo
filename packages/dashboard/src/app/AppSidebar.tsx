@@ -6,11 +6,11 @@ import {
   Link,
   Sidebar,
   SidebarFooter,
+  SidebarGroup,
   SidebarHeader,
   SidebarIconItem,
   SidebarItem,
   SidebarNav,
-  SidebarPartition,
   SidebarUser,
   Tooltip,
   TooltipContent,
@@ -110,13 +110,7 @@ export function AppSidebar({ collapsed, onToggle, user, onLogout, loggingOut }: 
       </SidebarHeader>
 
       {collapsed ? (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="mb-basalt-space-sm self-center"
-          onClick={onToggle}
-          aria-label="展开侧边栏"
-        >
+        <Button variant="ghost" size="icon" onClick={onToggle} aria-label="展开侧边栏">
           <PanelLeft aria-hidden="true" />
         </Button>
       ) : null}
@@ -133,7 +127,7 @@ export function AppSidebar({ collapsed, onToggle, user, onLogout, loggingOut }: 
                       aria-label={item.label}
                       onClick={() => navigate(item.href)}
                     >
-                      <Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+                      <Icon strokeWidth={1.5} aria-hidden="true" />
                     </SidebarIconItem>
                   </TooltipTrigger>
                   <TooltipContent side="right" sideOffset={8}>
@@ -143,24 +137,21 @@ export function AppSidebar({ collapsed, onToggle, user, onLogout, loggingOut }: 
               );
             })
           : NAV_GROUPS.map((group) => (
-              <div key={group.label}>
-                <SidebarPartition>{group.label}</SidebarPartition>
-                <div className="flex flex-col gap-basalt-nav-gap">
-                  {group.items.map((item) => {
-                    const Icon = iconFor(item.href);
-                    return (
-                      <SidebarItem
-                        key={item.href}
-                        active={isActivePath(location.pathname, item.href)}
-                        onClick={() => navigate(item.href)}
-                      >
-                        <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
-                        <span className="flex-1 truncate text-left">{item.label}</span>
-                      </SidebarItem>
-                    );
-                  })}
-                </div>
-              </div>
+              <SidebarGroup key={group.label} label={group.label}>
+                {group.items.map((item) => {
+                  const Icon = iconFor(item.href);
+                  return (
+                    <SidebarItem
+                      key={item.href}
+                      active={isActivePath(location.pathname, item.href)}
+                      onClick={() => navigate(item.href)}
+                    >
+                      <Icon strokeWidth={1.5} aria-hidden="true" />
+                      {item.label}
+                    </SidebarItem>
+                  );
+                })}
+              </SidebarGroup>
             ))}
       </SidebarNav>
 
