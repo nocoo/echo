@@ -57,30 +57,22 @@ export function AppSidebar({ collapsed, onToggle, user, onLogout, loggingOut }: 
   const email = user?.email?.trim() ?? "";
 
   const avatar = (
-    <Avatar className="h-8 w-8">
+    <Avatar className="h-9 w-9 shrink-0">
       {user?.picture ? <AvatarImage src={user.picture} alt="" /> : null}
-      <AvatarFallback className="text-basalt-xs">{display.initials}</AvatarFallback>
+      <AvatarFallback className="text-basalt-sm">{display.initials}</AvatarFallback>
     </Avatar>
   );
 
   const logoutButton = (
-    <Tooltip delayDuration={0}>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-basalt-muted-foreground hover:text-basalt-foreground"
-          onClick={onLogout}
-          loading={loggingOut}
-          aria-label="退出登录"
-        >
-          <LogOut className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="top" sideOffset={6}>
-        退出登录
-      </TooltipContent>
-    </Tooltip>
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={onLogout}
+      loading={loggingOut}
+      aria-label="退出登录"
+    >
+      <LogOut aria-hidden="true" />
+    </Button>
   );
 
   return (
@@ -175,9 +167,7 @@ export function AppSidebar({ collapsed, onToggle, user, onLogout, loggingOut }: 
       <SidebarFooter>
         {collapsed ? (
           <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <span className="inline-flex">{avatar}</span>
-            </TooltipTrigger>
+            <TooltipTrigger asChild>{avatar}</TooltipTrigger>
             <TooltipContent side="right" sideOffset={8}>
               {name}
             </TooltipContent>
