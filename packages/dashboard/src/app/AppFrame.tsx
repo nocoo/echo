@@ -126,8 +126,8 @@ export function AppFrame() {
             leading={
               isMobile ? (
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="打开导航菜单">
-                    <Menu className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
+                  <Button variant="ghost" size="icon" aria-label="打开导航菜单">
+                    <Menu aria-hidden="true" />
                   </Button>
                 </SheetTrigger>
               ) : null
@@ -135,11 +135,11 @@ export function AppFrame() {
             breadcrumbs={headerBreadcrumbs}
             title={page.title}
             actions={
-              <div className="flex items-center gap-1">
+              <>
                 <GitHubLink />
                 <HexlyLink />
                 <ThemeToggle />
-              </div>
+              </>
             }
           />
           <div className="flex min-h-0 min-w-0 flex-1 flex-col px-basalt-space-lg pb-basalt-space-lg md:px-basalt-layout-sm md:pb-basalt-layout-sm">
