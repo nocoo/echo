@@ -35,6 +35,7 @@ export function AppFrame() {
   const location = useLocation();
   const navigate = useNavigate();
   const page = resolvePageContext(location.pathname);
+  const headerBreadcrumbs = page.breadcrumbs.length > 0 ? page.breadcrumbs : undefined;
 
   useEffect(() => {
     let active = true;
@@ -131,7 +132,7 @@ export function AppFrame() {
                 </SheetTrigger>
               ) : null
             }
-            breadcrumbs={page.breadcrumbs.length > 0 ? page.breadcrumbs : undefined}
+            breadcrumbs={headerBreadcrumbs}
             title={page.title}
             actions={
               <div className="flex items-center gap-1">
