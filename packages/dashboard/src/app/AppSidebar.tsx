@@ -2,22 +2,28 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-  Button,
-  Link,
   Sidebar,
+  SidebarBrand,
   SidebarFooter,
   SidebarGroup,
   SidebarHeader,
   SidebarIconItem,
   SidebarItem,
   SidebarNav,
+  SidebarProvider,
+  SidebarToggle,
   SidebarUser,
+} from "@nocoo/basalt";
+import { useSidebar } from "@nocoo/basalt/components/sidebar";
+import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
-} from "@nocoo/basalt";
-import { Boxes, KeyRound, LogOut, PanelLeft, Search, Wrench } from "lucide-react";
-import { useLocation, useNavigate } from "react-router";
+} from "@nocoo/basalt/components/tooltip";
+import { Boxes, KeyRound, Search, Wrench } from "lucide-react";
+import { type ReactNode, useCallback, useState } from "react";
+import { useLocation } from "react-router";
 import { Logo } from "../components/Logo";
 import type { MeResponse } from "../lib/api";
 import {
@@ -28,7 +34,8 @@ import {
   SITE_NAME,
 } from "../lib/navigation";
 
-const SIDEBAR_MARK_SLOT_CLASS = "flex w-full items-center";
+const SIDEBAR_COLLAPSED_KEY = "echo:sidebar-collapsed";
+type SidebarCollapsedPreference = "false" | "true";
 
 const NAV_ICONS: Record<string, typeof Boxes> = {
   "/": Boxes,
@@ -41,91 +48,100 @@ function iconFor(href: string) {
   return NAV_ICONS[href] ?? Boxes;
 }
 
-export interface AppSidebarProps {
-  collapsed: boolean;
-  onToggle: () => void;
-  user: MeResponse | null;
-  onLogout: () => void;
-  loggingOut: boolean;
+function usePersistedSidebarCollapsed(
+  key: string,
+  defaultValue: SidebarCollapsedPreference,
+): [SidebarCollapsedPreference, (value: SidebarCollapsedPreference) => void] {
+  const [stored, setStored] = useState<SidebarCollapsedPreference>(() => {
+    if (typeof window === "undefined") return defaultValue;
+    const value = localStorage.getItem(key);
+    return value === "true" || value === "false" ? value : defaultValue;
+  });
+
+  const setValue = useCallback(
+    (next: SidebarCollapsedPreference) => {
+      setStored(next);
+      localStorage.setItem(key, next);
+    },
+    [key],
+  );
+
+  return [stored, setValue];
 }
 
-export function AppSidebar({ collapsed, onToggle, user, onLogout, loggingOut }: AppSidebarProps) {
+export function PersistedSidebarProvider({ children }: { children: ReactNode }) {
+  const [stored, setStored] = usePersistedSidebarCollapsed(SIDEBAR_COLLAPSED_KEY, "false");
+  const collapsed = stored === "true";
+  const onCollapsedChange = useCallback(
+    (next: boolean) => {
+      setStored(next ? "true" : "false");
+    },
+    [setStored],
+  );
+
+  return (
+    <SidebarProvider collapsed={collapsed} onCollapsedChange={onCollapsedChange} defaultWidth={260}>
+      {children}
+    </SidebarProvider>
+  );
+}
+
+export interface AppSidebarProps {
+  variant?: "desktop" | "mobile";
+  onNavigate?: () => void;
+  onDismiss?: () => void;
+  user: MeResponse | null;
+  onSignOut: () => void;
+}
+
+function EchoSidebarBody({ variant, onNavigate, onDismiss, user, onSignOut }: AppSidebarProps) {
   const location = useLocation();
-  const navigate = useNavigate();
+  const { collapsed, peek, peeking } = useSidebar();
+  const railCollapsed = collapsed && !(peek && peeking);
   const display = resolveDisplayUser(user?.name ?? null, user?.email ?? null);
   const name = display.label;
   const email = user?.email?.trim() ?? "";
 
   const avatar = (
-    <Avatar className="h-9 w-9 shrink-0">
+    <Avatar>
       {user?.picture ? <AvatarImage src={user.picture} alt="" /> : null}
       <AvatarFallback className="text-basalt-sm">{display.initials}</AvatarFallback>
     </Avatar>
   );
 
-  const logoutButton = (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={onLogout}
-      loading={loggingOut}
-      aria-label="退出登录"
-    >
-      <LogOut aria-hidden="true" />
-    </Button>
-  );
-
   return (
-    <Sidebar collapsed={collapsed}>
+    <>
       <SidebarHeader>
-        <div
-          className={[
-            SIDEBAR_MARK_SLOT_CLASS,
-            collapsed ? "justify-center" : "justify-between pl-basalt-layout-sm",
-          ].join(" ")}
-        >
-          <Link
-            href="/"
-            aria-label={SITE_NAME}
-            className="flex min-w-0 items-center gap-basalt-space-lg text-basalt-foreground no-underline hover:no-underline"
-          >
-            <Logo size="sm" className="h-7 w-7 object-contain" />
-            {collapsed ? null : (
-              <>
-                <span className="truncate text-basalt-xl font-semibold text-basalt-foreground">
-                  {SITE_NAME}
-                </span>
-                <span className="shrink-0 rounded-basalt-md bg-basalt-secondary px-basalt-space-md py-basalt-space-xs text-basalt-sm leading-basalt-tight font-medium text-basalt-muted-foreground">
-                  v{__ECHO_VERSION__}
-                </span>
-              </>
-            )}
-          </Link>
-          {collapsed ? null : (
-            <Button variant="ghost" size="icon" onClick={onToggle} aria-label="收起侧边栏">
-              <PanelLeft aria-hidden="true" />
-            </Button>
-          )}
-        </div>
+        <SidebarBrand
+          logo={<Logo size="sidebar" />}
+          name={SITE_NAME}
+          version={`v${__ECHO_VERSION__}`}
+          action={
+            variant === "mobile" ? (
+              <SidebarToggle
+                mode="dismiss"
+                dismissLabel="关闭导航菜单"
+                {...(onDismiss ? { onDismiss } : {})}
+              />
+            ) : (
+              <SidebarToggle expandLabel="展开侧边栏" collapseLabel="收起侧边栏" />
+            )
+          }
+        />
       </SidebarHeader>
 
-      {collapsed ? (
-        <Button variant="ghost" size="icon" onClick={onToggle} aria-label="展开侧边栏">
-          <PanelLeft aria-hidden="true" />
-        </Button>
-      ) : null}
-
-      <SidebarNav>
-        {collapsed
+      <SidebarNav aria-label="主导航">
+        {railCollapsed
           ? NAV_ITEMS.map((item) => {
               const Icon = iconFor(item.href);
               return (
                 <Tooltip key={item.href} delayDuration={0}>
                   <TooltipTrigger asChild>
                     <SidebarIconItem
+                      href={item.href}
                       active={isActivePath(location.pathname, item.href)}
                       aria-label={item.label}
-                      onClick={() => navigate(item.href)}
+                      onClick={onNavigate}
                     >
                       <Icon strokeWidth={1.5} aria-hidden="true" />
                     </SidebarIconItem>
@@ -143,11 +159,12 @@ export function AppSidebar({ collapsed, onToggle, user, onLogout, loggingOut }: 
                   return (
                     <SidebarItem
                       key={item.href}
+                      href={item.href}
                       active={isActivePath(location.pathname, item.href)}
-                      onClick={() => navigate(item.href)}
+                      onClick={onNavigate}
                     >
-                      <Icon strokeWidth={1.5} aria-hidden="true" />
-                      {item.label}
+                      <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+                      <span className="flex-1 truncate text-left">{item.label}</span>
                     </SidebarItem>
                   );
                 })}
@@ -156,17 +173,37 @@ export function AppSidebar({ collapsed, onToggle, user, onLogout, loggingOut }: 
       </SidebarNav>
 
       <SidebarFooter>
-        {collapsed ? (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>{avatar}</TooltipTrigger>
-            <TooltipContent side="right" sideOffset={8}>
-              {name}
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <SidebarUser name={name} email={email} avatar={avatar} action={logoutButton} />
-        )}
+        <SidebarUser
+          name={name}
+          email={email || undefined}
+          avatar={avatar}
+          tooltip={name}
+          onSignOut={onSignOut}
+          signOutLabel="退出登录"
+        />
       </SidebarFooter>
-    </Sidebar>
+    </>
+  );
+}
+
+export function AppSidebar({
+  variant = "desktop",
+  onNavigate,
+  onDismiss,
+  user,
+  onSignOut,
+}: AppSidebarProps) {
+  return (
+    <TooltipProvider delayDuration={0}>
+      <Sidebar aria-label={variant === "mobile" ? "导航抽屉" : "主导航"} resizable={false}>
+        <EchoSidebarBody
+          variant={variant}
+          user={user}
+          onSignOut={onSignOut}
+          {...(onNavigate ? { onNavigate } : {})}
+          {...(onDismiss ? { onDismiss } : {})}
+        />
+      </Sidebar>
+    </TooltipProvider>
   );
 }

@@ -149,12 +149,12 @@ describe("admin login guard", () => {
     await waitFor(() => expect(screen.getByText("keys page")).toBeTruthy());
     expect(screen.getByText(`v${__ECHO_VERSION__}`)).toBeTruthy();
 
-    const repo = screen.getByRole("link", { name: /GitHub 仓库/ });
+    const repo = screen.getByRole("link", { name: /GitHub repository/ });
     expect(repo.getAttribute("href")).toBe("https://github.com/nocoo/echo");
     expect(repo.getAttribute("target")).toBe("_blank");
     expect(repo.getAttribute("rel")).toBe("noopener noreferrer");
 
-    const hexly = screen.getByRole("link", { name: /hexly\.ai/ });
+    const hexly = screen.getByRole("link", { name: /Echo on hexly\.ai/ });
     expect(hexly.getAttribute("href")).toBe("https://hexly.ai/projects/echo");
     expect(hexly.getAttribute("rel")).toBe("noopener noreferrer");
   });
@@ -201,7 +201,7 @@ describe("mobile drawer", () => {
     const { dialog } = await openDrawer();
 
     await act(async () => {
-      fireEvent.click(within(dialog).getByRole("button", { name: "密钥" }));
+      fireEvent.click(within(dialog).getByRole("link", { name: "密钥" }));
     });
 
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
