@@ -2,6 +2,7 @@ import logoSmall from "../assets/icon-192.png";
 
 const SIZES = {
   sm: 20,
+  sidebar: 24,
   md: 32,
   lg: 48,
 } as const;

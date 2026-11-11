@@ -1,8 +1,8 @@
 import { Button } from "@nocoo/basalt";
+import { ProjectLinks } from "@nocoo/basalt/components/app-header";
+import { ThemeToggle } from "@nocoo/basalt/components/theme-toggle";
 import { useSearchParams } from "react-router";
-import { GitHubLink, HexlyLink } from "../../components/header-links";
 import { Logo } from "../../components/Logo";
-import { ThemeToggle } from "../../components/theme-toggle";
 import { SITE_NAME } from "../../lib/navigation";
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -71,9 +71,15 @@ export default function LoginPage() {
   return (
     <div className="basalt-ui relative flex min-h-dvh items-center justify-center overflow-hidden bg-basalt-background p-4">
       <div className="absolute top-4 right-4 z-10 flex items-center gap-1">
-        <GitHubLink />
-        <HexlyLink />
-        <ThemeToggle />
+        <ProjectLinks github="nocoo/echo" hexly="echo" name="Echo" />
+        <ThemeToggle
+          aria-label="切换主题"
+          labels={{
+            light: "切换为浅色主题",
+            dark: "切换为深色主题",
+            system: "切换为跟随系统主题",
+          }}
+        />
       </div>
 
       <div

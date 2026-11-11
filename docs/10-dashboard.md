@@ -39,7 +39,7 @@ IP 服务的管理界面与随附后端能力。目标是让维护者在一个�
 | 挂载位置 | 同域 `/admin`，登录页 `/admin/login` | 无需新 DNS、Caddy 块与证书；OAuth 回调与会话 Cookie 落在同一 origin |
 | 并发刷新 | 同一时刻只允许一个刷新任务 | 刷新会重启容器；并发会互相覆盖 staging |
 | 旧 `ECHO_API_KEY` | 不迁移，直接删除 | 管理台接管 key 生命周期；避免两套权威并存。删除与新 key 能力同批交付 |
-| UI 技术栈 | Vite 8 + React 19 + Tailwind v4 + `@nocoo/basalt` 3.2.1 | 与仓库外 13 个项目的既有组合一致 |
+| UI 技术栈 | Vite 8 + React 19 + Tailwind v4 + `@nocoo/basalt` 3.3.1 | 与仓库外 13 个项目的既有组合一致 |
 | 运行形态 | 单进程：ip-service 同时提供 API 与 SPA 静态资源 | 本地一条命令可跑；少一个容器 |
 | SQLite 驱动 | `node:sqlite`（`DatabaseSync`） | 同一份代码在 Node/Vitest 与 Bun 运行时都可用，测试可用真实临时库 |
 
