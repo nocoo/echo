@@ -1,16 +1,9 @@
-import { ContentIsland, SidebarProvider, toast } from "@nocoo/basalt";
+import { ContentIsland, SidebarDrawer, toast } from "@nocoo/basalt";
 import { AppHeader, AppHeaderMenuButton, ProjectLinks } from "@nocoo/basalt/components/app-header";
 import { AppMain, AppShell, AppSkipLink } from "@nocoo/basalt/components/app-shell";
 import { LoadingScreen } from "@nocoo/basalt/components/loading-screen";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@nocoo/basalt/components/sheet";
 import { ThemeToggle } from "@nocoo/basalt/components/theme-toggle";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useId, useRef, useState } from "react";
 import { Navigate, Outlet, useLocation, useNavigate } from "react-router";
 import { IslandSkeleton } from "../components/island-skeleton";
 import { Logo } from "../components/Logo";
@@ -32,6 +25,7 @@ function AppFrameShell() {
   const location = useLocation();
   const navigate = useNavigate();
   const menuButton = useRef<HTMLButtonElement>(null);
+  const drawerId = useId();
   const page = resolvePageContext(location.pathname);
 
   const allBreadcrumbs = [{ label: "首页", href: "/" }, ...page.breadcrumbs];
@@ -109,30 +103,22 @@ function AppFrameShell() {
       ) : null}
 
       {isMobile ? (
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent
-            side="left"
-            className="w-[260px] max-w-[260px] border-0 bg-basalt-background p-0 sm:max-w-[260px] sm:p-0"
-            onCloseAutoFocus={(event) => {
-              event.preventDefault();
-              menuButton.current?.focus();
-            }}
-          >
-            <SheetHeader className="sr-only">
-              <SheetTitle>导航菜单</SheetTitle>
-              <SheetDescription>浏览 Echo 管理台页面</SheetDescription>
-            </SheetHeader>
-            <SidebarProvider collapsed={false} defaultWidth={260}>
-              <AppSidebar
-                variant="mobile"
-                user={user}
-                onSignOut={handleSignOut}
-                onNavigate={() => setMobileOpen(false)}
-                onDismiss={() => setMobileOpen(false)}
-              />
-            </SidebarProvider>
-          </SheetContent>
-        </Sheet>
+        <SidebarDrawer
+          id={drawerId}
+          open={mobileOpen}
+          onOpenChange={setMobileOpen}
+          returnFocusRef={menuButton}
+          title="导航菜单"
+          description="浏览 Echo 管理台页面"
+        >
+          <AppSidebar
+            variant="mobile"
+            user={user}
+            onSignOut={handleSignOut}
+            onNavigate={() => setMobileOpen(false)}
+            onDismiss={() => setMobileOpen(false)}
+          />
+        </SidebarDrawer>
       ) : null}
 
       <AppMain>
@@ -143,6 +129,8 @@ function AppFrameShell() {
               <AppHeaderMenuButton
                 ref={menuButton}
                 label="打开导航菜单"
+                aria-controls={drawerId}
+                aria-expanded={mobileOpen}
                 onClick={() => setMobileOpen(true)}
               />
             ) : null
