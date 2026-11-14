@@ -2,6 +2,18 @@
 
 Accident narratives and original lessons. Historical instructions below describe their time; the current handbook and its local-isolation contract take precedence.
 
+## 2026-11-14 — Inspect generated locks and browser fixture state
+
+The Basalt upgrade install wrote Tencent tarball URLs into unrelated lock entries. The first local dependency commit included that noise; before any push, it was amended to retain the preceding records and only the requested Basalt version/integrity change. Always inspect and normalize generated registry locations before staging, then verify frozen installation. A subsequent normalization draft matched override keys as package records and made the lock invalid; it was restored from the task-owned snapshot and corrected to match package-array records only.
+
+The new browser fixture initially allocated a different random port when Playwright workers loaded the configuration again. Allocate once in the runner and pass the selected port to workers. Inspect the published DOM before writing selectors: Avatar has no avatar data-slot, collapsed markers are empty attributes, and modal dialogs hide the opener from accessibility queries while open.
+
+The first report incorrectly treated computed `display:flex` on collapsed brand copy as proof that its text remained visible. The actual browser hidden assertion passed; computed display alone does not establish rendered visibility. The remaining desktop failure was an unnamed navigation link: the application router adapter dropped aria attributes, click callbacks and refs. Forward the complete anchor contract and verify accessible names, routing, callbacks and focus with regressions rather than weakening a semantic locator.
+
+The outer drawer measured 320px, not the original 260px criterion. The user subsequently approved outer320/inner260 acceptance while retaining all other assertions. Record that as an explicit acceptance change, not a library fix. Preserve historical failures but rerun the corrected criteria before claiming success.
+
+HTTP tests previously downloaded provider databases into the package and symlinked those files into temporary directories. Generate small synthetic XDB/MMDB binaries per run instead, exercise the actual readers and HTTP server, and wait for server exit before removing state. Fixture expectations must follow existing product behavior: an unmatched XDB search is parsed to an empty location object while unmatched MMDB records are null.
+
 ## Undated entries migrated from CLAUDE.md
 
 - **JSON import attribute**: Bun silently accepts `import x from "./foo.json"`, but Node.js (used by Vercel) requires `with { type: "json" }`. Always use the import attribute for cross-runtime compatibility.

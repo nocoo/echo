@@ -130,10 +130,11 @@ IP 服务的部署形态是 jp4 上的 Docker 容器：Cloudflare → 共享 Cad
 | IP 服务单元测试 | `bun run --cwd packages/ip-service test` |
 | IP 服务 HTTP 集成测试 | `bun run --cwd packages/ip-service test:e2e` |
 | 管理台单元测试 | `bun run --cwd packages/dashboard test` |
+| Dashboard browser E2E | `bun run --cwd packages/dashboard test:e2e` |
 
-HTTP 测试需要 IP 服务 `data/` 下的全部数据库文件；套件会自行构建管理台、分配随机端口并使用临时的 `STATE_DIR`、`SPOOL_DIR` 与指向包内数据的 `IPDB_DIR` 符号链接目录，因此不会占用 `7010`，也不会在仓库里留下状态文件。`bun run --cwd packages/ip-service test:coverage` 可生成覆盖率报告。
+HTTP tests generate synthetic XDB/MMDB files in a temporary `IPDB_DIR`, build the dashboard and use a random port plus temporary `STATE_DIR`/`SPOOL_DIR`. They exercise real readers without downloading provider data or using daily databases. Browser tests use a separate random preview port and synthetic API responses. Install the matching browser first with `bun run --cwd packages/dashboard playwright install chromium`. See [testing](docs/05-testing.md) for coverage and acceptance details.
 
-Collector 和 DNS probe 目前没有自动化测试套件，也没有浏览器测试。TypeScript 检查分别使用 `bun run --cwd packages/ip-service typecheck` 和 `bun run --cwd packages/collector typecheck`。
+Collector and DNS probe still have no automated suites. TypeScript checks use `bun run --cwd packages/ip-service typecheck`, `bun run --cwd packages/collector typecheck` and `bun run --cwd packages/dashboard typecheck`.
 
 ## 技术栈
 

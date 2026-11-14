@@ -39,7 +39,7 @@ IP 服务的管理界面与随附后端能力。目标是让维护者在一个�
 | 挂载位置 | 同域 `/admin`，登录页 `/admin/login` | 无需新 DNS、Caddy 块与证书；OAuth 回调与会话 Cookie 落在同一 origin |
 | 并发刷新 | 同一时刻只允许一个刷新任务 | 刷新会重启容器；并发会互相覆盖 staging |
 | 旧 `ECHO_API_KEY` | 不迁移，直接删除 | 管理台接管 key 生命周期；避免两套权威并存。删除与新 key 能力同批交付 |
-| UI 技术栈 | Vite 8 + React 19 + Tailwind v4 + `@nocoo/basalt` 3.3.1 | 与仓库外 13 个项目的既有组合一致 |
+| UI 技术栈 | Vite 8 + React 19 + Tailwind v4 + `@nocoo/basalt` 3.3.4 | 与仓库外 13 个项目的既有组合一致 |
 | 运行形态 | 单进程：ip-service 同时提供 API 与 SPA 静态资源 | 本地一条命令可跑；少一个容器 |
 | SQLite 驱动 | `node:sqlite`（`DatabaseSync`） | 同一份代码在 Node/Vitest 与 Bun 运行时都可用，测试可用真实临时库 |
 
@@ -88,7 +88,7 @@ packages/
 
 ## 页面
 
-全部使用 Basalt 3.2.1 既有控件，不自造基础控件。
+Use the published Basalt 3.3.4 controls rather than consumer-built primitives.
 
 | 路由 | 内容 | 主要控件 |
 | --- | --- | --- |
@@ -101,6 +101,12 @@ packages/
 外壳固定为 `AppShell` + `AppSkipLink` + `Sidebar` + `AppMain` → `AppHeader` + `ContentIsland` → `PageHeader`。`ThemeToggle` 放 `AppHeader` 右上。
 
 Provider 接线（参照 wooly）：`ThemeProvider` + `LinkProvider` + `TooltipProvider` + 全局 `Toaster`。折叠导航依赖 `TooltipProvider`，缺它会报错。`src/styles.css` 按本仓库实际安装路径写 `@source`，顺序为 `@import "@nocoo/basalt/styles/tailwind"` 再 `@import "tailwindcss"`。
+
+### Sidebar upgrade acceptance
+
+The mobile shell uses `SidebarDrawer` with Basalt-owned padding, focus restoration and expanded sidebar context. The user approved changing acceptance from outer drawer 260px to outer drawer 320px; the inner sidebar remains 260px. This is an acceptance amendment, not a Basalt geometry fix. No consumer CSS compensates for the library.
+
+Playwright measures the 36px avatar and identical expanded/collapsed y coordinates, 16px email line-height, hidden collapsed brand, outer320/inner260 geometry, zero padding, one-Escape dismissal, focus restoration and route behavior in light/dark themes. The app-owned router adapter forwards anchor attributes, click callbacks and refs so collapsed navigation retains its accessible names and mobile navigation closes correctly. Synthetic browser sessions do not replace signed-in Google avatar acceptance.
 
 ### 概览页数据
 
