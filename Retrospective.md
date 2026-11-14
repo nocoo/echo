@@ -14,6 +14,8 @@ The outer drawer measured 320px, not the original 260px criterion. The user subs
 
 HTTP tests previously downloaded provider databases into the package and symlinked those files into temporary directories. Generate small synthetic XDB/MMDB binaries per run instead, exercise the actual readers and HTTP server, and wait for server exit before removing state. Fixture expectations must follow existing product behavior: an unmatched XDB search is parsed to an empty location object while unmatched MMDB records are null.
 
+Review found that random ports alone did not isolate the first test harness: both suites still built into the shared dashboard dist. Give each run its own build output as well as ports/state/results. Concurrent HTTP/browser runs now preserve the shared development index hash. Also inspect the exact pinned reusable CI inputs before declaring a slot implemented: browser checks must enable the dedicated browser job, not merely run inside the HTTP job while declaring the browser slot implemented.
+
 ## Undated entries migrated from CLAUDE.md
 
 - **JSON import attribute**: Bun silently accepts `import x from "./foo.json"`, but Node.js (used by Vercel) requires `with { type: "json" }`. Always use the import attribute for cross-runtime compatibility.

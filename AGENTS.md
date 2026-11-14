@@ -64,7 +64,7 @@ IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; o
 | Packaging | Image builds and `/api/live` reports `ok` with fresh data | enforced | `deploy.yml` remote and edge verification |
 | Docs | Keep numbered docs and commands aligned | manual | Diff/link review |
 
-Current pre-commit gates a checkout-index snapshot: IP types, IP coverage, dashboard types, dashboard coverage, root lint, plus staged secrets (gitleaks). Pre-push runs unit, lint, HTTP, dashboard browser E2E and OSV on the working tree. Browser checks require the matching Playwright Chromium installation; CI installs it before running the browser suite in the L2 job. Target: check-only unified L1 on the index snapshot under 30s; pre-push stdin refs with L2/G2 in parallel under 3min. Commit and branch-push hook bypass is forbidden.
+Current pre-commit gates a checkout-index snapshot: IP types, IP coverage, dashboard types, dashboard coverage, root lint, plus staged secrets (gitleaks). Pre-push runs unit, lint, HTTP, dashboard browser E2E and OSV on the working tree. Browser checks require the matching Playwright Chromium installation; CI installs it before running the dedicated browser E2E job. Target: check-only unified L1 on the index snapshot under 30s; pre-push stdin refs with L2/G2 in parallel under 3min. Commit and branch-push hook bypass is forbidden.
 
 ## Resources and isolation
 
