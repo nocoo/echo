@@ -8,6 +8,7 @@
     "build": "vite build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
     "lint": "biome check --error-on-warnings .",
     "typecheck": "tsc --noEmit"
   },
@@ -19,6 +20,7 @@
     "react-router": "8.5.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.65.0",
     "@tailwindcss/vite": "4.3.5",
     "@testing-library/react": "16.3.3",
     "@types/react": "19.3.0",
