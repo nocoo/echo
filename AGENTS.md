@@ -43,6 +43,8 @@ bun run lint
 bun run --cwd packages/ip-service test:coverage
 bun run --cwd packages/dashboard test:coverage
 bun run --cwd packages/ip-service test:e2e
+bun run --cwd packages/dashboard playwright install chromium
+bun run --cwd packages/dashboard test:e2e
 ```
 
 IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; obtain them with `bun run --cwd packages/ip-service ipdb:fetch --verify`. Downloads access external providers. `PORT` defaults to 7010; `STATE_DIR` holds the admin SQLite database and defaults to `./state`; `DASHBOARD_DIR` holds the console build and defaults to `packages/dashboard/dist`. The root `bun run dev` rebuilds the dashboard in watch mode and serves both the API and the console from 7010, matching production; there is no second dev port.
@@ -53,16 +55,16 @@ IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; o
 
 | Piece | Requirement and current reality | Status | Evidence |
 | --- | --- | --- | --- |
-| L1 TypeScript | IP-service and dashboard four metrics ≥95% plus strict types/lint across both packages and helper; Collector and SwiftBar coverage still missing | planned | IP gate enforced in pre-commit/CI and `packages/ip-service/vitest.config.ts`; dashboard gate in `packages/dashboard/vitest.config.ts` covers `src/lib/**` and `src/app/**/use-*.ts` with hook transitions exercised through jsdom render; the presentational components are not tested at all; IP checks and root Biome run as enforced static subchecks, but Collector typecheck is not in CI; pre-commit L1 runs on a checkout-index snapshot (not the working tree) |
+| L1 TypeScript | IP-service and dashboard four metrics ≥95% plus strict types/lint across both packages and helper; Collector and SwiftBar coverage still missing | planned | IP gate enforced in pre-commit/CI and `packages/ip-service/vitest.config.ts`; dashboard gate in `packages/dashboard/vitest.config.ts` covers `src/lib/**` and `src/app/**/use-*.ts` with hook transitions exercised through jsdom render; shell geometry/navigation have real Playwright coverage and the router adapter has a DOM regression; remaining presentational components are not comprehensively tested; IP checks and root Biome run as enforced static subchecks, but Collector typecheck is not in CI; pre-commit L1 runs on a checkout-index snapshot (not the working tree) |
 | L1 Go | Meaningful DNS coverage plus Go static checks and formatting at the same contract; no suite or gate yet | planned | `packages/dns-probe/`; no Go gate in hooks/CI |
-| L2 | Real HTTP across every service endpoint/method; IP tests exist, Collector coverage incomplete | planned | IP `tests/e2e/global-setup.ts`, pre-push/CI; the console HTTP cases cover the public routes, the admin 401 boundary and the static assets, but the OAuth and key lifecycle still run only in unit tests |
-| L3 | Real client IP/DNS workflows on controlled local services | planned | No full DNS/client system gate |
+| L2 | Real HTTP across every service endpoint/method; IP tests exist, Collector coverage incomplete | planned | IP `tests/e2e/global-setup.ts` builds the dashboard; the HTTP suite generates synthetic binary XDB/MMDB files and runs real readers without downloads; pre-push/CI; the console HTTP cases cover the public routes, the admin 401 boundary and the static assets, but the OAuth and key lifecycle still run only in unit tests |
+| L3 | Real client IP/DNS workflows on controlled local services | planned | Six dashboard Playwright cases exercise navigation and sidebar geometry in light/dark themes on desktop and 390/700px mobile viewports using synthetic API responses; no full DNS/client system gate |
 | G2 | OSV + gitleaks; missing scanner fails; cover Bun and Go dependencies | planned | Hooks scan Bun lock/staged secrets; Go dependency gate missing |
-| D1 | Per-run state/ports and guards, separate from dev | planned | The IP HTTP suite now takes a random port, temporary STATE_DIR, SPOOL_DIR and an IPDB_DIR of symlinks, and identifies its own server by the instance line; the shared 7010 port and the package data directory are still used by the dev server |
+| D1 | Per-run state/ports and guards, separate from dev | planned | The IP HTTP suite now takes a random port, temporary STATE_DIR, SPOOL_DIR and an IPDB_DIR of freshly generated synthetic XDB/MMDB files, and identifies its own server by the instance line; browser tests use their own random preview port and temporary result directory; the shared 7010 port and the package data directory are still used by the dev server |
 | Packaging | Image builds and `/api/live` reports `ok` with fresh data | enforced | `deploy.yml` remote and edge verification |
 | Docs | Keep numbered docs and commands aligned | manual | Diff/link review |
 
-Current pre-commit gates a checkout-index snapshot: IP types, IP coverage, dashboard types, dashboard coverage, root lint, plus staged secrets (gitleaks). Pre-push runs unit, lint, HTTP and OSV on the working tree. Target: check-only unified L1 on the index snapshot under 30s; pre-push stdin refs with L2/G2 in parallel under 3min. Commit and branch-push hook bypass is forbidden.
+Current pre-commit gates a checkout-index snapshot: IP types, IP coverage, dashboard types, dashboard coverage, root lint, plus staged secrets (gitleaks). Pre-push runs unit, lint, HTTP, dashboard browser E2E and OSV on the working tree. Browser checks require the matching Playwright Chromium installation; CI installs it before running the dedicated browser E2E job. Target: check-only unified L1 on the index snapshot under 30s; pre-push stdin refs with L2/G2 in parallel under 3min. Commit and branch-push hook bypass is forbidden.
 
 ## Resources and isolation
 

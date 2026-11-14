@@ -130,10 +130,11 @@ Run from the repository root:
 | IP service unit tests | `bun run --cwd packages/ip-service test` |
 | IP service HTTP integration tests | `bun run --cwd packages/ip-service test:e2e` |
 | Admin console unit tests | `bun run --cwd packages/dashboard test` |
+| Dashboard browser E2E | `bun run --cwd packages/dashboard test:e2e` |
 
-HTTP tests require every database file in the IP service's `data/` directory. The suite builds the console, takes a random port and uses temporary `STATE_DIR`, `SPOOL_DIR` and `IPDB_DIR` directories whose entries are symlinks to the package data, so it neither occupies `7010` nor leaves state files in the repository. Use `bun run --cwd packages/ip-service test:coverage` to generate a coverage report.
+HTTP tests generate synthetic XDB/MMDB files in a temporary `IPDB_DIR`, build the dashboard and use a random port plus temporary `STATE_DIR`/`SPOOL_DIR`. They exercise real readers without downloading provider data or using daily databases. Browser tests use a separate random preview port and synthetic API responses. Install the matching browser first with `bun run --cwd packages/dashboard playwright install chromium`. See [testing](05-testing.md) for coverage and acceptance details.
 
-Collector and the DNS probe have no automated test suites, and there are no browser tests. TypeScript checks are available through `bun run --cwd packages/ip-service typecheck` and `bun run --cwd packages/collector typecheck`.
+Collector and the DNS probe still have no automated suites. TypeScript checks use `bun run --cwd packages/ip-service typecheck`, `bun run --cwd packages/collector typecheck` and `bun run --cwd packages/dashboard typecheck`.
 
 ## Stack
 

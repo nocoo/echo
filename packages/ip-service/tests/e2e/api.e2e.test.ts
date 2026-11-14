@@ -1,39 +1,17 @@
 import { type ChildProcessByStdio, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { once } from "node:events";
 import { mkdtempSync } from "node:fs";
-import { access, mkdir, readdir, rm, symlink } from "node:fs/promises";
+import { mkdir, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import type { Readable } from "node:stream";
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { afterAll, beforeAll, describe, expect, inject, test } from "vitest";
+import { writeFixtureDatabases } from "../fixtures/ipdb.js";
 
 type ServerProcess = ChildProcessByStdio<null, Readable, Readable>;
 
-const packageRoot = process.cwd();
-const dataDir = path.join(packageRoot, "data");
-const dashboardDir = path.resolve(packageRoot, "../dashboard/dist");
-
-const requiredFiles = [
-  "ip2region_v4.xdb",
-  "ip2region_v6.xdb",
-  "iplocate-asn.mmdb",
-  "iplocate-country.mmdb",
-  "ip-location-db-asn.mmdb",
-  "ip-location-db-city.mmdb",
-  "circl-country-asn.mmdb",
-];
-
-async function ensureAllDatabases(): Promise<void> {
-  for (const file of requiredFiles) {
-    await access(path.join(dataDir, file));
-  }
-}
-
-async function linkDatabases(target: string): Promise<void> {
-  for (const file of await readdir(dataDir)) {
-    await symlink(path.join(dataDir, file), path.join(target, file));
-  }
-}
+const dashboardDir = inject("dashboardDir");
 
 async function waitForInstance(
   server: ServerProcess,
@@ -77,8 +55,6 @@ let tempRoot: string;
 let baseUrl: string;
 
 beforeAll(async () => {
-  await ensureAllDatabases();
-
   tempRoot = mkdtempSync(path.join(tmpdir(), "echo-e2e-"));
   const stateDir = path.join(tempRoot, "state");
   const spoolDir = path.join(tempRoot, "spool");
@@ -86,13 +62,14 @@ beforeAll(async () => {
   await mkdir(stateDir, { recursive: true });
   await mkdir(spoolDir, { recursive: true });
   await mkdir(ipdbDir, { recursive: true });
-  await linkDatabases(ipdbDir);
+  await writeFixtureDatabases(ipdbDir);
 
   const instanceId = randomUUID();
   server = spawn("bun", ["run", "src/index.ts"], {
     env: {
-      ...process.env,
+      PATH: process.env.PATH,
       PORT: "0",
+      DASHBOARD_DIR: dashboardDir,
       STATE_DIR: stateDir,
       SPOOL_DIR: spoolDir,
       IPDB_DIR: ipdbDir,
@@ -106,7 +83,11 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  server?.kill();
+  if (server && server.exitCode === null) {
+    const exited = once(server, "exit");
+    server.kill();
+    await exited;
+  }
   if (tempRoot) {
     await rm(tempRoot, { recursive: true, force: true });
   }
@@ -172,6 +153,7 @@ describe("api e2e", () => {
 
     const successful = providers.filter((p) => !p.error && p.location !== null);
     expect(successful.length).toBeGreaterThan(0);
+    expect(successful).toHaveLength(4);
   });
 
   test("ip endpoint returns non-empty location fields for known IP", async () => {
@@ -186,6 +168,45 @@ describe("api e2e", () => {
     const body = (await res.json()) as { location: { countryCode: string } | null };
     expect(body.location).not.toBeNull();
     expect(body.location?.countryCode).toBe("US");
+  });
+
+  test("unmatched fixture addresses never receive synthetic location records", async () => {
+    const res = await fetch(`${baseUrl}/api/ip?detail=true`, {
+      headers: { "x-forwarded-for": "192.0.2.1" },
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      providers: { name: string; location: unknown; error: boolean }[];
+    };
+    expect(body.providers).toHaveLength(4);
+    expect(body.providers.every((provider) => !provider.error)).toBe(true);
+    expect(body.providers.find((provider) => provider.name === "ip2region")?.location).toEqual({
+      country: "",
+      countryCode: "",
+      province: "",
+      city: "",
+      latitude: null,
+      longitude: null,
+      isp: "",
+      asn: null,
+      asOrg: "",
+    });
+    expect(
+      body.providers
+        .filter((provider) => provider.name !== "ip2region")
+        .map((provider) => provider.location),
+    ).toEqual([null, null, null]);
+  });
+
+  test("IPv6 lookups use the isolated XDB fixture", async () => {
+    const res = await fetch(`${baseUrl}/api/ip`, {
+      headers: { "x-forwarded-for": "2001:db8::1" },
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      ip: "2001:db8::1",
+      location: { countryCode: "US", city: "Fixture city" },
+    });
   });
 
   test("root endpoint returns the json self description", async () => {

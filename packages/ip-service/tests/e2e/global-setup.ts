@@ -1,48 +1,21 @@
 import { spawnSync } from "node:child_process";
-import { access } from "node:fs/promises";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
+import type { TestProject } from "vitest/node";
 
-const packageRoot = process.cwd();
-const dataDir = path.join(packageRoot, "data");
-const dashboardDir = path.resolve(packageRoot, "../dashboard");
-const v4Path = path.join(dataDir, "ip2region_v4.xdb");
-const v6Path = path.join(dataDir, "ip2region_v6.xdb");
-
-async function exists(file: string): Promise<boolean> {
-  try {
-    await access(file);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function ensureDatabases(): Promise<void> {
-  if ((await exists(v4Path)) && (await exists(v6Path))) {
-    return;
-  }
-
-  const result = spawnSync("bun", ["run", "ipdb:fetch"], {
+export default function setup(project: TestProject) {
+  const dashboardDir = mkdtempSync(path.join(tmpdir(), "echo-http-dashboard-"));
+  const result = spawnSync("bun", ["run", "build", "--outDir", dashboardDir, "--emptyOutDir"], {
+    cwd: path.resolve(process.cwd(), "../dashboard"),
+    env: { ...process.env, NODE_ENV: "production" },
     stdio: "inherit",
   });
 
   if (result.status !== 0) {
-    throw new Error(`ipdb:fetch failed with status ${result.status}`);
-  }
-}
-
-function buildDashboard(): void {
-  const result = spawnSync("bun", ["run", "build"], {
-    cwd: dashboardDir,
-    stdio: "inherit",
-  });
-
-  if (result.status !== 0) {
+    rmSync(dashboardDir, { recursive: true, force: true });
     throw new Error(`dashboard build failed with status ${result.status}`);
   }
-}
-
-export default async function setup() {
-  await ensureDatabases();
-  buildDashboard();
+  project.provide("dashboardDir", dashboardDir);
+  return () => rmSync(dashboardDir, { recursive: true, force: true });
 }

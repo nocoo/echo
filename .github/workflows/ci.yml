@@ -36,6 +36,10 @@ jobs:
       workflow-lint-yamllint: true
       l2: true
       l2-command: "cd packages/ip-service && bun run test:e2e"
+      l3: true
+      l3-command: "bun run --cwd packages/dashboard test:e2e"
+      l3-browsers: chromium
+      l3-browser-directory: packages/dashboard
       slot-status: >-
         {"S1": {"status": "impl"},
         "S2": {"status": "impl"},
@@ -46,6 +50,6 @@ jobs:
         "L1": {"status": "impl"},
         "L1.5": {"status": "todo", "reason": "packages/collector 为 Worker，尚无 vitest-pool-workers / miniflare 运行时测试套件"},
         "L2": {"status": "impl"},
-        "L3": {"status": "na", "reason": "无 Playwright 浏览器 E2E；控制台由 Vitest/jsdom 在 L1 覆盖，HTTP 集成在 L2"},
+        "L3": {"status": "impl", "reason": "Dashboard Playwright sidebar/navigation checks run in the dedicated browser E2E job"},
         "P1": {"status": "na", "reason": "根与各 workspace 的 package.json 均为 private，不发布 npm 包"},
         "Z1": {"status": "impl"}}
