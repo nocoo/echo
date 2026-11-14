@@ -1,3 +1,4 @@
+import { mkdtempSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -14,6 +15,9 @@ if (!process.env.ECHO_E2E_PORT) {
   );
 }
 const port = process.env.ECHO_E2E_PORT;
+process.env.ECHO_BROWSER_ROOT ??= mkdtempSync(path.join(tmpdir(), "echo-browser-"));
+const runRoot = process.env.ECHO_BROWSER_ROOT;
+const buildDir = JSON.stringify(path.join(runRoot, "dist"));
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -21,14 +25,14 @@ export default defineConfig({
   forbidOnly: true,
   retries: 0,
   reporter: "list",
-  outputDir: path.join(tmpdir(), `echo-browser-${port}`),
+  outputDir: path.join(runRoot, "results"),
   use: {
     baseURL: `http://127.0.0.1:${port}`,
     browserName: "chromium",
     trace: "retain-on-failure",
   },
   webServer: {
-    command: `bun run build && bun run vite preview --host 127.0.0.1 --port ${port} --strictPort`,
+    command: `bun run build --outDir ${buildDir} --emptyOutDir && bun run vite preview --outDir ${buildDir} --host 127.0.0.1 --port ${port} --strictPort`,
     url: `http://127.0.0.1:${port}/admin/`,
     reuseExistingServer: false,
   },

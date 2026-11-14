@@ -6,13 +6,12 @@ import { mkdir, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import type { Readable } from "node:stream";
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { afterAll, beforeAll, describe, expect, inject, test } from "vitest";
 import { writeFixtureDatabases } from "../fixtures/ipdb.js";
 
 type ServerProcess = ChildProcessByStdio<null, Readable, Readable>;
 
-const packageRoot = process.cwd();
-const dashboardDir = path.resolve(packageRoot, "../dashboard/dist");
+const dashboardDir = inject("dashboardDir");
 
 async function waitForInstance(
   server: ServerProcess,
