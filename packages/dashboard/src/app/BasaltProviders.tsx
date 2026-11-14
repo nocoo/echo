@@ -1,21 +1,12 @@
 import { LinkProvider, ThemeProvider, Toaster, TooltipProvider } from "@nocoo/basalt";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { Link } from "react-router";
 
 function AppRouterLink({
   href,
-  className,
-  children,
-}: {
-  href: string;
-  className?: string;
-  children?: ReactNode;
-}) {
-  return (
-    <Link to={href} className={className}>
-      {children}
-    </Link>
-  );
+  ...props
+}: Omit<ComponentProps<typeof Link>, "to"> & { href: string }) {
+  return <Link to={href} {...props} />;
 }
 
 export function BasaltProviders({ children }: { children: ReactNode }) {
