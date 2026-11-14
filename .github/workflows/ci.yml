@@ -35,7 +35,7 @@ jobs:
       workflow-lint-required-workflow: nocoo/base-ci/.github/workflows/deploy-docker.yml
       workflow-lint-yamllint: true
       l2: true
-      l2-command: "cd packages/ip-service && bun run test:e2e"
+      l2-command: "bun run --cwd packages/ip-service test:e2e && cd packages/dashboard && bun run playwright install --with-deps chromium && bun run test:e2e"
       slot-status: >-
         {"S1": {"status": "impl"},
         "S2": {"status": "impl"},
@@ -46,6 +46,6 @@ jobs:
         "L1": {"status": "impl"},
         "L1.5": {"status": "todo", "reason": "packages/collector 为 Worker，尚无 vitest-pool-workers / miniflare 运行时测试套件"},
         "L2": {"status": "impl"},
-        "L3": {"status": "na", "reason": "无 Playwright 浏览器 E2E；控制台由 Vitest/jsdom 在 L1 覆盖，HTTP 集成在 L2"},
+        "L3": {"status": "impl", "reason": "Dashboard Playwright sidebar/navigation checks run with the isolated HTTP suite in the L2 job"},
         "P1": {"status": "na", "reason": "根与各 workspace 的 package.json 均为 private，不发布 npm 包"},
         "Z1": {"status": "impl"}}
