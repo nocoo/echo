@@ -51,7 +51,7 @@ IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; o
 
 ## Testing and quality contract
 
-6DQ keeps its name with unified L1, L2/L3, G2 and D1; the owner merged former G1 into L1 on 2026-09-21. Statuses: `enforced`, `planned`, `manual`, `N/A`. No skipped/focused tests; required unified L1 coverage is statements/branches/functions/lines each ≥95% plus strict types and check-only lint with zero errors/warnings.
+Statuses: `enforced`, `planned`, `manual`, `N/A`. No skipped/focused tests; required L1 coverage is statements/branches/functions/lines each ≥95% plus strict types and check-only lint with zero errors/warnings.
 
 | Piece | Requirement and current reality | Status | Evidence |
 | --- | --- | --- | --- |

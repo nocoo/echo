@@ -1,5 +1,3 @@
-# CI slot standard v1 (nocoo/base-ci docs/slots.md): impl S1, S2, S3, G1, G2, B1, L1, L2, Z1 via quality.yml;
-# na L3, P1; todo L1.5 in slot-status. nocoo/base-ci v2026.12: top-level slot jobs, workflow-lint inlined.
 name: CI
 
 on:
@@ -15,41 +13,5 @@ permissions:
 
 jobs:
   quality:
-    uses: nocoo/base-ci/.github/workflows/quality.yml@1ea10ecab22b72512399485391603fe03a161016  # v2026.12
-    with:
-      package-manager: bun
-      runtime-version: "1.4.2"
-      node-version: "26.12.1"
-      install-policy: blocked
-      typecheck-command: "bun run --cwd packages/ip-service typecheck && bun run --cwd packages/dashboard typecheck"
-      lint-command: "bun run lint"
-      test-command: "cd packages/ip-service && bun run test:coverage && cd ../dashboard && bun run test:coverage"
-      coverage-path: |
-        packages/ip-service/coverage
-        packages/dashboard/coverage
-      osv-config: osv-scanner.toml
-      gitleaks-config: .gitleaks.toml
-      build: true
-      build-command: "bun run build"
-      workflow-lint: true
-      workflow-lint-required-workflow: nocoo/base-ci/.github/workflows/deploy-docker.yml
-      workflow-lint-yamllint: true
-      l2: true
-      l2-command: "cd packages/ip-service && bun run test:e2e"
-      l3: true
-      l3-command: "bun run --cwd packages/dashboard test:e2e"
-      l3-browsers: chromium
-      l3-browser-directory: packages/dashboard
-      slot-status: >-
-        {"S1": {"status": "impl"},
-        "S2": {"status": "impl"},
-        "S3": {"status": "impl"},
-        "G1": {"status": "impl"},
-        "G2": {"status": "impl"},
-        "B1": {"status": "impl"},
-        "L1": {"status": "impl"},
-        "L1.5": {"status": "todo", "reason": "packages/collector 为 Worker，尚无 vitest-pool-workers / miniflare 运行时测试套件"},
-        "L2": {"status": "impl"},
-        "L3": {"status": "impl", "reason": "Dashboard Playwright sidebar/navigation checks run in the dedicated browser E2E job"},
-        "P1": {"status": "na", "reason": "根与各 workspace 的 package.json 均为 private，不发布 npm 包"},
-        "Z1": {"status": "impl"}}
+    name: quality
+    uses: ./.github/workflows/quality-slots.yml
