@@ -56,7 +56,7 @@
       "devDependencies": {
         "@types/bun": "latest",
         "@vitest/coverage-v8": "5.1.0",
-        "mmdb-lib": "^3.0.4",
+        "mmdb-lib": "^3.0.5",
         "typescript7": "npm:typescript@7.0.2",
         "vitest": "5.1.0",
       },
@@ -64,7 +64,7 @@
   },
   "overrides": {
     "esbuild": "^0.28.1",
-    "mmdb-lib": "3.0.4",
+    "mmdb-lib": "3.0.5",
     "nanoid": "^3.3.17",
     "postcss": "^8.5.18",
     "sharp": "^0.35.5",
@@ -662,7 +662,7 @@
 
     "miniflare": ["miniflare@5.20261104.0-beta", "", { "dependencies": { "@cspotcode/source-map-support": "0.8.1", "sharp": "0.35.5", "undici": "7.30.1", "workerd": "1.20261104.1", "ws": "8.21.0", "youch": "4.1.0-beta.10" } }, "sha512-pYZ2n85+FYUb7s0oIVcQxO63/+wgaknm+A/kQjctJqshvHPJs3UtnzaIZ7xrrHMOk8atD7yAfauf6G9VAv7Upg=="],
 
-    "mmdb-lib": ["mmdb-lib@3.0.4", "", {}, "sha512-tWy4b2UQaJjRhW/VGpy7ypMMgS7JfPezMsmVW7/utlWm6vv1JgsxXkmjuv/SjN6tsG8YrKHfJ00zHhrOCQDhjg=="],
+    "mmdb-lib": ["mmdb-lib@3.0.5", "", {}, "sha512-fBhq5SQHKXwL4dPwF4/Xesw6Ai5nsPlft7RWQwBOm5fhfrQs0r1dR7FbLCaaKH9pkub2s4BKrHAeZUjq+KrX7g=="],
 
     "nanoid": ["nanoid@3.3.18", "", { "bin": { "nanoid": "bin/nanoid.cjs" } }, "sha512-DTg4MJbGMWkfi6VZFdNt2/caMbQy4Ou+Op/hJQvGEWcnVfoA1QA+xzRKAzw9jD6+GVOOeYr/mIcuDSdug6F6+w=="],
 
