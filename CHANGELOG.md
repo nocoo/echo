@@ -1,5 +1,11 @@
 # Changelog
 
+## [v2.1.31] - 2026-11-20
+
+### Changed
+- Upgrade `@nocoo/basalt` to `^3.5.1` and drop `lucide-react` in favor of `@nocoo/basalt/icons`
+- Migrate `StatCard` to `@nocoo/basalt/components/stat-card`, adopt 2-line Basalt CSS, and align sidebar default width (`240px`)
+
 ## [v2.1.30] - 2026-11-10
 
 ## [v2.1.29] - 2026-11-08

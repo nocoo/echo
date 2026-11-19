@@ -16,7 +16,7 @@ import {
 } from "@nocoo/basalt";
 import { DataTable, type DataTableColumn } from "@nocoo/basalt/components/data-table";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
-import { KeyRound } from "lucide-react";
+import { KeyRound } from "@nocoo/basalt/icons";
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { StatusDot } from "../../components/visual/StatusDot";
