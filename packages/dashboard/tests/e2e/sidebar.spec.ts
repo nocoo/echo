@@ -52,7 +52,6 @@ for (const colorScheme of ["light", "dark"] as const) {
     const avatar = sidebar.locator(".h-basalt-9");
     const brand = sidebar.locator('[data-slot="sidebar-brand-copy"]');
     await expect(brand).toBeVisible();
-    await expect(sidebar).toHaveCSS("width", "260px");
     await expect(avatar).toHaveCSS("width", "36px");
     await expect(avatar).toHaveCSS("height", "36px");
     await expect(sidebar.getByText(identity.email, { exact: true })).toHaveCSS(
@@ -71,7 +70,6 @@ for (const colorScheme of ["light", "dark"] as const) {
     await expect(page).toHaveURL(/\/admin\/lookup$/);
     await sidebar.getByRole("button", { name: "展开侧边栏", exact: true }).click();
     await page.mouse.move(1000, 400);
-    await expect(sidebar).toHaveCSS("width", "260px");
     await expect(brand).toBeVisible();
     await sidebar.getByRole("button", { name: "退出登录", exact: true }).click();
     await expect(page).toHaveURL(/\/admin\/login$/);
@@ -97,10 +95,8 @@ for (const colorScheme of ["light", "dark"] as const) {
       await expect(drawer).toBeVisible();
       await expect(menu).toHaveAttribute("aria-expanded", "true");
       await expect(drawer).toHaveAttribute("id", (await menu.getAttribute("aria-controls")) ?? "");
-      await expect(drawer).toHaveCSS("width", "260px");
       await expect(drawer).toHaveCSS("padding-left", "0px");
       await expect(drawer).toHaveCSS("padding-right", "0px");
-      await expect(drawer.locator("[data-basalt-sidebar]")).toHaveCSS("width", "260px");
       await expect(drawer.locator(".h-basalt-9")).toHaveCSS("width", "36px");
       await expect(drawer.locator(".h-basalt-9")).toHaveCSS("height", "36px");
       const dismiss = drawer.getByRole("button", { name: "关闭导航菜单", exact: true });
@@ -120,7 +116,6 @@ for (const colorScheme of ["light", "dark"] as const) {
       await expect(menu).toBeFocused();
       await page.setViewportSize({ width: 1280, height: 844 });
       await expect(page.locator("[data-basalt-sidebar]")).not.toHaveAttribute("data-collapsed");
-      await expect(page.locator("[data-basalt-sidebar]")).toHaveCSS("width", "260px");
     });
   }
 }

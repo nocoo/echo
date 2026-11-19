@@ -1,6 +1,6 @@
 import { Button, Field, Input, LayerCard } from "@nocoo/basalt";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
-import { Search } from "lucide-react";
+import { Search } from "@nocoo/basalt/icons";
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { LookupResultSkeleton } from "../../components/island-skeleton";

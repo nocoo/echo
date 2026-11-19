@@ -21,7 +21,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@nocoo/basalt/components/tooltip";
-import { Boxes, KeyRound, Search, Wrench } from "lucide-react";
+import { Boxes, KeyRound, Search, Wrench } from "@nocoo/basalt/icons";
 import { type ReactNode, useCallback, useState } from "react";
 import { useLocation } from "react-router";
 import { Logo } from "../components/Logo";
@@ -80,7 +80,7 @@ export function PersistedSidebarProvider({ children }: { children: ReactNode }) 
   );
 
   return (
-    <SidebarProvider collapsed={collapsed} onCollapsedChange={onCollapsedChange} defaultWidth={260}>
+    <SidebarProvider collapsed={collapsed} onCollapsedChange={onCollapsedChange}>
       {children}
     </SidebarProvider>
   );

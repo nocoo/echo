@@ -1,4 +1,4 @@
-import { Building2, Globe2, type LucideIcon, Map as MapIcon, Radio } from "lucide-react";
+import { Building2, Globe2, type LucideIcon, Map as MapIcon, Radio } from "@nocoo/basalt/icons";
 import { providerAccent } from "../../lib/visual";
 
 const PROVIDER_ICONS: Record<string, LucideIcon> = {

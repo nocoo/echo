@@ -1,7 +1,7 @@
 import { Button, StatStrip, Tooltip, TooltipContent, TooltipTrigger } from "@nocoo/basalt";
-import { StatCard } from "@nocoo/basalt/charts/stat-card";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
-import { Clock3, Database, HardDrive, KeyRound } from "lucide-react";
+import { StatCard } from "@nocoo/basalt/components/stat-card";
+import { Clock3, Database, HardDrive, KeyRound } from "@nocoo/basalt/icons";
 import { apiClient } from "../../lib/api";
 import { formatAgeDays, formatBytes } from "../../lib/format";
 import { statusTone, toneClasses } from "../../lib/visual";
@@ -55,26 +55,26 @@ export default function OverviewPage() {
           label="数据年龄"
           value={metrics[0]?.value ?? "—"}
           subtitle="超过 7 天视为陈旧"
-          icon={Clock3}
+          icon={<Clock3 className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />}
           iconColor={tone.text}
         />
         <StatCard
           label="数据库"
           value={metrics[1]?.value ?? "—"}
           subtitle={stats ? `${stats.missingCount} 个缺失` : undefined}
-          icon={Database}
+          icon={<Database className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />}
         />
         <StatCard
           label="总大小"
           value={metrics[2]?.value ?? "—"}
           subtitle="已安装文件合计"
-          icon={HardDrive}
+          icon={<HardDrive className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />}
         />
         <StatCard
           label="有效 key"
           value={metrics[3]?.value ?? "—"}
           subtitle={stats ? `共 ${stats.keyCount} 个` : undefined}
-          icon={KeyRound}
+          icon={<KeyRound className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />}
         />
       </div>
 
