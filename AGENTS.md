@@ -1,89 +1,81 @@
 # Echo
 
-IP lookup API plus a separate DNS resolver-observation service.
-Profile: native-hybrid (TypeScript services and Go DNS probe).
-Direction: [README.md](README.md), [DNS design](docs/07-dns-leak-detection.md).
+Native-hybrid monorepo: IP API (`packages/ip-service/`, Bun/Hono, MMDB/ip2region), admin console (`packages/dashboard/`, Vite/React/`@nocoo/basalt`), DNS collector (`packages/collector/`, Cloudflare Worker + `ECHO` KV), UDP DNS probe (`packages/dns-probe/`, Go/Docker), and Node 18+ SwiftBar helper (`swiftbar/`).
+Docs: [README.md](README.md) · [Docs Index](docs/README.md) · [Testing](docs/05-testing.md) · [DNS Design](docs/07-dns-leak-detection.md) · [Operations](docs/09-operations.md) · [Dashboard](docs/10-dashboard.md) · [Retrospective](Retrospective.md)
 
-## Scope and instruction sources
+## Commands
 
-- This file is the only project handbook; nested files do not compete with it. Do not create a `CLAUDE.md` alias or copy.
-- This file is the contract; hooks, CI and config enforce it. Gaps require stronger enforcement, never a lower contract. Frameworks must not rewrite this handbook.
-- Human docs: [README.md](README.md) and [docs/README.md](docs/README.md). Version: `packages/ip-service/package.json`; generated `src/lib/version.ts` within that package. Enforcement: `.husky/`, `.github/workflows/ci.yml`, IP-service Vitest configs. Accidents: [Retrospective.md](Retrospective.md). Private configuration: ignored environment files; use variable names only in docs.
-
-## Project invariants
-
-- Preserve database attribution and source-merging semantics; local IP datasets are downloaded assets, never committed.
-- `?ip=` requires an `X-Api-Key` that the admin console issued and has not revoked; an invalid key falls back to requester IP. Trust forwarded IP headers only behind the intended proxy.
-- Admin keys and refresh runs live in SQLite (`node:sqlite`) at `$STATE_DIR/echo.db`; there is no `ECHO_API_KEY` environment variable and no import path from one.
-- Admin routes require a Google OAuth session (`PUBLIC_ORIGIN` is the single source of truth for the OAuth redirect and the CSRF origin check); every mutation requires `Origin` to equal `PUBLIC_ORIGIN` exactly, and `ALLOWED_EMAILS` empty rejects every login.
-- The IP service serves the console build from `DASHBOARD_DIR` (default `packages/dashboard/dist`): `/admin/assets/*` is static, `/admin` and extension-less `/admin/*` fall back to `index.html`, and a missing build answers 404. `/` stays the JSON self description and unknown `/api/*` paths answer a JSON 404, never the shell.
-- The console is a separate Vite app with `basename /admin`; its pages stay thin and the fetching and derivation live in `src/lib` and `src/app/<page>/use-*.ts` so they are testable without a DOM.
-- Public, uncached `/api/live` performs a local database lookup and returns version plus 200/503 without database paths or raw diagnostics. A database refresh older than seven days reports `outdated` and a non-200 status; describe staleness only in days, never as a timestamp.
-- The IP service runs as a GHCR image on jp4 behind the shared proxy-caddy. IP databases are mounted from the host, refreshed by `deploy/systemd/echo-ipdb-refresh.timer`, and never baked into the image. The image does bake the console build; the admin SQLite database lives on a writable `/state` volume while `/data` stays read-only. The proxy must overwrite `X-Forwarded-For` with `CF-Connecting-IP`.
-- Collector also exposes an uncached public `/api/live`, using its own package version; this is Worker liveness only and does not probe or write KV.
-- Collector currently has unauthenticated report/read endpoints, token deduplication and 300-second KV retention. Do not imply stronger authentication or a DNS-leak verdict.
-- DNS probe is a separate Go/Docker service on jp2; changing its IP requires updating NS address and Uptime Kuma. Preserve its UDP-only behavior.
-- IP-service deployment belongs to `.github/workflows/deploy.yml` (base-ci `deploy-docker`, Tailscale WIF). DNS probe and Collector deploy independently.
-
-## Setup and commands
-
-IP API: Bun, Hono, TypeScript, local MMDB/ip2region files, GHCR image on jp4. Collector: Cloudflare Worker with `ECHO` KV binding. DNS probe: Go toolchain from `packages/dns-probe/go.mod`, Docker. Quality: Bun workspaces, Biome, Vitest; Go testing gap below. `packages/ip-service/` owns the API, downloader and tests; `packages/collector/` owns KV collection; `packages/dns-probe/` owns DNS; `swiftbar/` contains the Node 18+ helper.
-
-Run from root unless a working directory is shown. CI pins Bun 1.4.2; use the Go version in go.mod.
+Run from root unless noted. CI pins Bun 1.4.2 and Node 26.12.1; `packages/dns-probe/` uses the Go version in `packages/dns-probe/go.mod`. Keep secrets in ignored local env files and document variable names only.
 
 ```sh
 bun install --frozen-lockfile
-bun run --cwd packages/ip-service dev
-bun run --cwd packages/collector dev
-bun run --cwd packages/dashboard dev
-bun run --cwd packages/ip-service typecheck
-bun run --cwd packages/collector typecheck
-bun run --cwd packages/dashboard typecheck
-bun run lint
-bun run --cwd packages/ip-service test:coverage
-bun run --cwd packages/dashboard test:coverage
-bun run --cwd packages/ip-service test:e2e
+bun run dev                                      # watch dashboard + serve API & console on :7010
+bun run --cwd packages/ip-service ipdb:update    # fetch & verify external IP datasets
+bun run --cwd packages/ip-service dev            # IP API only
+bun run --cwd packages/dashboard dev             # Vite watch build -> packages/dashboard/dist
+bun run --cwd packages/collector dev             # local Wrangler Worker + KV
+bun run --cwd packages/ip-service typecheck      # S1 (IP service)
+bun run --cwd packages/dashboard typecheck       # S1 (dashboard)
+bun run --cwd packages/collector typecheck       # S1 (collector; local only)
+bun run lint                                     # S2 Biome check-only, 0 warnings
+bun run build                                    # B1 dashboard build
+bun run --cwd packages/ip-service test:coverage  # L1 >= 95%
+bun run --cwd packages/dashboard test:coverage   # L1 >= 95% (src/lib/**, use-*.ts)
+bun run --cwd packages/ip-service test:e2e       # L2 isolated HTTP + synthetic XDB/MMDB
 bun run --cwd packages/dashboard playwright install chromium
-bun run --cwd packages/dashboard test:e2e
+bun run --cwd packages/dashboard test:e2e        # L4 isolated Playwright E2E
 ```
 
-IP dev needs all databases under the package's `data/` or matching `IPDB_DIR`; obtain them with `bun run --cwd packages/ip-service ipdb:fetch --verify`. Downloads access external providers. `PORT` defaults to 7010; `STATE_DIR` holds the admin SQLite database and defaults to `./state`; `DASHBOARD_DIR` holds the console build and defaults to `packages/dashboard/dist`. The root `bun run dev` rebuilds the dashboard in watch mode and serves both the API and the console from 7010, matching production; there is no second dev port.
+IP dev needs datasets in `packages/ip-service/data/` or `IPDB_DIR` (fetched from external providers via `ipdb:update` / `ipdb:fetch -- --verify`; refreshes local DBs only). Defaults: `PORT=7010`, `STATE_DIR=./state` (admin SQLite), `DASHBOARD_DIR=packages/dashboard/dist`. Root `bun run dev` serves API and console on `:7010` matching prod (no second dev port).
 
-## Testing and quality contract
+Authorized releases run `bun run --cwd packages/ip-service release` (patch default; accepts `minor`/`major`/explicit version or `-- --dry-run`), which tags, pushes, creates a GitHub release, and triggers `.github/workflows/deploy.yml`. Verify deployed `/api/live` returns `ok` with small `ageDays`.
 
-Statuses: `enforced`, `planned`, `manual`, `N/A`. No skipped/focused tests; required L1 coverage is statements/branches/functions/lines each ≥95% plus strict types and check-only lint with zero errors/warnings.
+## Invariants
 
-| Piece | Requirement and current reality | Status | Evidence |
-| --- | --- | --- | --- |
-| L1 TypeScript | IP-service and dashboard four metrics ≥95% plus strict types/lint across both packages and helper; Collector and SwiftBar coverage still missing | planned | IP gate enforced in pre-commit/CI and `packages/ip-service/vitest.config.ts`; dashboard gate in `packages/dashboard/vitest.config.ts` covers `src/lib/**` and `src/app/**/use-*.ts` with hook transitions exercised through jsdom render; shell geometry/navigation have real Playwright coverage and the router adapter has a DOM regression; remaining presentational components are not comprehensively tested; IP checks and root Biome run as enforced static subchecks, but Collector typecheck is not in CI; pre-commit L1 runs on a checkout-index snapshot (not the working tree) |
-| L1 Go | Meaningful DNS coverage plus Go static checks and formatting at the same contract; no suite or gate yet | planned | `packages/dns-probe/`; no Go gate in hooks/CI |
-| L2 | Real HTTP across every service endpoint/method; IP tests exist, Collector coverage incomplete | planned | IP `tests/e2e/global-setup.ts` builds the dashboard; the HTTP suite generates synthetic binary XDB/MMDB files and runs real readers without downloads; pre-push/CI; the console HTTP cases cover the public routes, the admin 401 boundary and the static assets, but the OAuth and key lifecycle still run only in unit tests |
-| L3 | Real client IP/DNS workflows on controlled local services | planned | Six dashboard Playwright cases exercise navigation and sidebar geometry in light/dark themes on desktop and 390/700px mobile viewports using synthetic API responses; no full DNS/client system gate |
-| G2 | OSV + gitleaks; missing scanner fails; cover Bun and Go dependencies | planned | Hooks scan Bun lock/staged secrets; Go dependency gate missing |
-| D1 | Per-run state/ports and guards, separate from dev | planned | The IP HTTP suite now takes a random port, temporary STATE_DIR, SPOOL_DIR and an IPDB_DIR of freshly generated synthetic XDB/MMDB files, and identifies its own server by the instance line; browser tests use their own random preview port and temporary result directory; the shared 7010 port and the package data directory are still used by the dev server |
-| Packaging | Image builds and `/api/live` reports `ok` with fresh data | enforced | `deploy.yml` remote and edge verification |
-| Docs | Keep numbered docs and commands aligned | manual | Diff/link review |
+- Authoritative IP-service version lives in `packages/ip-service/package.json` (re-exported by `packages/ip-service/src/lib/version.ts`).
+- Use JSON import attributes (`with { type: "json" }`) for Node.js compatibility, and avoid trailing-newline contamination in env values.
+- Preserve IP database attribution and source-merging semantics; local IP datasets are downloaded assets, never committed.
+- `?ip=` requires a non-revoked `X-Api-Key` from the admin console; invalid keys fall back to requester IP. Trust forwarded IP headers only behind the intended proxy.
+- Admin keys and refresh runs live in SQLite (`node:sqlite`) at `$STATE_DIR/echo.db`; there is no `ECHO_API_KEY` env var and no import path from one.
+- Admin routes require a Google OAuth session; empty `ALLOWED_EMAILS` rejects every login.
+- `PUBLIC_ORIGIN` is the single source of truth for OAuth redirects and CSRF checks; every admin mutation requires `Origin` to match `PUBLIC_ORIGIN` exactly.
+- IP service serves `DASHBOARD_DIR` (default `packages/dashboard/dist`): `/admin/assets/*` is static, `/admin` and extension-less `/admin/*` fall back to `index.html`, and a missing build returns 404.
+- `/` stays the JSON self-description and unknown `/api/*` paths return a JSON 404, never the console HTML shell.
+- Console is a separate Vite app (`basename /admin`, `@nocoo/basalt`); keep pages thin and put fetching/derivation in `src/lib` and `src/app/<page>/use-*.ts` for DOM-free unit testing.
+- Public uncached `/api/live` runs a local DB lookup and returns version + 200/503 without DB paths or raw diagnostics.
+- A DB refresh older than 7 days reports `outdated` with a non-200 status; report staleness only in days (`ageDays`), never as a timestamp.
+- IP service runs on jp4 behind shared `proxy-caddy` (GHCR): console baked in, `/state` writable for SQLite, `/data` read-only host IP DBs (never baked; `deploy/systemd/echo-ipdb-refresh.timer`).
+- `proxy-caddy` must overwrite `X-Forwarded-For` with `CF-Connecting-IP`; `/api/ip` reports what the proxy forwards, and Caddy otherwise appends the Cloudflare edge IP.
+- Collector exposes an uncached public `/api/live` using its own package version; checks Worker liveness only and never probes or writes KV.
+- Collector has unauthenticated report/read endpoints, token deduplication, and 300s KV retention; do not imply stronger auth or a DNS-leak verdict.
+- DNS probe is a separate UDP-only Go/Docker service on jp2; changing its IP requires updating the `ns1` A record and Uptime Kuma.
+- IP-service deploys via `.github/workflows/deploy.yml` (`deploy-docker`, Tailscale WIF); Collector/DNS deploy independently ([Operations](docs/09-operations.md)); releases/deploys need authorization.
 
-Current pre-commit gates a checkout-index snapshot: IP types, IP coverage, dashboard types, dashboard coverage, root lint, plus staged secrets (gitleaks). Pre-push runs unit, lint, HTTP, dashboard browser E2E and OSV on the working tree. Browser checks require the matching Playwright Chromium installation; CI installs it before running the dedicated browser E2E job. Target: check-only unified L1 on the index snapshot under 30s; pre-push stdin refs with L2/G2 in parallel under 3min. Commit and branch-push hook bypass is forbidden.
+## Quality & Local Gates
 
-## Resources and isolation
+Follows `system1-quality`; CI slots and pinned `base-ci` revision live in [.github/workflows/quality-slots.yml](.github/workflows/quality-slots.yml) (`quality / Z1: Gate` required on `main` via [.github/workflows/ci.yml](.github/workflows/ci.yml)). Status vocabulary: `enforced`, `planned`, `manual`, `N/A`. No skipped or focused tests; Biome lint runs check-only with 0 errors/warnings.
 
-| Purpose | Existing resource | Current isolation |
+- **CI slots**: `S1`–`S3`, `G1`–`G2`, `B1`, `L1`, `L2` (IP HTTP), `L4` (dashboard Playwright), and `Z1` are `enforced`; `L3` (covered by `L2`/`L4`) and `P1` (private monorepo) are `N/A`.
+- **L1 coverage**: >=95% statements/branches/functions/lines for `ip-service` (`src/**`, excl. `index.ts`/`version.ts`) and `dashboard` (`src/lib/**`, `src/app/**/use-*.ts`).
+- **Planned gaps**: `Collector` typecheck/Worker tests, Go (`dns-probe`) tests/static/OSV, `SwiftBar` coverage, and full DNS/client E2E are `planned`.
+- **Partial & manual**: OAuth/key lifecycle is unit-tested only; presentational UI lacks unit coverage; signed-in avatar and docs alignment are `manual` ([Testing](docs/05-testing.md)).
+- **Deploy smoke**: `.github/workflows/deploy.yml` runs `enforced` container and edge checks on `/api/live`, `/admin`, and `/api/admin/keys` (401).
+- **Local hooks**: installed via `bun install` (`.husky/`); never bypass hooks, and missing `gitleaks` or `osv-scanner` fails the gate.
+- **Pre-commit**: scans staged diff with `gitleaks` (`G1`) and checks a `git checkout-index` snapshot for `ip-service`/`dashboard` `S1`/`L1` and root `S2` (target <30s).
+- **Pre-push**: runs unit, `lint`, IP `L2`, dashboard `L4` (needs matching Chromium), and `G2` OSV on the working tree; validating pushed stdin refs in parallel (<3m) is `planned`.
+
+## Resources & Isolation
+
+| Lane | Endpoint / State | Boundary |
 | --- | --- | --- |
-| IP dev / HTTP suite | 7010 for dev; the HTTP suite takes a random port | Shared for dev: run only after freeing the port; the suite is isolated per run |
-| Dashboard dev | Served by the IP service on 7010 from `packages/dashboard/dist`, rebuilt by `vite build --watch` | Single port, same origin as production; local https comes from `echo.dev.hexly.ai` in the machine Caddy |
-| Collector dev | Local Wrangler KV | Separate per-run fixture guard/marker not established |
-| DNS production | jp2 UDP 53 | Never use production as an automated fixture target |
+| Dev (IP + Dashboard) | `127.0.0.1:7010` (`https://echo.dev.hexly.ai`), `data/`, `./state`, `packages/dashboard/dist` | Single port matching prod; free `:7010` first; preserve daily local data |
+| Tests (`L2` / `L4`) | Random local ports, per-run temp `STATE_DIR`/`SPOOL_DIR`/`IPDB_DIR` (synthetic XDB/MMDB) & temp dashboard build | Isolated per run; checks server instance ID and shuts down before cleanup ([Testing](docs/05-testing.md)) |
+| Collector dev | Local Wrangler / Miniflare `ECHO` KV | Local only; per-run fixture marker not yet wired (`planned`) |
+| Prod | `https://echo.nocoo.cloud` (jp4), `echo-collector.worker.hexly.ai`, jp2 UDP `:53` | Never target in automated fixtures; read-only checks unless deploy is authorized |
 
-Worker test design must use local Wrangler/Miniflare, per-run persistence, local-binding checks and `_test_marker` before writes/cleanup; never create remote `-test` resources. DNS/client system tests need an independent local receiver and tokens.
-
-## Operations / release
-
-Authorized releases run `bun run --cwd packages/ip-service release` (patch default; minor/major/explicit version or `-- --dry-run`). The script tags/pushes and creates a GitHub release; the deploy workflow builds and deploys the image. `ipdb:update` refreshes local databases only. Collector and DNS steps are in [operations](docs/09-operations.md). Verify deployed `/api/live` reports `ok` with a small `ageDays`.
+- Worker tests must use local Wrangler/Miniflare with per-run persistence, local-binding checks, and `_test_marker` before writes/cleanup; never create remote `-test` resources.
+- DNS/client system tests must use an independent local receiver and synthetic tokens rather than jp2 UDP 53.
 
 ## Retrospective
 
-Accident narratives live in [Retrospective.md](Retrospective.md); keep only recurring rules here. Global lessons go to nmem/rules; deterministic rules belong in tests/hooks.
-
-- Use JSON import attributes for Node.js compatibility; avoid newline-contaminated environment values.
-- Keep the proxy's `X-Forwarded-For` rewrite in mind: `/api/ip` reports whatever the proxy forwards, and Caddy appends the Cloudflare edge IP unless it is overwritten with `CF-Connecting-IP`.
+Record incident narratives and root causes in [Retrospective.md](Retrospective.md); promote recurring project constraints to `Invariants` above and enforceable safeguards to tests or hooks.
