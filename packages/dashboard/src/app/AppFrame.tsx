@@ -111,13 +111,15 @@ function AppFrameShell() {
           title="导航菜单"
           description="浏览 Echo 管理台页面"
         >
-          <AppSidebar
-            variant="mobile"
-            user={user}
-            onSignOut={handleSignOut}
-            onNavigate={() => setMobileOpen(false)}
-            onDismiss={() => setMobileOpen(false)}
-          />
+          <PersistedSidebarProvider>
+            <AppSidebar
+              variant="mobile"
+              user={user}
+              onSignOut={handleSignOut}
+              onNavigate={() => setMobileOpen(false)}
+              onDismiss={() => setMobileOpen(false)}
+            />
+          </PersistedSidebarProvider>
         </SidebarDrawer>
       ) : null}
 

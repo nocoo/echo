@@ -3,6 +3,9 @@ import ipServicePackage from "../ip-service/package.json";
 
 export default defineConfig({
   cacheDir: "node_modules/.cache/vitest",
+  resolve: {
+    dedupe: ["react", "react-dom", "@nocoo/basalt"],
+  },
   define: {
     __ECHO_VERSION__: JSON.stringify(ipServicePackage.version),
   },
