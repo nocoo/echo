@@ -14,3 +14,7 @@
     @apply bg-basalt-background text-basalt-foreground antialiased;
   }
 }
+
+[data-slot="sidebar-drawer"] > [data-slot="sheet-close"] {
+  display: none;
+}
