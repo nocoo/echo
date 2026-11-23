@@ -10,7 +10,7 @@ const TONES: Record<MetaTone, string> = {
 export function MetaBadge({ tone, children }: { tone: MetaTone; children: string }) {
   return (
     <Badge
-      variant={null}
+      variant="outline"
       title={children}
       className={`h-6 max-w-[18rem] truncate border ${TONES[tone]}`}
     >

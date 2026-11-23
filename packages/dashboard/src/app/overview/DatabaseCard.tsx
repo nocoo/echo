@@ -4,10 +4,10 @@ import { ProviderIcon } from "../../components/visual/ProviderIcon";
 import type { DatabaseEntry } from "../../lib/api";
 import { formatBytes, formatDate, formatDateTime } from "../../lib/format";
 
-const STATUS_VARIANTS: Record<DatabaseEntry["status"], "success" | "warning" | "destructive"> = {
+const STATUS_TONES: Record<DatabaseEntry["status"], "success" | "warning" | "danger"> = {
   ok: "success",
   stale: "warning",
-  missing: "destructive",
+  missing: "danger",
 };
 
 const STATUS_LABELS: Record<DatabaseEntry["status"], string> = {
@@ -36,7 +36,7 @@ export function DatabaseCard({ database }: { database: DatabaseEntry }) {
             {database.provider}
           </p>
         </div>
-        <Badge variant={STATUS_VARIANTS[database.status]}>{STATUS_LABELS[database.status]}</Badge>
+        <Badge tone={STATUS_TONES[database.status]}>{STATUS_LABELS[database.status]}</Badge>
       </div>
 
       <dl className="grid grid-cols-2 gap-x-basalt-space-md gap-y-basalt-space-xs">

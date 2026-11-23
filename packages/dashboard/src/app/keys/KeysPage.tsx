@@ -46,7 +46,7 @@ export default function KeysPage() {
       accessor: (row) => (
         <span className="flex items-center gap-basalt-space-xs">
           <StatusDot tone={statusTone(row.status === "active" ? "ok" : "idle")} />
-          <Badge variant={row.status === "active" ? "success" : "secondary"}>
+          <Badge tone={row.status === "active" ? "success" : "neutral"}>
             {row.status === "active" ? "有效" : "已撤销"}
           </Badge>
         </span>
@@ -105,7 +105,7 @@ export default function KeysPage() {
     void navigator.clipboard
       .writeText(secret)
       .then(() => toast.success("密钥已复制"))
-      .catch(() => toast.error("复制失败，请手动选择"));
+      .catch(() => toast.danger("复制失败，请手动选择"));
   };
 
   const closeDialog = () => {

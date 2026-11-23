@@ -1,6 +1,6 @@
-import { Button, StatStrip, Tooltip, TooltipContent, TooltipTrigger } from "@nocoo/basalt";
+import { Button, Tooltip, TooltipContent, TooltipTrigger } from "@nocoo/basalt";
 import { PageHeader } from "@nocoo/basalt/components/page-header";
-import { StatCard } from "@nocoo/basalt/components/stat-card";
+import { StatCard, StatGrid } from "@nocoo/basalt/components/stat-card";
 import { Clock3, Database, HardDrive, KeyRound } from "@nocoo/basalt/icons";
 import { apiClient } from "../../lib/api";
 import { formatAgeDays, formatBytes } from "../../lib/format";
@@ -78,11 +78,16 @@ export default function OverviewPage() {
         />
       </div>
 
-      <StatStrip
-        className="md:hidden"
-        loading={loading}
-        items={metrics.map((metric) => ({ label: metric.label, value: metric.value }))}
-      />
+      <StatGrid columns={2} className="md:hidden">
+        {metrics.map((metric) => (
+          <StatCard
+            key={metric.label}
+            label={metric.label}
+            value={metric.value}
+            loading={loading}
+          />
+        ))}
+      </StatGrid>
 
       <div className="@container">
         <div className="grid items-start gap-basalt-layout @min-2xl:grid-cols-2 @min-5xl:grid-cols-3">

@@ -71,7 +71,7 @@ function AppFrameShell() {
       setAuth("anonymous");
       navigate("/login", { replace: true });
     } catch (error) {
-      toast.error("退出失败", {
+      toast.danger("退出失败", {
         description: describeError(error),
         action: { label: "重试", onClick: () => void logout() },
       });
@@ -125,7 +125,7 @@ function AppFrameShell() {
 
       <AppMain>
         <AppHeader
-          density={isMobile ? "compact" : "comfortable"}
+          density={isMobile ? "compact" : "default"}
           leading={
             isMobile ? (
               <AppHeaderMenuButton

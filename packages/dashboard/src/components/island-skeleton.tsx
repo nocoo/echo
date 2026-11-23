@@ -1,5 +1,5 @@
 import { LayerCard } from "@nocoo/basalt";
-import { SkeletonLine } from "@nocoo/basalt/components/skeleton-line";
+import { Skeleton } from "@nocoo/basalt/components/skeleton";
 import type { PageVariant } from "../lib/navigation";
 import { CardSkeleton } from "./card-skeleton";
 
@@ -8,8 +8,8 @@ const TABLE_ROWS = [92, 78, 86, 70, 88, 74];
 function PageHeaderSkeleton() {
   return (
     <div className="space-y-basalt-space-sm">
-      <SkeletonLine height={26} minWidth={18} maxWidth={26} />
-      <SkeletonLine height={14} minWidth={30} maxWidth={44} />
+      <Skeleton height={26} width="22%" />
+      <Skeleton height={14} width="37%" />
     </div>
   );
 }
@@ -18,9 +18,9 @@ function TableSkeleton({ rows = 6 }: { rows?: number }) {
   return (
     <LayerCard>
       <div className="space-y-basalt-space-sm">
-        <SkeletonLine height={14} minWidth={16} maxWidth={24} />
+        <Skeleton height={14} width="20%" />
         {TABLE_ROWS.slice(0, rows).map((maxWidth) => (
-          <SkeletonLine key={maxWidth} height={16} minWidth={maxWidth - 30} maxWidth={maxWidth} />
+          <Skeleton key={maxWidth} height={16} width={`${maxWidth - 15}%`} />
         ))}
       </div>
     </LayerCard>
@@ -33,8 +33,8 @@ function StatRowSkeleton() {
       {["a", "b", "c", "d"].map((key) => (
         <LayerCard key={key}>
           <div className="space-y-basalt-space-sm">
-            <SkeletonLine height={12} minWidth={30} maxWidth={48} />
-            <SkeletonLine height={18} minWidth={24} maxWidth={40} />
+            <Skeleton height={12} width="39%" />
+            <Skeleton height={18} width="32%" />
           </div>
         </LayerCard>
       ))}
@@ -46,7 +46,7 @@ function TabRowSkeleton() {
   return (
     <div className="flex gap-basalt-space-sm">
       {["a", "b", "c", "d"].map((key) => (
-        <SkeletonLine key={key} height={28} minWidth={12} maxWidth={16} />
+        <Skeleton key={key} height={28} width="14%" />
       ))}
     </div>
   );
