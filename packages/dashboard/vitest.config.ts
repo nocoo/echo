@@ -10,6 +10,8 @@ export default defineConfig({
     __ECHO_VERSION__: JSON.stringify(ipServicePackage.version),
   },
   test: {
+    allowOnly: false,
+    passWithNoTests: false,
     globals: false,
     environment: "jsdom",
     pool: "threads",

@@ -3,6 +3,8 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   cacheDir: "node_modules/.cache/vitest",
   test: {
+    allowOnly: false,
+    passWithNoTests: false,
     globals: false,
     pool: "threads",
     // Unit tests only — e2e tests live under tests/e2e and are run via test:e2e.
