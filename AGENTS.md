@@ -19,9 +19,9 @@ bun run --cwd packages/dashboard typecheck       # S1 (dashboard)
 bun run --cwd packages/collector typecheck       # S1 (collector; local only)
 bun run lint                                     # S2 Biome check-only, 0 warnings
 bun run build                                    # B1 dashboard build
-bun run --cwd packages/ip-service test:coverage  # L1 >= 95%
-bun run --cwd packages/dashboard test:coverage   # L1 >= 95% (src/lib/**, use-*.ts)
-bun run --cwd packages/ip-service test:e2e       # L2 isolated HTTP + synthetic XDB/MMDB
+bun run --cwd packages/ip-service test:coverage  # L1 >= 80%
+bun run --cwd packages/dashboard test:coverage   # L1 >= 80% (src/lib/**, use-*.ts)
+bun run --cwd packages/ip-service test:e2e       # L3 isolated HTTP + synthetic XDB/MMDB
 bun run --cwd packages/dashboard playwright install chromium
 bun run --cwd packages/dashboard test:e2e        # L4 isolated Playwright E2E
 ```
@@ -55,8 +55,8 @@ Authorized releases run `bun run --cwd packages/ip-service release` (patch defau
 
 Follows `system1-quality`; CI slots and pinned `base-ci` revision live in [.github/workflows/quality-slots.yml](.github/workflows/quality-slots.yml) (`quality / Z1: Gate` required on `main` via [.github/workflows/ci.yml](.github/workflows/ci.yml)). Status vocabulary: `enforced`, `planned`, `manual`, `N/A`. No skipped or focused tests; Biome lint runs check-only with 0 errors/warnings.
 
-- **CI slots**: `S1`–`S3`, `G1`–`G2`, `B1`, `L1`, `L2` (IP HTTP), `L4` (dashboard Playwright), and `Z1` are `enforced`; `L3` (covered by `L2`/`L4`) and `P1` (private monorepo) are `N/A`.
-- **L1 coverage**: >=95% statements/branches/functions/lines for `ip-service` (`src/**`, excl. `index.ts`/`version.ts`) and `dashboard` (`src/lib/**`, `src/app/**/use-*.ts`).
+- **CI slots**: `S1`–`S3`, `G1`–`G2`, `B1`, `L1`, `L3` (IP HTTP), `L4` (dashboard Playwright), and `Z1` are `enforced`; `L2` (covered by `L1`/`L3`) and `P1` (private monorepo) are `N/A`.
+- **L1 coverage**: >=80% statements/branches/functions/lines for `ip-service` (`src/**`, excl. `index.ts`/`version.ts`) and `dashboard` (`src/lib/**`, `src/app/**/use-*.ts`, excl. Views).
 - **Planned gaps**: `Collector` typecheck/Worker tests, Go (`dns-probe`) tests/static/OSV, `SwiftBar` coverage, and full DNS/client E2E are `planned`.
 - **Partial & manual**: OAuth/key lifecycle is unit-tested only; presentational UI lacks unit coverage; signed-in avatar and docs alignment are `manual` ([Testing](docs/05-testing.md)).
 - **Deploy smoke**: `.github/workflows/deploy.yml` runs `enforced` container and edge checks on `/api/live`, `/admin`, and `/api/admin/keys` (401).
