@@ -12,7 +12,7 @@ COPY package.json bun.lock ./
 COPY packages/ip-service/package.json ./packages/ip-service/
 COPY packages/collector/package.json ./packages/collector/
 COPY packages/dashboard/package.json ./packages/dashboard/
-RUN bun install --frozen-lockfile --production
+RUN bun install --frozen-lockfile --production --ignore-scripts
 
 FROM deps AS dashboard
 WORKDIR /app
