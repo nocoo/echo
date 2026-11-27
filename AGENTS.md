@@ -28,7 +28,7 @@ bun run --cwd packages/dashboard test:e2e        # L4 isolated Playwright E2E
 
 IP dev needs datasets in `packages/ip-service/data/` or `IPDB_DIR` (fetched from external providers via `ipdb:update` / `ipdb:fetch -- --verify`; refreshes local DBs only). Defaults: `PORT=7010`, `STATE_DIR=./state` (admin SQLite), `DASHBOARD_DIR=packages/dashboard/dist`. Root `bun run dev` serves API and console on `:7010` matching prod (no second dev port).
 
-Authorized releases run `bun run --cwd packages/ip-service release` (patch default; accepts `minor`/`major`/explicit version or `-- --dry-run`), which tags, pushes, creates a GitHub release, and triggers `.github/workflows/deploy.yml`. Verify deployed `/api/live` returns `ok` with small `ageDays`.
+Authorized releases run `bun run --cwd packages/ip-service release` (patch default; accepts `minor`/`major`/explicit version or `-- --dry-run`), which bumps version, tags, pushes, and creates a GitHub release; merging/pushing to `main` triggers `.github/workflows/pipeline.yml` (`D1`–`D5` Docker deploy). Verify deployed `/api/live` returns `ok` with small `ageDays`.
 
 ## Invariants
 
@@ -49,17 +49,17 @@ Authorized releases run `bun run --cwd packages/ip-service release` (patch defau
 - Collector exposes an uncached public `/api/live` using its own package version; checks Worker liveness only and never probes or writes KV.
 - Collector has unauthenticated report/read endpoints, token deduplication, and 300s KV retention; do not imply stronger auth or a DNS-leak verdict.
 - DNS probe is a separate UDP-only Go/Docker service on jp2; changing its IP requires updating the `ns1` A record and Uptime Kuma.
-- IP-service deploys via `.github/workflows/deploy.yml` (`deploy-docker`, Tailscale WIF); Collector/DNS deploy independently ([Operations](docs/09-operations.md)); releases/deploys need authorization.
+- IP-service deploys via `.github/workflows/pipeline.yml` (`deploy` job calling `nocoo/base-ci` `deploy-docker.yml` `D1`–`D5` on `main` push or `workflow_dispatch` with `deploy=true`, Tailscale WIF); Collector/DNS deploy independently ([Operations](docs/09-operations.md)); releases/deploys need authorization.
 
 ## Quality & Local Gates
 
-Follows `system1-quality`; CI slots and pinned `base-ci` revision live in [.github/workflows/quality-slots.yml](.github/workflows/quality-slots.yml) (`quality / Z1: Gate` required on `main` via [.github/workflows/ci.yml](.github/workflows/ci.yml)). Status vocabulary: `enforced`, `planned`, `manual`, `N/A`. No skipped or focused tests; Biome lint runs check-only with 0 errors/warnings.
+Follows `system1-quality`; CI slots and pinned `base-ci` revision live in [.github/workflows/quality-slots.yml](.github/workflows/quality-slots.yml) (`quality / Z1: Gate` required on `main`, invoked alongside `D1`–`D5` Docker CD via [.github/workflows/pipeline.yml](.github/workflows/pipeline.yml)). Status vocabulary: `enforced`, `planned`, `manual`, `N/A`. No skipped or focused tests; Biome lint runs check-only with 0 errors/warnings.
 
 - **CI slots**: `S1`–`S3`, `G1`–`G2`, `B1`, `L1`, `L3` (IP HTTP), `L4` (dashboard Playwright), and `Z1` are `enforced`; `L2` (covered by `L1`/`L3`) and `P1` (private monorepo) are `N/A`.
 - **L1 coverage**: >=80% statements/branches/functions/lines for `ip-service` (`src/**`, excl. `index.ts`/`version.ts`) and `dashboard` (`src/lib/**`, `src/app/**/use-*.ts`, excl. Views).
 - **Planned gaps**: `Collector` typecheck/Worker tests, Go (`dns-probe`) tests/static/OSV, `SwiftBar` coverage, and full DNS/client E2E are `planned`.
 - **Partial & manual**: OAuth/key lifecycle is unit-tested only; presentational UI lacks unit coverage; signed-in avatar and docs alignment are `manual` ([Testing](docs/05-testing.md)).
-- **Deploy smoke**: `.github/workflows/deploy.yml` runs `enforced` container and edge checks on `/api/live`, `/admin`, and `/api/admin/keys` (401).
+- **Deploy smoke**: `.github/workflows/pipeline.yml` (`D4`/`D5`) runs `enforced` container and edge checks on `/api/live`, `/admin`, and `/api/admin/keys` (401).
 - **Local hooks**: installed via `bun install` (`.husky/`); never bypass hooks, and missing `gitleaks` or `osv-scanner` fails the gate.
 - **Pre-commit**: scans staged diff with `gitleaks` (`G1`) and checks a `git checkout-index` snapshot for `ip-service`/`dashboard` `S1`/`L1` and root `S2` (target <30s).
 - **Pre-push**: runs unit, `lint`, IP `L2`, dashboard `L4` (needs matching Chromium), and `G2` OSV on the working tree; validating pushed stdin refs in parallel (<3m) is `planned`.
