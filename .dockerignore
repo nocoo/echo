@@ -3,10 +3,16 @@
 !bun.lock
 !packages/
 !packages/**
+packages/dns-probe
 **/node_modules
 **/coverage
 **/dist
 **/data
+**/tests
+**/*.test.ts
+**/*.test.tsx
+**/vitest*.config.ts
+**/playwright.config.ts
 **/*.xdb
 **/*.mmdb
 **/*.gz
