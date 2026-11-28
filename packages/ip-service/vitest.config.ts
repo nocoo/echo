@@ -18,6 +18,9 @@ export default defineConfig({
       exclude: [
         "**/*.test.ts",
         "**/*.d.ts",
+        "**/index.ts",
+        // Pure TypeScript interfaces (IpLocation, IpProvider).
+        "src/services/ipProvider.ts",
         // Entry point — boots the Bun HTTP server. Pure side-effect module
         // (Bun.serve), exercised by E2E tests rather than unit tests.
         "src/index.ts",
@@ -25,10 +28,10 @@ export default defineConfig({
         "src/lib/version.ts",
       ],
       thresholds: {
-        statements: 80,
-        branches: 80,
-        functions: 80,
-        lines: 80,
+        statements: 90,
+        branches: 85,
+        functions: 90,
+        lines: 90,
       },
     },
   },
